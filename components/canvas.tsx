@@ -4,29 +4,39 @@ import Konva from "konva";
 
 interface Props {
   onMouseDown?: (event: Konva.KonvaEventObject<MouseEvent>) => void
-  onMousemove?: (event: Konva.KonvaEventObject<MouseEvent>) => void
+  onMouseMove?: (event: Konva.KonvaEventObject<MouseEvent>) => void
   onMouseup?: (event: Konva.KonvaEventObject<MouseEvent>) => void
-  circleCenterCoordinates: {x: number, y: number}[]
+  circles: {x: number, y: number, radius: number}[],
+  temporaryCircle: {x: number, y: number, radius: number} | null
 }
 
-const Canvas: React.FC<Props> = ({onMouseDown, onMousemove, onMouseup, circleCenterCoordinates}) => {
+const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, temporaryCircle}) => {
 
-  console.debug(circleCenterCoordinates)
+  console.debug(circles)
 
   return (
     <Stage
       width={window.innerWidth}
       height={window.innerHeight}
       onMouseDown={onMouseDown}
-      onMousemove={onMousemove}
+      onMousemove={onMouseMove}
       onMouseup={onMouseup}
     >
       <Layer>
+        {temporaryCircle &&
+          <Circle key={'temporaryCircle'}
+                  x={temporaryCircle.x}
+                  y={temporaryCircle.y}
+                  radius={temporaryCircle.radius}
+                  stroke={'grey'}
+                  strokeWidth={1}
+          />
+        }
         {
-          circleCenterCoordinates.map((coordinate, index) => (
+          circles.map((circle, index) => (
             <Circle key={index}
-                    x={coordinate.x} y={coordinate.y}
-                    radius={10}
+                    x={circle.x} y={circle.y}
+                    radius={circle.radius}
                     stroke={'black'}
                     strokeWidth={1}
             />
