@@ -1,5 +1,5 @@
 import React from 'react'
-import {Circle, Layer, Path, Rect, Stage} from "react-konva";
+import {Circle, Layer, Line, Path, Rect, Stage} from "react-konva";
 import Konva from "konva";
 
 interface Props {
@@ -7,7 +7,13 @@ interface Props {
   onMouseMove?: (event: Konva.KonvaEventObject<MouseEvent>) => void
   onMouseup?: (event: Konva.KonvaEventObject<MouseEvent>) => void
   circles: {x: number, y: number, radius: number}[],
-  temporaryCircle: {x: number, y: number, radius: number} | null
+  temporaryCircle: {
+    x: number,
+    y: number,
+    radius: number,
+    diameterStart: {x: number, y: number},
+    diameterEnd: {x: number, y: number}
+  } | null
 }
 
 const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, temporaryCircle}) => {
@@ -24,13 +30,31 @@ const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, 
     >
       <Layer>
         {temporaryCircle &&
-          <Circle key={'temporaryCircle'}
-                  x={temporaryCircle.x}
-                  y={temporaryCircle.y}
-                  radius={temporaryCircle.radius}
-                  stroke={'grey'}
+          <>
+            <Circle key={'temporaryCircleCenter'}
+                    x={temporaryCircle.x}
+                    y={temporaryCircle.y}
+                    radius={3}
+                    fill="blue"
+            />
+            <Line key={'temporaryCircleDiameter'}
+                  points={[
+                    temporaryCircle.diameterStart.x,
+                    temporaryCircle.diameterStart.y,
+                    temporaryCircle.diameterEnd.x,
+                    temporaryCircle.diameterEnd.y
+                  ]}
+                  stroke={"grey"}
                   strokeWidth={1}
-          />
+            />
+            <Circle key={'temporaryCircle'}
+                    x={temporaryCircle.x}
+                    y={temporaryCircle.y}
+                    radius={temporaryCircle.radius}
+                    stroke={'grey'}
+                    strokeWidth={1}
+            />
+          </>
         }
         {
           circles.map((circle, index) => (

@@ -12,7 +12,13 @@ const Test: NextPage = () => {
   const didMountRef = useRef(false)
 
   const [operationMode, setOperationMode] = useState<OperationMode>('point-center')
-  const [temporaryCircle, setTemporaryCircle] = useState<{ x: number, y: number, radius: number } | null>(null)
+  const [temporaryCircle, setTemporaryCircle] = useState<{
+    x: number,
+    y: number,
+    radius: number
+    diameterStart: {x: number, y: number},
+    diameterEnd: {x: number, y: number},
+  } | null>(null)
   const [circles, setCircles] = useState<{x: number, y:number, radius: number}[]>([])
 
   useEffect(() => {
@@ -40,7 +46,12 @@ const Test: NextPage = () => {
     }
 
     if (operationMode === 'point-center') {
-      setTemporaryCircle({x: coords.x, y: coords.y, radius: 0})
+      setTemporaryCircle({
+        x: coords.x, y: coords.y,
+        radius: 0,
+        diameterStart: {x: coords.x, y: coords.y},
+        diameterEnd: {x: coords.x, y: coords.y},
+      })
       setOperationMode('fix-radius')
     } else if (operationMode === 'fix-radius' && temporaryCircle) {
       setCircles([...circles, temporaryCircle])
@@ -73,8 +84,17 @@ const Test: NextPage = () => {
       Math.pow(temporaryCircle.x - coords.x, 2)
       + Math.pow(temporaryCircle.y - coords.y, 2)
     )
+    const temporaryCircleDiameterStart = coords
+    const temporaryCircleDiameterEnd = {
+      x: coords.x + (temporaryCircle.x - coords.x) * 2,
+      y: coords.y + (temporaryCircle.y - coords.y) * 2
+    }
 
-    setTemporaryCircle({...temporaryCircle, radius: temporaryCircleRadius})
+    setTemporaryCircle({...temporaryCircle,
+      radius: temporaryCircleRadius,
+      diameterStart: temporaryCircleDiameterStart,
+      diameterEnd: temporaryCircleDiameterEnd
+    })
   }
 
   return (
