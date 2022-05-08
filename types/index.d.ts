@@ -1,7 +1,7 @@
 
 type ShapeType = 'line' | 'circle'
 
-type OperationMode = 'circle:point-center' | 'circle:fix-radius'
+type OperationMode = 'line:point-start' | 'line:point-end' | 'circle:point-center' | 'circle:fix-radius'
 
 interface Shape {
   type: string
@@ -21,6 +21,12 @@ interface CircleShape extends Shape {
   type: 'circle'
   center: { x: number, y: number }
   radius: number
+}
+
+interface TemporaryLineShape extends TemporaryShape {
+  type: 'temporary-line'
+  start: { x: number, y: number }
+  end: { x: number, y: number }
 }
 
 interface TemporaryCircleShape extends TemporaryShape {

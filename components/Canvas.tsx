@@ -1,6 +1,6 @@
 import React from 'react'
 import { css } from '@emotion/react'
-import {isCircleShape, isTemporaryCircleShape} from "../lib/typeguard";
+import {isCircleShape, isLineShape, isTemporaryCircleShape, isTemporaryLineShape} from "../lib/typeguard";
 
 const style = css`
   width: 100%;
@@ -57,6 +57,24 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
             />
           </>
         }
+        {isTemporaryLineShape(temporaryShape) &&
+            <>
+              <line key={'temporaryLine'}
+                    x1={temporaryShape.start.x}
+                    y1={temporaryShape.start.y}
+                    x2={temporaryShape.end.x}
+                    y2={temporaryShape.end.y}
+                    stroke={"grey"}
+                    strokeWidth={1}
+              />
+              <circle key={'temporaryLineStart'}
+                      cx={temporaryShape.start.x}
+                      cy={temporaryShape.start.y}
+                      r={3}
+                      fill="blue"
+              />
+            </>
+        }
         {
           shapes.map((shape, index) => {
             if (isCircleShape(shape)) {
@@ -68,6 +86,18 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
                         stroke={'black'}
                         strokeWidth={1}
                         fill={'none'}
+                />
+              )
+
+            } else if (isLineShape(shape)) {
+              return (
+                <line key={index}
+                      x1={shape.start.x}
+                      y1={shape.start.y}
+                      x2={shape.end.x}
+                      y2={shape.end.y}
+                      stroke={"black"}
+                      strokeWidth={1}
                 />
               )
             }

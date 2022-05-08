@@ -22,6 +22,16 @@ export const isCircleShape = (shape: any): shape is CircleShape => {
     && typeof shape?.radius === 'number'
 }
 
+export const isTemporaryLineShape = (shape: any): shape is TemporaryLineShape => {
+  return shape?.type === 'temporary-line'
+    && isObject(shape?.start)
+    && typeof shape?.start?.x === 'number'
+    && typeof shape?.start?.y === 'number'
+    && isObject(shape?.end)
+    && typeof shape?.end?.x === 'number'
+    && typeof shape?.end?.y === 'number'
+}
+
 export const isTemporaryCircleShape = (shape: any): shape is TemporaryCircleShape => {
   return shape?.type === 'temporary-circle'
     && isObject(shape?.center)
