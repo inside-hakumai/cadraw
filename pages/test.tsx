@@ -94,10 +94,10 @@ const Test: NextPage = () => {
   }
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    const coords = {x: event.clientX, y: event.clientY}
-    console.debug(coords)
-
-    setSnappingDot(closestDot?.[coords.x]?.[coords.y] || null)
+    const coord = {x: event.clientX, y: event.clientY}
+    setSnappingDot(closestDot?.[coord.x]?.[coord.y] || null)
+    const pointingCoord = snappingDot ? snappingDot : coord
+    console.debug(coord, pointingCoord)
 
     if (!(operationMode === 'circle:fix-radius' || operationMode === 'line:point-end')
       || !temporaryShape) {
@@ -108,13 +108,13 @@ const Test: NextPage = () => {
       const temporaryCircleShape = temporaryShape as TemporaryCircleShape
 
       const temporaryCircleRadius = Math.sqrt(
-        Math.pow(temporaryCircleShape.center.x - coords.x, 2)
-        + Math.pow(temporaryCircleShape.center.y - coords.y, 2)
+        Math.pow(temporaryCircleShape.center.x - pointingCoord.x, 2)
+        + Math.pow(temporaryCircleShape.center.y - pointingCoord.y, 2)
       )
-      const temporaryCircleDiameterStart = coords
+      const temporaryCircleDiameterStart = pointingCoord
       const temporaryCircleDiameterEnd = {
-        x: coords.x + (temporaryCircleShape.center.x - coords.x) * 2,
-        y: coords.y + (temporaryCircleShape.center.y - coords.y) * 2
+        x: pointingCoord.x + (temporaryCircleShape.center.x - pointingCoord.x) * 2,
+        y: pointingCoord.y + (temporaryCircleShape.center.y - pointingCoord.y) * 2
       }
 
       setTemporaryShape({
@@ -127,7 +127,7 @@ const Test: NextPage = () => {
     } else if (operationMode === 'line:point-end') {
       setTemporaryShape((prev) => ({
         ...prev,
-        end: coords
+        end: pointingCoord
       }) as TemporaryLineShape)
     }
   }
