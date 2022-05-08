@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react'
 import type { NextPage } from 'next'
 import dynamic from 'next/dynamic'
-import Konva from "konva"
+import ToolWindow from "../components/ToolWindow";
 
 const Canvas = dynamic(() => import('../components/canvas'), { ssr: false })
 
@@ -10,6 +10,7 @@ type OperationMode = 'point-center' | 'fix-radius'
 const Test: NextPage = () => {
 
   const didMountRef = useRef(false)
+  const stageRef = useRef<SVGSVGElement>(null)
 
   const [operationMode, setOperationMode] = useState<OperationMode>('point-center')
   const [temporaryCircle, setTemporaryCircle] = useState<{
@@ -71,13 +72,33 @@ const Test: NextPage = () => {
     })
   }
 
+  const exportAsSvg = () => {
+    if (!stageRef.current) {
+      return
+    }
+
+    const serializer = new XMLSerializer()
+    let source = serializer.serializeToString(stageRef.current)
+    source = '<?xml version="1.0" standalone="no"?>\r\n' + source
+
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+
+    const anchor = document.createElement('a')
+    anchor.download = 'exported.svg'
+    anchor.href = url
+    anchor.click()
+    anchor.remove()
+  }
+
   return (
     <div>
-      <Canvas onMouseDown={handleMouseDown}
+      <Canvas stageRef={stageRef}
+              onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               circles={circles}
               temporaryCircle={temporaryCircle}
       />
+      <ToolWindow onClickExportButton={exportAsSvg} />
     </div>
   )
 }

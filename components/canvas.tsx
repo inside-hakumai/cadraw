@@ -7,6 +7,7 @@ const style = css`
 `
 
 interface Props {
+  stageRef: React.RefObject<SVGSVGElement>
   onMouseDown?: (event: React.MouseEvent) => void
   onMouseMove?: (event: React.MouseEvent) => void
   onMouseup?: (event: React.MouseEvent) => void
@@ -20,7 +21,7 @@ interface Props {
   } | null
 }
 
-const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, temporaryCircle}) => {
+const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, circles, temporaryCircle}) => {
 
   console.debug(circles)
 
@@ -31,6 +32,7 @@ const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, 
       onMouseUp={onMouseup}
     >
       <svg
+        ref={stageRef}
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -50,7 +52,7 @@ const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, 
                     r={temporaryCircle.radius}
                     stroke={'grey'}
                     strokeWidth={1}
-                    fill={'transparent'}
+                    fill={'none'}
             />
             <circle key={'temporaryCircleCenter'}
                     cx={temporaryCircle.x}
@@ -68,7 +70,7 @@ const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, 
                     r={circle.radius}
                     stroke={'black'}
                     strokeWidth={1}
-                    fill={'transparent'}
+                    fill={'none'}
             />
           ))
         }
