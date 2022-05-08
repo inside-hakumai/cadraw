@@ -29,21 +29,8 @@ const Test: NextPage = () => {
     didMountRef.current = true
   }, [])
 
-  const handleMouseDown = (event: Konva.KonvaEventObject<MouseEvent>) => {
-    let coords: {x: number, y: number} | null = null
-
-    const stage = event.target.getStage()
-    if (stage) {
-      console.debug(event)
-      const vector = stage.getPointerPosition()
-      if (vector) {
-        coords = {x: vector.x, y: vector.y}
-      }
-    }
-
-    if (!coords) {
-      return
-    }
+  const handleMouseDown = (event: React.MouseEvent) => {
+    const coords = {x: event.clientX, y: event.clientY}
 
     if (operationMode === 'point-center') {
       setTemporaryCircle({
@@ -60,25 +47,12 @@ const Test: NextPage = () => {
     }
   }
 
-  const handleMouseMove = (event: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseMove = (event: React.MouseEvent) => {
     if (operationMode !== 'fix-radius' || !temporaryCircle) {
       return
     }
 
-    let coords: {x: number, y: number} | null = null
-
-    const stage = event.target.getStage()
-    if (stage) {
-      console.debug(event)
-      const vector = stage.getPointerPosition()
-      if (vector) {
-        coords = {x: vector.x, y: vector.y}
-      }
-    }
-
-    if (!coords) {
-      return
-    }
+    const coords = {x: event.clientX, y: event.clientY}
 
     const temporaryCircleRadius = Math.sqrt(
       Math.pow(temporaryCircle.x - coords.x, 2)

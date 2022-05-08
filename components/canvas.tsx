@@ -1,16 +1,15 @@
 import React from 'react'
-import {Circle, Layer, Line, Path, Rect, Stage} from "react-konva";
-import Konva from "konva";
 import { css } from '@emotion/react'
 
 const style = css`
-  display: none;
+  width: 100%;
+  height: 100%;
 `
 
 interface Props {
-  onMouseDown?: (event: Konva.KonvaEventObject<MouseEvent>) => void
-  onMouseMove?: (event: Konva.KonvaEventObject<MouseEvent>) => void
-  onMouseup?: (event: Konva.KonvaEventObject<MouseEvent>) => void
+  onMouseDown?: (event: React.MouseEvent) => void
+  onMouseMove?: (event: React.MouseEvent) => void
+  onMouseup?: (event: React.MouseEvent) => void
   circles: {x: number, y: number, radius: number}[],
   temporaryCircle: {
     x: number,
@@ -26,58 +25,55 @@ const Canvas: React.FC<Props> = ({onMouseDown, onMouseMove, onMouseup, circles, 
   console.debug(circles)
 
   return (
-    <>
-      <div css={style}>
-        hoge
-      </div>
-      <Stage
-        width={window.innerWidth}
-        height={window.innerHeight}
-        onMouseDown={onMouseDown}
-        onMousemove={onMouseMove}
-        onMouseup={onMouseup}
+    <div css={style}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseup}
+    >
+      <svg
+        viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <Layer>
-          {temporaryCircle &&
-            <>
-              <Circle key={'temporaryCircleCenter'}
-                      x={temporaryCircle.x}
-                      y={temporaryCircle.y}
-                      radius={3}
-                      fill="blue"
-              />
-              <Line key={'temporaryCircleDiameter'}
-                    points={[
-                      temporaryCircle.diameterStart.x,
-                      temporaryCircle.diameterStart.y,
-                      temporaryCircle.diameterEnd.x,
-                      temporaryCircle.diameterEnd.y
-                    ]}
-                    stroke={"grey"}
+        {temporaryCircle &&
+          <>
+            <line key={'temporaryCircleDiameter'}
+                  x1={temporaryCircle.diameterStart.x}
+                  y1={temporaryCircle.diameterStart.y}
+                  x2={temporaryCircle.diameterEnd.x}
+                  y2={temporaryCircle.diameterEnd.y}
+                  stroke={"grey"}
+                  strokeWidth={1}
+            />
+            <circle key={'temporaryCircle'}
+                    cx={temporaryCircle.x}
+                    cy={temporaryCircle.y}
+                    r={temporaryCircle.radius}
+                    stroke={'grey'}
                     strokeWidth={1}
-              />
-              <Circle key={'temporaryCircle'}
-                      x={temporaryCircle.x}
-                      y={temporaryCircle.y}
-                      radius={temporaryCircle.radius}
-                      stroke={'grey'}
-                      strokeWidth={1}
-              />
-            </>
-          }
-          {
-            circles.map((circle, index) => (
-              <Circle key={index}
-                      x={circle.x} y={circle.y}
-                      radius={circle.radius}
-                      stroke={'black'}
-                      strokeWidth={1}
-              />
-            ))
-          }
-          </Layer>
-      </Stage>
-    </>
+                    fill={'transparent'}
+            />
+            <circle key={'temporaryCircleCenter'}
+                    cx={temporaryCircle.x}
+                    cy={temporaryCircle.y}
+                    r={3}
+                    fill="blue"
+            />
+          </>
+        }
+        {
+          circles.map((circle, index) => (
+            <circle key={index}
+                    cx={circle.x}
+                    cy={circle.y}
+                    r={circle.radius}
+                    stroke={'black'}
+                    strokeWidth={1}
+                    fill={'transparent'}
+            />
+          ))
+        }
+        </svg>
+    </div>
   )
 
 }
