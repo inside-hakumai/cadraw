@@ -52,7 +52,7 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
             <circle key={'temporaryCircleCenter'}
                     cx={temporaryShape.center.x}
                     cy={temporaryShape.center.y}
-                    r={3}
+                    r={2}
                     fill="blue"
             />
           </>
@@ -70,7 +70,7 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
               <circle key={'temporaryLineStart'}
                       cx={temporaryShape.start.x}
                       cy={temporaryShape.start.y}
-                      r={3}
+                      r={2}
                       fill="blue"
               />
             </>
