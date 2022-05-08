@@ -14,11 +14,10 @@ interface Props {
   onMouseup?: (event: React.MouseEvent) => void
   shapes: Shape[],
   temporaryShape: TemporaryShape | null
+  snappingDot: Coordinate | null
 }
 
-const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape}) => {
-
-  console.debug(shapes)
+const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot}) => {
 
   return (
     <div css={style}
@@ -80,16 +79,29 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
           shapes.map((shape, index) => {
             if (isCircleShape(shape)) {
               return (
-                <circle key={index}
-                        cx={shape.center.x}
-                        cy={shape.center.y}
-                        r={shape.radius}
-                        stroke={'black'}
-                        strokeWidth={1}
-                        fill={'none'}
-                />
+                <>
+                  <circle key={index}
+                          cx={shape.center.x}
+                          cy={shape.center.y}
+                          r={shape.radius}
+                          stroke={'black'}
+                          strokeWidth={1}
+                          fill={'none'}
+                  />
+                  {/*{*/}
+                  {/*  shape.approximatedCoords.map((dot, index) => (*/}
+                  {/*    <circle key={`dot-${index}`}*/}
+                  {/*            cx={dot.x}*/}
+                  {/*            cy={dot.y}*/}
+                  {/*            r={2}*/}
+                  {/*            stroke={'green'}*/}
+                  {/*            strokeWidth={1}*/}
+                  {/*            fill={'green'}*/}
+                  {/*    />*/}
+                  {/*  ))*/}
+                  {/*}*/}
+                </>
               )
-
             } else if (isLineShape(shape)) {
               return (
                 <line key={index}
@@ -103,6 +115,14 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
               )
             }
           })
+        }
+        {snappingDot &&
+          <circle key={'snappingDot'}
+                  cx={snappingDot.x}
+                  cy={snappingDot.y}
+                  r={3}
+                  fill="green"
+          />
         }
         </svg>
     </div>
