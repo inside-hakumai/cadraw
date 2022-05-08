@@ -39,6 +39,7 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
                   x2={temporaryShape.diameterEnd.x}
                   y2={temporaryShape.diameterEnd.y}
                   stroke={"grey"}
+                  strokeDasharray={'3 3'}
                   strokeWidth={1}
             />
             <circle key={'temporaryCircle'}
