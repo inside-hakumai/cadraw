@@ -1,0 +1,70 @@
+import path from 'path'
+import { Configuration } from 'webpack'
+
+const NODE_ENV: 'development' | 'production' = (() => {
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
+    return process.env.NODE_ENV
+  } else {
+    return 'development'
+  }
+})()
+
+const config: Configuration = {
+  mode: NODE_ENV,
+  target: 'web',
+  entry: './ui/index.tsx',
+  output: {
+    path: path.join(__dirname, 'dist'),
+    filename: 'bundle.js',
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: [
+                ['@babel/preset-react', { runtime: 'automatic', importSource: '@emotion/react' }],
+              ],
+              plugins: ['@emotion/babel-plugin'],
+            },
+          },
+          {
+            loader: 'ts-loader',
+            options: {
+              configFile: 'tsconfig.ui.json',
+            }
+          },
+        ],
+      },
+      {
+        test: /\.s?css$/,
+        use: [
+          {
+            loader: 'css-loader',
+            options: {
+              sourceMap: true,
+            },
+          },
+          {
+            loader: 'sass-loader',
+            options: {
+              sourceMap: true,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  resolve: {
+    extensions: ['.js', '.ts', '.tsx'],
+  },
+  devtool: 'inline-source-map',
+}
+
+export default config

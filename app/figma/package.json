@@ -5,12 +5,11 @@
   "main": "code.js",
   "scripts": {
     "dev": "tsc -w ",
-    "build": "tsc -p tsconfig.json"
+    "prebuild": "rimraf dist && rimraf code.js",
+    "build": "run-p build:*",
+    "build:ui": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack --progress",
+    "build:code": "tsc --project tsconfig.code.json"
   },
   "author": "",
-  "license": "",
-  "devDependencies": {
-    "@figma/plugin-typings": "^1.45.0",
-    "typescript": "^4.6.4"
-  }
+  "license": ""
 }

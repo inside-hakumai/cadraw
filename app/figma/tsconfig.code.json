@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["plugin-typings"]
+  },
+  "include": ["code.ts"],
+}
