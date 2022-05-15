@@ -1,5 +1,7 @@
 import path from 'path'
 import { Configuration } from 'webpack'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import HtmlInlineScriptPlugin from "html-inline-script-webpack-plugin";
 
 const NODE_ENV: 'development' | 'production' = (() => {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
@@ -11,11 +13,15 @@ const NODE_ENV: 'development' | 'production' = (() => {
 
 const config: Configuration = {
   mode: NODE_ENV,
+  devtool: NODE_ENV === 'production' ? false : 'inline-source-map',
   target: 'web',
-  entry: './ui/index.tsx',
+  entry: {
+    ui: './ui/index.tsx',
+    code: './code/index.ts',
+  },
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'bundle.js',
+    filename: '[name].js',
   },
 
   module: {
@@ -62,9 +68,20 @@ const config: Configuration = {
   },
 
   resolve: {
-    extensions: ['.js', '.ts', '.tsx'],
+    extensions: ['.js', '.ts', '.jsx', '.tsx'],
   },
-  devtool: 'inline-source-map',
+
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './ui/index.html',
+      filename: 'ui.html',
+      inlineSource: '.(js)$',
+      chunks: ['ui'],
+      inject: 'body',
+    }),
+    new HtmlInlineScriptPlugin()
+  ]
+
 }
 
 export default config

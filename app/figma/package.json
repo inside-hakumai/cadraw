@@ -4,11 +4,11 @@
   "description": "Your Figma Plugin",
   "main": "code.js",
   "scripts": {
-    "dev": "tsc -w ",
+    "dev": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"development\" webpack --progress --watch",
     "prebuild": "rimraf dist && rimraf code.js",
     "build": "run-p build:*",
-    "build:ui": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack --progress",
-    "build:code": "tsc --project tsconfig.code.json"
+    "build:ui": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"production\" webpack --progress",
+    "build:code": "cross-env NODE_ENV=\"production\" tsc --project tsconfig.code.json"
   },
   "author": "",
   "license": ""

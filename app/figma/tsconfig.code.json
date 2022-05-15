@@ -1,7 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "lib": ["es6"],
     "types": ["plugin-typings"]
   },
-  "include": ["code.ts"],
+  "include": [
+    "code/index.ts"
+  ],
 }
