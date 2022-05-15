@@ -34,7 +34,10 @@ const config: Configuration = {
             loader: 'babel-loader',
             options: {
               presets: [
-                ['@babel/preset-react', { runtime: 'automatic', importSource: '@emotion/react' }],
+                [
+                  '@babel/preset-react',
+                  { runtime: 'automatic', importSource: '@emotion/react' }
+                ],
               ],
               plugins: ['@emotion/babel-plugin'],
             },

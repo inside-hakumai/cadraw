@@ -11,5 +11,8 @@
     "build:code": "cross-env NODE_ENV=\"production\" tsc --project tsconfig.code.json"
   },
   "author": "",
-  "license": ""
+  "license": "",
+  "dependencies": {
+    "react": "^18.1.0"
+  }
 }
