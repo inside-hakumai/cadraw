@@ -19,5 +19,8 @@ figma.ui.onmessage = msg => {
     figma.viewport.scrollAndZoomIntoView(nodes)
   }
 
-  figma.closePlugin()
+  if (msg.type === 'paste-svg') {
+    figma.currentPage.appendChild(figma.createNodeFromSvg(msg.svgString))
+  }
+
 }

@@ -3,8 +3,11 @@ import ToolWindow from "./components/ToolWindow";
 
 import Canvas from './components/Canvas'
 
+interface Props {
+  onExport?: (data: string) => void
+}
 
-const Cadraw: React.FC = () => {
+const Cadraw: React.FC<Props> = ({onExport}) => {
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
@@ -151,13 +154,16 @@ const Cadraw: React.FC = () => {
     let source = serializer.serializeToString(stageRef.current)
     source = '<?xml version="1.0" standalone="no"?>\r\n' + source
 
-    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
-
-    const anchor = document.createElement('a')
-    anchor.download = 'exported.svg'
-    anchor.href = url
-    anchor.click()
-    anchor.remove()
+    if (onExport) {
+      onExport(source)
+    } else {
+      const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+      const anchor = document.createElement('a')
+      anchor.download = 'exported.svg'
+      anchor.href = url
+      anchor.click()
+      anchor.remove()
+    }
   }
 
   const scanClosestDot = (shape: CircleShape) => {
