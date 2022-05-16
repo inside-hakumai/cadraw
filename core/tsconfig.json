@@ -17,8 +17,10 @@
     "incremental": true
   },
   "include": [
-    "common/**/*.ts",
-    "common/**/*.tsx"
+    "./**/*.ts",
+    "./**/*.tsx"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "../node_modules"
+  ]
 }

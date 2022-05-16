@@ -1,5 +1,5 @@
 import React from 'react'
-import Cadraw from '../../../common/cadraw'
+import Cadraw from '../../../core/cadraw'
 
 const App = () => {
 

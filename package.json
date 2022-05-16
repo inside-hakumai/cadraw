@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "app/web",
-    "app/figma"
+    "app/figma",
+    "core"
   ],
   "scripts": {
     "web:dev": "npm run dev -w app/web",
@@ -14,14 +15,9 @@
     "figma:dev": "npm run dev -w app/figma",
     "figma:build": "npm run build -w app/figma"
   },
-  "dependencies": {
+  "devDependencies": {
     "@emotion/babel-plugin": "^11.9.2",
     "@emotion/react": "^11.9.0",
-    "canvas": "^2.9.1",
-    "react": "18.1.0",
-    "react-dom": "18.1.0"
-  },
-  "devDependencies": {
     "@babel/preset-react": "^7.16.7",
     "@figma/plugin-typings": "^1.45.0",
     "@types/react": "18.0.8",
