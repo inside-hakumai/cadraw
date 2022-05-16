@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["@emotion/react/types/css-prop", "plugin-typings"],
+  },
+  "include": ["ui/**/*.ts", "ui/**/*.tsx", "../../common/**/*.ts", "../../common/**/*.tsx"],
+}
