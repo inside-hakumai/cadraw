@@ -117,32 +117,18 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
           shapes.map((shape, index) => {
             if (isCircleShape(shape)) {
               return (
-                <>
-                  <circle key={index}
-                          cx={shape.center.x}
-                          cy={shape.center.y}
-                          r={shape.radius}
-                          stroke={'black'}
-                          strokeWidth={1}
-                          fill={'none'}
-                  />
-                  {/*{*/}
-                  {/*  shape.approximatedCoords.map((dot, index) => (*/}
-                  {/*    <circle key={`dot-${index}`}*/}
-                  {/*            cx={dot.x}*/}
-                  {/*            cy={dot.y}*/}
-                  {/*            r={2}*/}
-                  {/*            stroke={'green'}*/}
-                  {/*            strokeWidth={1}*/}
-                  {/*            fill={'green'}*/}
-                  {/*    />*/}
-                  {/*  ))*/}
-                  {/*}*/}
-                </>
+                <circle key={`circle-${index}`}
+                        cx={shape.center.x}
+                        cy={shape.center.y}
+                        r={shape.radius}
+                        stroke={'black'}
+                        strokeWidth={1}
+                        fill={'none'}
+                />
               )
             } else if (isLineShape(shape)) {
               return (
-                <line key={index}
+                <line key={`line-${index}`}
                       x1={shape.start.x}
                       y1={shape.start.y}
                       x2={shape.end.x}
