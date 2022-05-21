@@ -73,10 +73,11 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       scanClosestDot(newCircle)
 
     } else if (operationMode === 'line:point-start') {
+      const coord = snappingCoord || pointingCoord
       setTemporaryShape({
         type: 'temporary-line',
-        start: { x: pointingCoord.x, y: pointingCoord.y },
-        end: { x: pointingCoord.x, y: pointingCoord.y },
+        start: { x: coord.x, y: coord.y },
+        end: { x: coord.x, y: coord.y },
       } as TemporaryLineShape)
       setOperationMode('line:point-end')
 
