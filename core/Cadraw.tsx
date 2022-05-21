@@ -33,15 +33,17 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   }, [shapes])
 
   const handleMouseDown = (event: React.MouseEvent) => {
-    const svgCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
+    const pointingCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
+    const snappingCoord = snappingDot ? convertDomCoordToSvgCoord(snappingDot) : null
 
     if (operationMode === 'circle:point-center') {
+      const coord = snappingCoord || pointingCoord
       setTemporaryShape({
         type: 'temporary-circle',
-        center: { x: svgCoord.x, y: svgCoord.y },
+        center: { x: coord.x, y: coord.y },
         radius: 0,
-        diameterStart: {x: svgCoord.x, y: svgCoord.y},
-        diameterEnd: {x: svgCoord.x, y: svgCoord.y},
+        diameterStart: {x: coord.x, y: coord.y},
+        diameterEnd: {x: coord.x, y: coord.y},
       } as TemporaryCircleShape)
       setOperationMode('circle:fix-radius')
 
@@ -71,8 +73,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     } else if (operationMode === 'line:point-start') {
       setTemporaryShape({
         type: 'temporary-line',
-        start: { x: svgCoord.x, y: svgCoord.y },
-        end: { x: svgCoord.x, y: svgCoord.y },
+        start: { x: pointingCoord.x, y: pointingCoord.y },
+        end: { x: pointingCoord.x, y: pointingCoord.y },
       } as TemporaryLineShape)
       setOperationMode('line:point-end')
 
