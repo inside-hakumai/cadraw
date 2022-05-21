@@ -15,8 +15,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const [operationMode, setOperationMode] = useState<OperationMode>('circle:point-center')
   const [temporaryShape, setTemporaryShape] = useState<TemporaryShape | null>(null)
   const [shapes, setShapes] = useState<Shape[]>([])
-  const [closestDot, setClosestDot] = useState<{[key: number]: { [key: number]: {x: number, y: number, distance: number}}}>({})
-  // const [closestDot, setClosestDot] = useState<Coordinate[][] | null>(null)
+  const [snapDestinationCoord, setSnapDestinationCoord] = useState<{[key: number]: { [key: number]: {x: number, y: number, distance: number}}}>({})
+  // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
   const [snappingDot, setSnappingDot] = useState<Coordinate | null>(null)
   const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
 
@@ -26,6 +26,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     }
 
     didMountRef.current = true
+
+    findGridNeighborCoords()
   }, [])
 
   useEffect(() => {
@@ -100,7 +102,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const handleMouseMove = (event: React.MouseEvent) => {
     const svgCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
     setPointingCoord(svgCoord)
-    setSnappingDot(closestDot?.[svgCoord.x]?.[svgCoord.y] || null)
+    setSnappingDot(snapDestinationCoord?.[svgCoord.x]?.[svgCoord.y] || null)
     const pointingCoord = snappingDot ? snappingDot : svgCoord
 
     if (!(operationMode === 'circle:fix-radius' || operationMode === 'line:point-end')
@@ -181,7 +183,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       return
     }
 
-    const tmpClosestDot: {[key: number]: { [key: number]: {x: number, y: number, distance: number}}} = closestDot
+    const tmpClosestDot: {[key: number]: { [key: number]: {x: number, y: number, distance: number}}} = snapDestinationCoord
 
     shape.approximatedCoords.forEach(circleDot => {
       const { x: circleX, y: circleY } = circleDot
@@ -211,7 +213,44 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     })
 
     console.debug(tmpClosestDot)
-    setClosestDot(tmpClosestDot)
+    setSnapDestinationCoord(tmpClosestDot)
+  }
+
+  /**
+   * グリッド線の交点に対するスナップが機能するように交点の近傍座標に対してスナップ先座標を設定する
+   */
+  const findGridNeighborCoords = () => {
+    if (!stageRef.current) {
+      return
+    }
+
+    setSnapDestinationCoord((previous) => {
+      // x = 50ごとに垂直方向のグリッド線を引いている
+      for (let x = 0; x <= window.innerWidth; x += 50) {
+        // y = 50ごとに水平方向のグリッド線を引いている
+        for (let y = 0; y <= window.innerHeight; y += 50) {
+          // 各交点ごとに、x軸方向前後4に対して最も近い交点を探す
+          for (let dx = -4; dx <= 4; dx++) {
+            // 各交点ごとに、y軸方向前後4に対して最も近い交点を探す
+            for (let dy = -4; dy <= 4; dy++) {
+
+              if (previous[x + dx] === undefined) {
+                previous[x + dx] = {}
+              }
+
+              let minimumDistance = previous[x + dx][y + dy]?.distance || Number.MAX_VALUE
+
+              const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
+              if (distance < minimumDistance) {
+                previous[x + dx][y + dy] = {x: x, y: y, distance}
+              }
+
+            }
+          }
+        }
+      }
+      return previous
+    })
   }
 
   return (
