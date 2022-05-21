@@ -6,19 +6,25 @@ interface Props {
   onActivateLineDraw: () => void
   onActivateCircleDraw: () => void
   onClickExportButton: () => void
+  pointingCoord: Coordinate | null
 }
 
 const style = css`
   position: absolute;
   bottom: 10px;
   right: 10px;
+  
+  span, button {
+    margin-right: 10px;
+  }
 `
 
 
-const ToolWindow: React.FC<Props> = ({ activeShape, onActivateLineDraw, onActivateCircleDraw, onClickExportButton }) => {
+const ToolWindow: React.FC<Props> = ({ activeShape, onActivateLineDraw, onActivateCircleDraw, onClickExportButton, pointingCoord }) => {
 
   return (
     <div css={style}>
+      {pointingCoord && <span>{pointingCoord.x}, {pointingCoord.y}</span> }
       <button onClick={onActivateLineDraw} disabled={activeShape === 'line'}>線</button>
       <button onClick={onActivateCircleDraw} disabled={activeShape === 'circle'}>丸</button>
       <button onClick={onClickExportButton}>Export</button>

@@ -18,6 +18,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const [closestDot, setClosestDot] = useState<{[key: number]: { [key: number]: {x: number, y: number, distance: number}}}>({})
   // const [closestDot, setClosestDot] = useState<Coordinate[][] | null>(null)
   const [snappingDot, setSnappingDot] = useState<Coordinate | null>(null)
+  const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -32,15 +33,15 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   }, [shapes])
 
   const handleMouseDown = (event: React.MouseEvent) => {
-    const coords = {x: event.clientX, y: event.clientY}
+    const svgCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
 
     if (operationMode === 'circle:point-center') {
       setTemporaryShape({
         type: 'temporary-circle',
-        center: { x: coords.x, y: coords.y },
+        center: { x: svgCoord.x, y: svgCoord.y },
         radius: 0,
-        diameterStart: {x: coords.x, y: coords.y},
-        diameterEnd: {x: coords.x, y: coords.y},
+        diameterStart: {x: svgCoord.x, y: svgCoord.y},
+        diameterEnd: {x: svgCoord.x, y: svgCoord.y},
       } as TemporaryCircleShape)
       setOperationMode('circle:fix-radius')
 
@@ -70,8 +71,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     } else if (operationMode === 'line:point-start') {
       setTemporaryShape({
         type: 'temporary-line',
-        start: { x: coords.x, y: coords.y },
-        end: { x: coords.x, y: coords.y },
+        start: { x: svgCoord.x, y: svgCoord.y },
+        end: { x: svgCoord.x, y: svgCoord.y },
       } as TemporaryLineShape)
       setOperationMode('line:point-end')
 
@@ -95,10 +96,10 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   }
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    const coord = {x: event.clientX, y: event.clientY}
-    setSnappingDot(closestDot?.[coord.x]?.[coord.y] || null)
-    const pointingCoord = snappingDot ? snappingDot : coord
-    console.debug(coord, pointingCoord)
+    const svgCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
+    setPointingCoord(svgCoord)
+    setSnappingDot(closestDot?.[svgCoord.x]?.[svgCoord.y] || null)
+    const pointingCoord = snappingDot ? snappingDot : svgCoord
 
     if (!(operationMode === 'circle:fix-radius' || operationMode === 'line:point-end')
       || !temporaryShape) {
@@ -131,6 +132,13 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         end: pointingCoord
       }) as TemporaryLineShape)
     }
+  }
+
+  const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate => {
+    const point = stageRef.current!.createSVGPoint()
+    point.x = domCoord.x
+    point.y = domCoord.y
+    return point.matrixTransform(stageRef.current!.getScreenCTM()!.inverse())
   }
 
   const changeDrawShape = (shape: ShapeType) => {
@@ -222,6 +230,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         onActivateLineDraw={() => {changeDrawShape('line')}}
         onActivateCircleDraw={() => {changeDrawShape('circle')}}
         onClickExportButton={exportAsSvg}
+        pointingCoord={pointingCoord}
       />
     </div>
   )
