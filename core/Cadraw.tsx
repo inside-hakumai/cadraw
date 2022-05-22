@@ -17,7 +17,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const [shapes, setShapes] = useState<Shape[]>([])
   const [snapDestinationCoord, setSnapDestinationCoord] = useState<{[x: number]: { [y: number]: {x: number, y: number, distance: number}}}>({})
   // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
-  const [coordInfo, setCoordInfo] = useState<{[x: number]: { [y: number]: string[]}}>({})
+  const [coordInfo, setCoordInfo] = useState<{[xy: string]: string[]}>({})
   const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
   const [snappingCoord, setSnappingCoord] = useState<Coordinate | null>(null)
   const [tooltipContent, setTooltipContent] = useState<string | null>(null)
@@ -77,6 +77,38 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         center, radius, approximatedCoords
       }
 
+      setCoordInfo(prevState => {
+        if (prevState[`${center.x}-${center.y}`]) {
+          return {
+            ...prevState,
+            [`${center.x}-${center.y}`]: [...prevState[`${center.x}-${center.y}`], '円の中心']
+          }
+        } else {
+          return {
+            ...prevState,
+            [`${center.x}-${center.y}`]: ['円の中心']
+          }
+        }
+      })
+      setSnapDestinationCoord(prevState => {
+        const newState = {...prevState}
+
+        for (let dx = -4; dx <= 4; dx++) {
+          for (let dy = -4; dy <= 4; dy++) {
+            if (newState[center.x + dx] === undefined) {
+              newState[center.x + dx] = {}
+            }
+
+            let minimumDistance = newState[center.x + dx][center.y + dy]?.distance || Number.MAX_VALUE
+
+            const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
+            if (distance < minimumDistance) {
+              newState[center.x + dx][center.y + dy] = {x: center.x, y: center.y, distance}
+            }
+          }
+        }
+        return newState
+      })
       setTooltipContent(null)
       setShapes([...shapes, newCircle])
       setTemporaryShape(null)
@@ -117,8 +149,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     setSnappingCoord(snapDestinationCoord?.[pointingCoord.x]?.[pointingCoord.y] || null)
     const coord = snappingCoord ? snappingCoord : pointingCoord
 
-    if (coordInfo?.[coord.x]?.[coord.y]) {
-      setCurrentCoordInfo(coordInfo[coord.x][coord.y])
+    if (coordInfo?.[`${coord.x}-${coord.y}`]) {
+      setCurrentCoordInfo(coordInfo[`${coord.x}-${coord.y}`])
     } else {
       setCurrentCoordInfo(null)
     }
@@ -279,23 +311,22 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       return previous
     })
 
-    setCoordInfo(previous => {
+    setCoordInfo(prevState => {
+      const newState = {...prevState}
+
       // x = 50ごとに垂直方向のグリッド線を引いている
       for (let x = 0; x <= window.innerWidth; x += 50) {
         // y = 50ごとに水平方向のグリッド線を引いている
         for (let y = 0; y <= window.innerHeight; y += 50) {
-          if (previous[x] === undefined) {
-            previous[x] = {}
+          if (newState[`${x}-${y}`] === undefined) {
+            newState[`${x}-${y}`] = []
           }
-          if (previous[x][y] === undefined) {
-            previous[x][y] = []
-          }
-          if (!previous[x][y].includes("グリッドの交点")) {
-            previous[x][y] = [...previous[x][y], "グリッドの交点"]
+          if (!newState[`${x}-${y}`].includes("グリッドの交点")) {
+            newState[`${x}-${y}`] = [...newState[`${x}-${y}`], "グリッドの交点"]
           }
         }
       }
-      return previous
+      return newState
     })
   }
 
@@ -320,6 +351,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         onActivateCircleDraw={() => {changeDrawShape('circle')}}
         onClickExportButton={exportAsSvg}
         pointingCoord={pointingCoord}
+        snappingCoord={snappingCoord}
       />
     </div>
   )
