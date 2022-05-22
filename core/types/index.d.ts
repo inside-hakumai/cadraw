@@ -44,7 +44,7 @@ interface TemporaryCircleShape extends TemporaryShape {
 }
 
 interface CoordInfo {
-  type: 'gridIntersection' | 'circleCenter'
+  type: 'gridIntersection' | 'circleCenter' | 'circumference'
 }
 
 interface CoordInfoGridIntersection extends CoordInfo {
@@ -56,3 +56,7 @@ interface CoordInfoCircleCenter extends CoordInfo {
   targetShapeId: number
 }
 
+interface CoordInfoCircumference extends CoordInfo {
+  type: 'circumference'
+  targetShapeId: number
+}

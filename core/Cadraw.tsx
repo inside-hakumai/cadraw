@@ -80,21 +80,33 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       }
 
       setCoordInfo(prevState => {
+        const newState = {...prevState}
+
         const circleCenterCoordInfo: CoordInfoCircleCenter = {
           type: 'circleCenter',
           targetShapeId: newCircle.id,
         }
-        if (prevState[`${center.x}-${center.y}`]) {
-          return {
-            ...prevState,
-            [`${center.x}-${center.y}`]: [...prevState[`${center.x}-${center.y}`], circleCenterCoordInfo]
-          }
+        if (newState[`${center.x}-${center.y}`]) {
+          newState[`${center.x}-${center.y}`] = [...newState[`${center.x}-${center.y}`], circleCenterCoordInfo]
         } else {
-          return {
-            ...prevState,
-            [`${center.x}-${center.y}`]: [circleCenterCoordInfo]
-          }
+          newState[`${center.x}-${center.y}`] = [circleCenterCoordInfo]
         }
+
+        approximatedCoords.forEach(circumferenceCoord => {
+          const circumferenceCoordInfo: CoordInfoCircumference = {
+            type: 'circumference',
+            targetShapeId: newCircle.id,
+          }
+          const coordInfoKey = `${circumferenceCoord.x}-${circumferenceCoord.y}`
+          const targetCoordInfo = newState[coordInfoKey]
+          if (targetCoordInfo) {
+            newState[coordInfoKey] = [...targetCoordInfo, circumferenceCoordInfo]
+          } else {
+            newState[coordInfoKey] = [circumferenceCoordInfo]
+          }
+        })
+
+        return newState
       })
       setSnapDestinationCoord(prevState => {
         const newState = {...prevState}

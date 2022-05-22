@@ -218,6 +218,8 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
               return 'グリッドの交点'
             } else if (infoType === 'circleCenter') {
               return '円の中心'
+            } else if (infoType === 'circumference') {
+              return '円周上'
             } else {
               throw new Error(`Unknown infoType: ${infoType}`)
             }
