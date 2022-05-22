@@ -19,6 +19,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
   const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
   const [snappingCoord, setSnappingCoord] = useState<Coordinate | null>(null)
+  const [tooltipContent, setTooltipContent] = useState<string | null>(null)
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -74,6 +75,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         center, radius, approximatedCoords
       }
 
+      setTooltipContent(null)
       setShapes([...shapes, newCircle])
       setTemporaryShape(null)
       setOperationMode('circle:point-center')
@@ -136,6 +138,9 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         diameterStart: temporaryCircleDiameterStart,
         diameterEnd: temporaryCircleDiameterEnd
       } as TemporaryCircleShape)
+
+      setTooltipContent((temporaryCircleRadius * 2).toFixed(2) + 'px')
+
 
     } else if (operationMode === 'line:point-end') {
       setTemporaryShape((prev) => ({
@@ -272,6 +277,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
               shapes={shapes}
               temporaryShape={temporaryShape}
               snappingDot={snappingCoord}
+              tooltipContent={tooltipContent}
       />
       <ToolWindow
         activeShape={

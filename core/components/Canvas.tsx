@@ -11,6 +11,12 @@ const svgStyle = css`
   position: absolute;
 `
 
+const tooltipStyle = css`
+  position: absolute;
+  font-size: 10px;
+  transform: translate(-40%);
+`
+
 interface Props {
   stageRef: React.RefObject<SVGSVGElement>
   onMouseDown?: (event: React.MouseEvent) => void
@@ -19,9 +25,13 @@ interface Props {
   shapes: Shape[],
   temporaryShape: TemporaryShape | null
   snappingDot: Coordinate | null
+  tooltipContent: string | null
 }
 
-const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot}) => {
+const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot, tooltipContent}) => {
+
+  const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
+  const tooltipRef = React.useRef<HTMLDivElement>(null)
 
   // グリッドを描画するためのline要素
   const gridLines: React.ReactElement[] = []
@@ -44,6 +54,15 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
         strokeWidth={1}
       />
     )
+  }
+
+  let tooltipPosition: {x: number, y: number} | null = null
+  if (temporaryCircleCenterRef.current) {
+    console.debug(temporaryCircleCenterRef.current.getBoundingClientRect())
+    tooltipPosition = {
+      x: temporaryCircleCenterRef.current.getBoundingClientRect().x,
+      y: temporaryCircleCenterRef.current.getBoundingClientRect().y - 15
+    }
   }
 
   return (
@@ -92,6 +111,7 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
                     cy={temporaryShape.center.y}
                     r={2}
                     fill="blue"
+                    ref={temporaryCircleCenterRef}
             />
           </>
         }
@@ -148,7 +168,12 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
                   fill="green"
           />
         }
-        </svg>
+      </svg>
+      {tooltipContent && tooltipPosition &&
+        <div css={tooltipStyle} style={{left: tooltipPosition.x, top: tooltipPosition.y}}>
+          {tooltipContent}
+        </div>
+      }
     </div>
   )
 
