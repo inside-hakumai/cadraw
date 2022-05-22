@@ -17,9 +17,11 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const [shapes, setShapes] = useState<Shape[]>([])
   const [snapDestinationCoord, setSnapDestinationCoord] = useState<{[x: number]: { [y: number]: {x: number, y: number, distance: number}}}>({})
   // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
+  const [coordInfo, setCoordInfo] = useState<{[x: number]: { [y: number]: string[]}}>({})
   const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
   const [snappingCoord, setSnappingCoord] = useState<Coordinate | null>(null)
   const [tooltipContent, setTooltipContent] = useState<string | null>(null)
+  const [currentCoordInfo, setCurrentCoordInfo] = useState<string[] | null>(null)
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -114,6 +116,12 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     setPointingCoord(pointingCoord)
     setSnappingCoord(snapDestinationCoord?.[pointingCoord.x]?.[pointingCoord.y] || null)
     const coord = snappingCoord ? snappingCoord : pointingCoord
+
+    if (coordInfo?.[coord.x]?.[coord.y]) {
+      setCurrentCoordInfo(coordInfo[coord.x][coord.y])
+    } else {
+      setCurrentCoordInfo(null)
+    }
 
     if (!(operationMode === 'circle:fix-radius' || operationMode === 'line:point-end')
       || !temporaryShape) {
@@ -270,6 +278,25 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       }
       return previous
     })
+
+    setCoordInfo(previous => {
+      // x = 50ごとに垂直方向のグリッド線を引いている
+      for (let x = 0; x <= window.innerWidth; x += 50) {
+        // y = 50ごとに水平方向のグリッド線を引いている
+        for (let y = 0; y <= window.innerHeight; y += 50) {
+          if (previous[x] === undefined) {
+            previous[x] = {}
+          }
+          if (previous[x][y] === undefined) {
+            previous[x][y] = []
+          }
+          if (!previous[x][y].includes("グリッドの交点")) {
+            previous[x][y] = [...previous[x][y], "グリッドの交点"]
+          }
+        }
+      }
+      return previous
+    })
   }
 
   return (
@@ -281,6 +308,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
               temporaryShape={temporaryShape}
               snappingDot={snappingCoord}
               tooltipContent={tooltipContent}
+              currentCoordInfo={currentCoordInfo}
       />
       <ToolWindow
         activeShape={

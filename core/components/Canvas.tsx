@@ -17,6 +17,13 @@ const tooltipStyle = css`
   transform: translate(-40%);
 `
 
+const  currentCoordInfoStyle = css`
+  position: absolute;
+  font-size: 10px;
+  transform: translate(-40%);
+  color: #008000;
+`
+
 interface Props {
   stageRef: React.RefObject<SVGSVGElement>
   onMouseDown?: (event: React.MouseEvent) => void
@@ -26,13 +33,14 @@ interface Props {
   temporaryShape: TemporaryShape | null
   snappingDot: Coordinate | null
   tooltipContent: string | null
+  currentCoordInfo: string[] | null
 }
 
-const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot, tooltipContent}) => {
+const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot, tooltipContent, currentCoordInfo}) => {
 
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
-  const tooltipRef = React.useRef<HTMLDivElement>(null)
+  const snappingDotRef = React.useRef<SVGCircleElement>(null)
 
   // グリッドを描画するためのline要素
   const gridLines: React.ReactElement[] = []
@@ -67,6 +75,14 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
     tooltipPosition = {
       x: temporaryLineStartRef.current.getBoundingClientRect().x,
       y: temporaryLineStartRef.current.getBoundingClientRect().y - 15
+    }
+  }
+
+  let currentCoordInfoPosition: {x: number, y: number} | null = null
+  if (snappingDotRef.current) {
+    currentCoordInfoPosition = {
+      x: snappingDotRef.current.getBoundingClientRect().x,
+      y: snappingDotRef.current.getBoundingClientRect().y - 15
     }
   }
 
@@ -171,13 +187,19 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
                   cx={snappingDot.x}
                   cy={snappingDot.y}
                   r={3}
-                  fill="green"
+                  fill="#008000"
+                  ref={snappingDotRef}
           />
         }
       </svg>
       {tooltipContent && tooltipPosition &&
         <div css={tooltipStyle} style={{left: tooltipPosition.x, top: tooltipPosition.y}}>
           {tooltipContent}
+        </div>
+      }
+      {currentCoordInfo && currentCoordInfoPosition &&
+        <div css={currentCoordInfoStyle} style={{left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y}}>
+          {currentCoordInfo.join("・")}
         </div>
       }
     </div>
