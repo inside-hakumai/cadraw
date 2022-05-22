@@ -8,17 +8,17 @@
     "core"
   ],
   "scripts": {
-    "web:dev": "npm run dev -w app/web",
-    "web:build": "npm run build -w app/web",
-    "web:start": "npm run start -w app/web",
-    "web:lint": "npm run lint -w app/web",
-    "figma:dev": "npm run dev -w app/figma",
-    "figma:build": "npm run build -w app/figma"
+    "web:dev": "yarn workspace cadraw-web run dev",
+    "web:build": "yarn workspace cadraw-web run build",
+    "web:start": "yarn workspace cadraw-web run start",
+    "web:lint": "yarn workspace cadraw-web run lint",
+    "figma:dev": "yarn workspace cadraw-figma run dev",
+    "figma:build": "yarn workspace cadraw-figma run build"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.16.7",
     "@emotion/babel-plugin": "^11.9.2",
     "@emotion/react": "^11.9.0",
-    "@babel/preset-react": "^7.16.7",
     "@figma/plugin-typings": "^1.45.0",
     "@types/react": "18.0.8",
     "@types/react-dom": "18.0.3",
@@ -36,5 +36,6 @@
     "url-loader": "^4.1.1",
     "webpack": "^5.72.1",
     "webpack-cli": "^4.9.2"
-  }
+  },
+  "packageManager": "yarn@3.2.1"
 }

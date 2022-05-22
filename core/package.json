@@ -16,7 +16,6 @@
     "url": "https://github.com/inside-hakumai/cadraw/issues"
   },
   "homepage": "https://github.com/inside-hakumai/cadraw#readme",
-  "devDependencies": {},
   "dependencies": {
     "react": "18.1.0",
     "react-dom": "18.1.0"

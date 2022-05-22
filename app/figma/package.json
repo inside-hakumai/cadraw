@@ -1,12 +1,12 @@
 {
-  "name": "Cadraw",
+  "name": "cadraw-figma",
   "version": "0.0.1",
   "description": "Your Figma Plugin",
   "main": "code.js",
   "scripts": {
     "dev": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"development\" webpack --progress --watch",
     "prebuild": "rimraf dist && rimraf code.js",
-    "build": "run-p build:*",
+    "build": "yarn run prebuild && run-p build:*",
     "build:ui": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"production\" webpack --progress",
     "build:code": "cross-env NODE_ENV=\"production\" tsc --project tsconfig.code.json"
   },
