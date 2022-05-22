@@ -99,6 +99,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         approximatedCoords: []
       }
 
+      setTooltipContent(null)
       setShapes([...shapes, newLine])
       setTemporaryShape(null)
       setOperationMode('line:point-start')
@@ -143,10 +144,12 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
 
 
     } else if (operationMode === 'line:point-end') {
+      const temporaryLineShape = temporaryShape as TemporaryLineShape
       setTemporaryShape((prev) => ({
         ...prev,
         end: coord
       }) as TemporaryLineShape)
+      setTooltipContent(Math.sqrt(Math.pow(temporaryLineShape.start.x - coord.x, 2) + Math.pow(temporaryLineShape.start.y - coord.y, 2)).toFixed(2) + 'px')
     }
   }
 

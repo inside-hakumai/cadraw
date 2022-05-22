@@ -31,6 +31,7 @@ interface Props {
 const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot, tooltipContent}) => {
 
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
+  const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const tooltipRef = React.useRef<HTMLDivElement>(null)
 
   // グリッドを描画するためのline要素
@@ -58,10 +59,14 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
 
   let tooltipPosition: {x: number, y: number} | null = null
   if (temporaryCircleCenterRef.current) {
-    console.debug(temporaryCircleCenterRef.current.getBoundingClientRect())
     tooltipPosition = {
       x: temporaryCircleCenterRef.current.getBoundingClientRect().x,
       y: temporaryCircleCenterRef.current.getBoundingClientRect().y - 15
+    }
+  } else if (temporaryLineStartRef.current) {
+    tooltipPosition = {
+      x: temporaryLineStartRef.current.getBoundingClientRect().x,
+      y: temporaryLineStartRef.current.getBoundingClientRect().y - 15
     }
   }
 
@@ -130,6 +135,7 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
                       cy={temporaryShape.start.y}
                       r={2}
                       fill="blue"
+                      ref={temporaryLineStartRef}
               />
             </>
         }
