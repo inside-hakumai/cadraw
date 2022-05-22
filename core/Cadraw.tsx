@@ -17,7 +17,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const [shapes, setShapes] = useState<Shape[]>([])
   const [snapDestinationCoord, setSnapDestinationCoord] = useState<{[x: number]: { [y: number]: {x: number, y: number, distance: number}}}>({})
   // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
-  const [coordInfo, setCoordInfo] = useState<{[xy: string]: string[]}>({})
+  const [guideLines, setGuideLines] = useState<{ start: Coordinate, end: Coordinate }[]>([])
+  const [coordInfo, setCoordInfo] = useState<{[xy: string]: CoordInfo[]}>({})
   const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
   const [snappingCoord, setSnappingCoord] = useState<Coordinate | null>(null)
   const [tooltipContent, setTooltipContent] = useState<string | null>(null)
@@ -74,19 +75,24 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
 
       const newCircle: CircleShape = {
         type: 'circle',
+        id: shapes.length,
         center, radius, approximatedCoords
       }
 
       setCoordInfo(prevState => {
+        const circleCenterCoordInfo: CoordInfoCircleCenter = {
+          type: 'circleCenter',
+          targetShapeId: newCircle.id,
+        }
         if (prevState[`${center.x}-${center.y}`]) {
           return {
             ...prevState,
-            [`${center.x}-${center.y}`]: [...prevState[`${center.x}-${center.y}`], '円の中心']
+            [`${center.x}-${center.y}`]: [...prevState[`${center.x}-${center.y}`], circleCenterCoordInfo]
           }
         } else {
           return {
             ...prevState,
-            [`${center.x}-${center.y}`]: ['円の中心']
+            [`${center.x}-${center.y}`]: [circleCenterCoordInfo]
           }
         }
       })
@@ -128,6 +134,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
 
       const newLine: LineShape = {
         type: 'line',
+        id: shapes.length,
         start: { x: temporaryLineShape.start.x, y: temporaryLineShape.start.y },
         end: { x: temporaryLineShape.end.x, y: temporaryLineShape.end.y },
         approximatedCoords: []
@@ -149,10 +156,25 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     setSnappingCoord(snapDestinationCoord?.[pointingCoord.x]?.[pointingCoord.y] || null)
     const coord = snappingCoord ? snappingCoord : pointingCoord
 
-    if (coordInfo?.[`${coord.x}-${coord.y}`]) {
-      setCurrentCoordInfo(coordInfo[`${coord.x}-${coord.y}`])
+    const pointingCoordInfo = coordInfo?.[`${coord.x}-${coord.y}`]
+    if (pointingCoordInfo) {
+      setCurrentCoordInfo(pointingCoordInfo.map(info => info.type))
+      const guides = pointingCoordInfo
+        .filter(cInfo => cInfo.type === 'circleCenter')
+        .map(cInfo => {
+          const circleCenterCoordInfo = cInfo as CoordInfoCircleCenter
+          const circle = shapes.find(shape => shape.id === circleCenterCoordInfo.targetShapeId) as CircleShape
+          return {
+            start: {x: circle.center.x - circle.radius, y: circle.center.y},
+            end: {x: circle.center.x + circle.radius, y: circle.center.y},
+          }
+        })
+      console.debug(guides)
+      setGuideLines(guides)
+
     } else {
       setCurrentCoordInfo(null)
+      setGuideLines([])
     }
 
     if (!(operationMode === 'circle:fix-radius' || operationMode === 'line:point-end')
@@ -321,8 +343,8 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
           if (newState[`${x}-${y}`] === undefined) {
             newState[`${x}-${y}`] = []
           }
-          if (!newState[`${x}-${y}`].includes("グリッドの交点")) {
-            newState[`${x}-${y}`] = [...newState[`${x}-${y}`], "グリッドの交点"]
+          if (newState[`${x}-${y}`].every(info => info.type !== 'gridIntersection')) {
+            newState[`${x}-${y}`] = [...newState[`${x}-${y}`], { type: 'gridIntersection' }]
           }
         }
       }
@@ -337,6 +359,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
               onMouseMove={handleMouseMove}
               shapes={shapes}
               temporaryShape={temporaryShape}
+              guideLines={guideLines}
               snappingDot={snappingCoord}
               tooltipContent={tooltipContent}
               currentCoordInfo={currentCoordInfo}

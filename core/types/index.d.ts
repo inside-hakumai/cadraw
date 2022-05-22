@@ -9,6 +9,7 @@ interface Coordinate {
 
 interface Shape {
   type: string
+  id: number
   approximatedCoords: Coordinate[]
 }
 
@@ -41,3 +42,17 @@ interface TemporaryCircleShape extends TemporaryShape {
   diameterStart: Coordinate
   diameterEnd: Coordinate
 }
+
+interface CoordInfo {
+  type: 'gridIntersection' | 'circleCenter'
+}
+
+interface CoordInfoGridIntersection extends CoordInfo {
+  type: 'gridIntersection'
+}
+
+interface CoordInfoCircleCenter extends CoordInfo {
+  type: 'circleCenter'
+  targetShapeId: number
+}
+

@@ -31,12 +31,16 @@ interface Props {
   onMouseup?: (event: React.MouseEvent) => void
   shapes: Shape[],
   temporaryShape: TemporaryShape | null
+  guideLines: {
+    start: Coordinate
+    end: Coordinate
+  }[] | null
   snappingDot: Coordinate | null
   tooltipContent: string | null
   currentCoordInfo: string[] | null
 }
 
-const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, snappingDot, tooltipContent, currentCoordInfo}) => {
+const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, guideLines, snappingDot, tooltipContent, currentCoordInfo}) => {
 
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
@@ -107,6 +111,16 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
         xmlns="http://www.w3.org/2000/svg"
         css={svgStyle}
       >
+        {guideLines && guideLines.map((line, index) => (
+          <line
+            key={`guideLine-${index}`}
+            x1={line.start.x} y1={line.start.y}
+            x2={line.end.x} y2={line.end.y}
+            stroke="grey"
+            strokeDasharray={'3 3'}
+            strokeWidth={1}
+          />
+        ))}
 
         {isTemporaryCircleShape(temporaryShape) &&
           <>
@@ -199,7 +213,15 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
       }
       {currentCoordInfo && currentCoordInfoPosition &&
         <div css={currentCoordInfoStyle} style={{left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y}}>
-          {currentCoordInfo.join("・")}
+          {currentCoordInfo.map(infoType => {
+            if (infoType === 'gridIntersection') {
+              return 'グリッドの交点'
+            } else if (infoType === 'circleCenter') {
+              return '円の中心'
+            } else {
+              throw new Error(`Unknown infoType: ${infoType}`)
+            }
+          }).join("・")}
         </div>
       }
     </div>
