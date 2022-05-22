@@ -15,10 +15,10 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   const [operationMode, setOperationMode] = useState<OperationMode>('circle:point-center')
   const [temporaryShape, setTemporaryShape] = useState<TemporaryShape | null>(null)
   const [shapes, setShapes] = useState<Shape[]>([])
-  const [snapDestinationCoord, setSnapDestinationCoord] = useState<{[key: number]: { [key: number]: {x: number, y: number, distance: number}}}>({})
+  const [snapDestinationCoord, setSnapDestinationCoord] = useState<{[x: number]: { [y: number]: {x: number, y: number, distance: number}}}>({})
   // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
-  const [snappingDot, setSnappingDot] = useState<Coordinate | null>(null)
   const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
+  const [snappingCoord, setSnappingCoord] = useState<Coordinate | null>(null)
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -35,11 +35,18 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   }, [shapes])
 
   const handleMouseDown = (event: React.MouseEvent) => {
-    const pointingCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
-    const snappingCoord = snappingDot ? convertDomCoordToSvgCoord(snappingDot) : null
+    if (pointingCoord === null) {
+      console.warn('pointingCoord is null')
+      return
+    }
+
+    if (snappingCoord) {
+      console.debug('point: ', pointingCoord, ' -> snap: ', snappingCoord)
+    }
+
+    const coord = snappingCoord || pointingCoord
 
     if (operationMode === 'circle:point-center') {
-      const coord = snappingCoord || pointingCoord
       setTemporaryShape({
         type: 'temporary-circle',
         center: { x: coord.x, y: coord.y },
@@ -73,7 +80,6 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       scanClosestDot(newCircle)
 
     } else if (operationMode === 'line:point-start') {
-      const coord = snappingCoord || pointingCoord
       setTemporaryShape({
         type: 'temporary-line',
         start: { x: coord.x, y: coord.y },
@@ -101,10 +107,10 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
   }
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    const svgCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
-    setPointingCoord(svgCoord)
-    setSnappingDot(snapDestinationCoord?.[svgCoord.x]?.[svgCoord.y] || null)
-    const pointingCoord = snappingDot ? snappingDot : svgCoord
+    const pointingCoord = convertDomCoordToSvgCoord({x: event.clientX, y: event.clientY})
+    setPointingCoord(pointingCoord)
+    setSnappingCoord(snapDestinationCoord?.[pointingCoord.x]?.[pointingCoord.y] || null)
+    const coord = snappingCoord ? snappingCoord : pointingCoord
 
     if (!(operationMode === 'circle:fix-radius' || operationMode === 'line:point-end')
       || !temporaryShape) {
@@ -115,13 +121,13 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
       const temporaryCircleShape = temporaryShape as TemporaryCircleShape
 
       const temporaryCircleRadius = Math.sqrt(
-        Math.pow(temporaryCircleShape.center.x - pointingCoord.x, 2)
-        + Math.pow(temporaryCircleShape.center.y - pointingCoord.y, 2)
+        Math.pow(temporaryCircleShape.center.x - coord.x, 2)
+        + Math.pow(temporaryCircleShape.center.y - coord.y, 2)
       )
-      const temporaryCircleDiameterStart = pointingCoord
+      const temporaryCircleDiameterStart = coord
       const temporaryCircleDiameterEnd = {
-        x: pointingCoord.x + (temporaryCircleShape.center.x - pointingCoord.x) * 2,
-        y: pointingCoord.y + (temporaryCircleShape.center.y - pointingCoord.y) * 2
+        x: coord.x + (temporaryCircleShape.center.x - coord.x) * 2,
+        y: coord.y + (temporaryCircleShape.center.y - coord.y) * 2
       }
 
       setTemporaryShape({
@@ -134,7 +140,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
     } else if (operationMode === 'line:point-end') {
       setTemporaryShape((prev) => ({
         ...prev,
-        end: pointingCoord
+        end: coord
       }) as TemporaryLineShape)
     }
   }
@@ -235,6 +241,10 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
             // 各交点ごとに、y軸方向前後4に対して最も近い交点を探す
             for (let dy = -4; dy <= 4; dy++) {
 
+              if (x + dx < 0 || y + dy < 0 || x + dx > window.innerWidth || y + dy > window.innerHeight) {
+                continue
+              }
+
               if (previous[x + dx] === undefined) {
                 previous[x + dx] = {}
               }
@@ -243,7 +253,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
 
               const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
               if (distance < minimumDistance) {
-                previous[x + dx][y + dy] = {x: x, y: y, distance}
+                previous[x + dx][y + dy] = {x, y, distance}
               }
 
             }
@@ -261,7 +271,7 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
               onMouseMove={handleMouseMove}
               shapes={shapes}
               temporaryShape={temporaryShape}
-              snappingDot={snappingDot}
+              snappingDot={snappingCoord}
       />
       <ToolWindow
         activeShape={
