@@ -113,26 +113,7 @@ const Cadraw: React.FC<Props> = ({ onExport }) => {
 
         return newState
       })
-      setSnapDestinationCoord(prevState => {
-        const newState = { ...prevState }
-
-        for (let dx = -4; dx <= 4; dx++) {
-          for (let dy = -4; dy <= 4; dy++) {
-            if (newState[center.x + dx] === undefined) {
-              newState[center.x + dx] = {}
-            }
-
-            let minimumDistance =
-              newState[center.x + dx][center.y + dy]?.distance || Number.MAX_VALUE
-
-            const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
-            if (distance < minimumDistance) {
-              newState[center.x + dx][center.y + dy] = { x: center.x, y: center.y, distance }
-            }
-          }
-        }
-        return newState
-      })
+      enableSnapping(center)
       setTooltipContent(null)
       setShapes([...shapes, newCircle])
       setTemporaryShape(null)
@@ -156,10 +137,8 @@ const Cadraw: React.FC<Props> = ({ onExport }) => {
         approximatedCoords: [],
       }
 
-      enableSnapping(temporaryLineShape.start)
-      enableSnapping(temporaryLineShape.end)
-      addCoordInfo(temporaryLineShape.start, 'lineEdge', shapes.length)
-      addCoordInfo(temporaryLineShape.end, 'lineEdge', shapes.length)
+      enableSnapping(temporaryLineShape.start, temporaryLineShape.end)
+      addCoordInfo([temporaryLineShape.start, temporaryLineShape.end], 'lineEdge', shapes.length)
       setTooltipContent(null)
       setShapes([...shapes, newLine])
       setTemporaryShape(null)
@@ -384,25 +363,27 @@ const Cadraw: React.FC<Props> = ({ onExport }) => {
     })
   }
 
-  const enableSnapping = (targetCoord: Coordinate) => {
+  const enableSnapping = (...targetCoords: Coordinate[]) => {
     setSnapDestinationCoord(prevState => {
       const newState = { ...prevState }
 
-      for (let dx = -4; dx <= 4; dx++) {
-        for (let dy = -4; dy <= 4; dy++) {
-          if (newState[targetCoord.x + dx] === undefined) {
-            newState[targetCoord.x + dx] = {}
-          }
+      for (let targetCoord of targetCoords) {
+        for (let dx = -4; dx <= 4; dx++) {
+          for (let dy = -4; dy <= 4; dy++) {
+            if (newState[targetCoord.x + dx] === undefined) {
+              newState[targetCoord.x + dx] = {}
+            }
 
-          let minimumDistance =
-            newState[targetCoord.x + dx][targetCoord.y + dy]?.distance || Number.MAX_VALUE
+            let minimumDistance =
+              newState[targetCoord.x + dx][targetCoord.y + dy]?.distance || Number.MAX_VALUE
 
-          const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
-          if (distance < minimumDistance) {
-            newState[targetCoord.x + dx][targetCoord.y + dy] = {
-              x: targetCoord.x,
-              y: targetCoord.y,
-              distance,
+            const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
+            if (distance < minimumDistance) {
+              newState[targetCoord.x + dx][targetCoord.y + dy] = {
+                x: targetCoord.x,
+                y: targetCoord.y,
+                distance,
+              }
             }
           }
         }
@@ -411,25 +392,34 @@ const Cadraw: React.FC<Props> = ({ onExport }) => {
     })
   }
 
-  const addCoordInfo = (coord: Coordinate, type: CoordInfo['type'], targetShapeId?: number) => {
+  const addCoordInfo = (
+    targetCoords: Coordinate[],
+    type: CoordInfo['type'],
+    targetShapeId?: number
+  ) => {
     setCoordInfo(prevState => {
       const newState = { ...prevState }
 
-      const coordInfoKey = `${coord.x}-${coord.y}`
-      if (newState[coordInfoKey] === undefined) {
-        newState[coordInfoKey] = []
-      }
+      for (let targetCoord of targetCoords) {
+        const coordInfoKey = `${targetCoord.x}-${targetCoord.y}`
+        if (newState[coordInfoKey] === undefined) {
+          newState[coordInfoKey] = []
+        }
 
-      if (type === 'gridIntersection') {
-        newState[coordInfoKey] = [...newState[coordInfoKey], { type } as CoordInfoGridIntersection]
-      } else {
-        if (targetShapeId !== undefined) {
+        if (type === 'gridIntersection') {
           newState[coordInfoKey] = [
             ...newState[coordInfoKey],
-            { type, targetShapeId } as ShapeRelatedCoordInfo,
+            { type } as CoordInfoGridIntersection,
           ]
         } else {
-          throw new Error('targetShapeId is required if type !== "gridIntersection"')
+          if (targetShapeId !== undefined) {
+            newState[coordInfoKey] = [
+              ...newState[coordInfoKey],
+              { type, targetShapeId } as ShapeRelatedCoordInfo,
+            ]
+          } else {
+            throw new Error('targetShapeId is required if type !== "gridIntersection"')
+          }
         }
       }
 
