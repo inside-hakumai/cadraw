@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"development\" webpack --progress --watch",
     "prebuild": "rimraf dist && rimraf code.js",
-    "build": "yarn run prebuild && run-p build:*",
+    "build": "yarn run prebuild && run-p build:ui build:code",
     "build:ui": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"production\" webpack --progress",
     "build:code": "cross-env NODE_ENV=\"production\" tsc --project tsconfig.code.json"
   },
