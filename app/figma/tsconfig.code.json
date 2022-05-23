@@ -4,7 +4,5 @@
     "lib": ["es6"],
     "types": ["plugin-typings"]
   },
-  "include": [
-    "code/index.ts"
-  ],
+  "include": ["code/index.ts"]
 }

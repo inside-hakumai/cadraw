@@ -1,9 +1,12 @@
-
 type ShapeType = 'line' | 'circle'
-type OperationMode = 'line:point-start' | 'line:point-end' | 'circle:point-center' | 'circle:fix-radius'
+type OperationMode =
+  | 'line:point-start'
+  | 'line:point-end'
+  | 'circle:point-center'
+  | 'circle:fix-radius'
 
 interface Coordinate {
-  x: number,
+  x: number
   y: number
 }
 

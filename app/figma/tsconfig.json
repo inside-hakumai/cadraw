@@ -3,10 +3,7 @@
     "target": "es6",
     "lib": ["es6", "dom"],
     "jsx": "preserve",
-    "typeRoots": [
-      "../../node_modules/@types",
-      "../../node_modules/@figma",
-    ],
+    "typeRoots": ["../../node_modules/@types", "../../node_modules/@figma"],
     "moduleResolution": "node",
     "esModuleInterop": true
   }

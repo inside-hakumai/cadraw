@@ -2,9 +2,7 @@
   "name": "Cadraw",
   "id": "1105469756974970867",
   "api": "1.0.0",
-  "editorType": [
-    "figma"
-  ],
+  "editorType": ["figma"],
   "main": "dist/code.js",
   "ui": "dist/ui.html"
 }

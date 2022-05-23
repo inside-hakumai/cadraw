@@ -1,7 +1,7 @@
 import path from 'path'
 import { Configuration } from 'webpack'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import HtmlInlineScriptPlugin from "html-inline-script-webpack-plugin";
+import HtmlInlineScriptPlugin from 'html-inline-script-webpack-plugin'
 
 const NODE_ENV: 'development' | 'production' = (() => {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
@@ -34,10 +34,7 @@ const config: Configuration = {
             loader: 'babel-loader',
             options: {
               presets: [
-                [
-                  '@babel/preset-react',
-                  { runtime: 'automatic', importSource: '@emotion/react' }
-                ],
+                ['@babel/preset-react', { runtime: 'automatic', importSource: '@emotion/react' }],
               ],
               plugins: ['@emotion/babel-plugin'],
             },
@@ -46,7 +43,7 @@ const config: Configuration = {
             loader: 'ts-loader',
             options: {
               configFile: 'tsconfig.ui.json',
-            }
+            },
           },
         ],
       },
@@ -82,9 +79,8 @@ const config: Configuration = {
       chunks: ['ui'],
       inject: 'body',
     }),
-    new HtmlInlineScriptPlugin()
-  ]
-
+    new HtmlInlineScriptPlugin(),
+  ],
 }
 
 export default config

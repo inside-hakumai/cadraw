@@ -1,6 +1,11 @@
 import React from 'react'
 import { css } from '@emotion/react'
-import {isCircleShape, isLineShape, isTemporaryCircleShape, isTemporaryLineShape} from "../lib/typeguard";
+import {
+  isCircleShape,
+  isLineShape,
+  isTemporaryCircleShape,
+  isTemporaryLineShape,
+} from '../lib/typeguard'
 
 const style = css`
   width: 100%;
@@ -17,7 +22,7 @@ const tooltipStyle = css`
   transform: translate(-40%);
 `
 
-const  currentCoordInfoStyle = css`
+const currentCoordInfoStyle = css`
   position: absolute;
   font-size: 10px;
   transform: translate(-40%);
@@ -29,78 +34,91 @@ interface Props {
   onMouseDown?: (event: React.MouseEvent) => void
   onMouseMove?: (event: React.MouseEvent) => void
   onMouseup?: (event: React.MouseEvent) => void
-  shapes: Shape[],
+  shapes: Shape[]
   temporaryShape: TemporaryShape | null
-  guideLines: {
-    start: Coordinate
-    end: Coordinate
-  }[] | null
+  guideLines:
+    | {
+        start: Coordinate
+        end: Coordinate
+      }[]
+    | null
   snappingDot: Coordinate | null
   tooltipContent: string | null
   currentCoordInfo: string[] | null
 }
 
-const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup, shapes, temporaryShape, guideLines, snappingDot, tooltipContent, currentCoordInfo}) => {
-
+const Canvas: React.FC<Props> = ({
+  stageRef,
+  onMouseDown,
+  onMouseMove,
+  onMouseup,
+  shapes,
+  temporaryShape,
+  guideLines,
+  snappingDot,
+  tooltipContent,
+  currentCoordInfo,
+}) => {
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const snappingDotRef = React.useRef<SVGCircleElement>(null)
 
   // グリッドを描画するためのline要素
   const gridLines: React.ReactElement[] = []
-  for (let i = 0; i < window.innerWidth; i+= 50) {
+  for (let i = 0; i < window.innerWidth; i += 50) {
     gridLines.push(
       <line
         key={`gridLine-vertical${i}`}
-        x1={i} y1={0} x2={i} y2={window.innerHeight}
-        stroke="#DDDDDD"
+        x1={i}
+        y1={0}
+        x2={i}
+        y2={window.innerHeight}
+        stroke='#DDDDDD'
         strokeWidth={1}
       />
     )
   }
-  for (let i = 0; i < window.innerHeight; i+= 50) {
+  for (let i = 0; i < window.innerHeight; i += 50) {
     gridLines.push(
       <line
         key={`gridLine-horizontal${i}`}
-        x1={0} y1={i} x2={window.innerWidth} y2={i}
-        stroke="#DDDDDD"
+        x1={0}
+        y1={i}
+        x2={window.innerWidth}
+        y2={i}
+        stroke='#DDDDDD'
         strokeWidth={1}
       />
     )
   }
 
-  let tooltipPosition: {x: number, y: number} | null = null
+  let tooltipPosition: { x: number; y: number } | null = null
   if (temporaryCircleCenterRef.current) {
     tooltipPosition = {
       x: temporaryCircleCenterRef.current.getBoundingClientRect().x,
-      y: temporaryCircleCenterRef.current.getBoundingClientRect().y - 15
+      y: temporaryCircleCenterRef.current.getBoundingClientRect().y - 15,
     }
   } else if (temporaryLineStartRef.current) {
     tooltipPosition = {
       x: temporaryLineStartRef.current.getBoundingClientRect().x,
-      y: temporaryLineStartRef.current.getBoundingClientRect().y - 15
+      y: temporaryLineStartRef.current.getBoundingClientRect().y - 15,
     }
   }
 
-  let currentCoordInfoPosition: {x: number, y: number} | null = null
+  let currentCoordInfoPosition: { x: number; y: number } | null = null
   if (snappingDotRef.current) {
     currentCoordInfoPosition = {
       x: snappingDotRef.current.getBoundingClientRect().x,
-      y: snappingDotRef.current.getBoundingClientRect().y - 15
+      y: snappingDotRef.current.getBoundingClientRect().y - 15,
     }
   }
 
   return (
-    <div css={style}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseup}
-    >
+    <div css={style} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseup}>
       <svg
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
-        xmlns="http://www.w3.org/2000/svg"
-        css={svgStyle}
-      >
+        xmlns='http://www.w3.org/2000/svg'
+        css={svgStyle}>
         {gridLines}
       </svg>
 
@@ -108,129 +126,140 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
         id={'renderer'}
         ref={stageRef}
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
-        xmlns="http://www.w3.org/2000/svg"
-        css={svgStyle}
-      >
-        {guideLines && guideLines.map((line, index) => (
-          <line
-            key={`guideLine-${index}`}
-            x1={line.start.x} y1={line.start.y}
-            x2={line.end.x} y2={line.end.y}
-            stroke="grey"
-            strokeDasharray={'3 3'}
-            strokeWidth={1}
-          />
-        ))}
+        xmlns='http://www.w3.org/2000/svg'
+        css={svgStyle}>
+        {guideLines &&
+          guideLines.map((line, index) => (
+            <line
+              key={`guideLine-${index}`}
+              x1={line.start.x}
+              y1={line.start.y}
+              x2={line.end.x}
+              y2={line.end.y}
+              stroke='grey'
+              strokeDasharray={'3 3'}
+              strokeWidth={1}
+            />
+          ))}
 
-        {isTemporaryCircleShape(temporaryShape) &&
+        {isTemporaryCircleShape(temporaryShape) && (
           <>
-            <line key={'temporaryCircleDiameter'}
-                  x1={temporaryShape.diameterStart.x}
-                  y1={temporaryShape.diameterStart.y}
-                  x2={temporaryShape.diameterEnd.x}
-                  y2={temporaryShape.diameterEnd.y}
-                  stroke={"grey"}
-                  strokeDasharray={'3 3'}
-                  strokeWidth={1}
+            <line
+              key={'temporaryCircleDiameter'}
+              x1={temporaryShape.diameterStart.x}
+              y1={temporaryShape.diameterStart.y}
+              x2={temporaryShape.diameterEnd.x}
+              y2={temporaryShape.diameterEnd.y}
+              stroke={'grey'}
+              strokeDasharray={'3 3'}
+              strokeWidth={1}
             />
-            <circle key={'temporaryCircle'}
-                    cx={temporaryShape.center.x}
-                    cy={temporaryShape.center.y}
-                    r={temporaryShape.radius}
-                    stroke={'grey'}
-                    strokeWidth={1}
-                    fill={'none'}
+            <circle
+              key={'temporaryCircle'}
+              cx={temporaryShape.center.x}
+              cy={temporaryShape.center.y}
+              r={temporaryShape.radius}
+              stroke={'grey'}
+              strokeWidth={1}
+              fill={'none'}
             />
-            <circle key={'temporaryCircleCenter'}
-                    cx={temporaryShape.center.x}
-                    cy={temporaryShape.center.y}
-                    r={2}
-                    fill="blue"
-                    ref={temporaryCircleCenterRef}
+            <circle
+              key={'temporaryCircleCenter'}
+              cx={temporaryShape.center.x}
+              cy={temporaryShape.center.y}
+              r={2}
+              fill='blue'
+              ref={temporaryCircleCenterRef}
             />
           </>
-        }
-        {isTemporaryLineShape(temporaryShape) &&
-            <>
-              <line key={'temporaryLine'}
-                    x1={temporaryShape.start.x}
-                    y1={temporaryShape.start.y}
-                    x2={temporaryShape.end.x}
-                    y2={temporaryShape.end.y}
-                    stroke={"grey"}
-                    strokeWidth={1}
+        )}
+        {isTemporaryLineShape(temporaryShape) && (
+          <>
+            <line
+              key={'temporaryLine'}
+              x1={temporaryShape.start.x}
+              y1={temporaryShape.start.y}
+              x2={temporaryShape.end.x}
+              y2={temporaryShape.end.y}
+              stroke={'grey'}
+              strokeWidth={1}
+            />
+            <circle
+              key={'temporaryLineStart'}
+              cx={temporaryShape.start.x}
+              cy={temporaryShape.start.y}
+              r={2}
+              fill='blue'
+              ref={temporaryLineStartRef}
+            />
+          </>
+        )}
+        {shapes.map((shape, index) => {
+          if (isCircleShape(shape)) {
+            return (
+              <circle
+                key={`circle-${index}`}
+                cx={shape.center.x}
+                cy={shape.center.y}
+                r={shape.radius}
+                stroke={'black'}
+                strokeWidth={1}
+                fill={'none'}
               />
-              <circle key={'temporaryLineStart'}
-                      cx={temporaryShape.start.x}
-                      cy={temporaryShape.start.y}
-                      r={2}
-                      fill="blue"
-                      ref={temporaryLineStartRef}
+            )
+          } else if (isLineShape(shape)) {
+            return (
+              <line
+                key={`line-${index}`}
+                x1={shape.start.x}
+                y1={shape.start.y}
+                x2={shape.end.x}
+                y2={shape.end.y}
+                stroke={'black'}
+                strokeWidth={1}
               />
-            </>
-        }
-        {
-          shapes.map((shape, index) => {
-            if (isCircleShape(shape)) {
-              return (
-                <circle key={`circle-${index}`}
-                        cx={shape.center.x}
-                        cy={shape.center.y}
-                        r={shape.radius}
-                        stroke={'black'}
-                        strokeWidth={1}
-                        fill={'none'}
-                />
-              )
-            } else if (isLineShape(shape)) {
-              return (
-                <line key={`line-${index}`}
-                      x1={shape.start.x}
-                      y1={shape.start.y}
-                      x2={shape.end.x}
-                      y2={shape.end.y}
-                      stroke={"black"}
-                      strokeWidth={1}
-                />
-              )
-            }
-          })
-        }
-        {snappingDot &&
-          <circle key={'snappingDot'}
-                  cx={snappingDot.x}
-                  cy={snappingDot.y}
-                  r={3}
-                  fill="#008000"
-                  ref={snappingDotRef}
+            )
+          }
+        })}
+        {snappingDot && (
+          <circle
+            key={'snappingDot'}
+            cx={snappingDot.x}
+            cy={snappingDot.y}
+            r={3}
+            fill='#008000'
+            ref={snappingDotRef}
           />
-        }
+        )}
       </svg>
-      {tooltipContent && tooltipPosition &&
-        <div css={tooltipStyle} style={{left: tooltipPosition.x, top: tooltipPosition.y}}>
+      {tooltipContent && tooltipPosition && (
+        <div css={tooltipStyle} style={{ left: tooltipPosition.x, top: tooltipPosition.y }}>
           {tooltipContent}
         </div>
-      }
-      {currentCoordInfo && currentCoordInfoPosition &&
-        <div css={currentCoordInfoStyle} style={{left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y}}>
-          {currentCoordInfo.map(infoType => {
-            if (infoType === 'gridIntersection') {
-              return 'グリッドの交点'
-            } else if (infoType === 'circleCenter') {
-              return '円の中心'
-            } else if (infoType === 'circumference') {
-              return '円周上'
-            } else if (infoType === 'lineEdge') {
-              return '線の端'
-            } else {
-              throw new Error(`Unknown infoType: ${infoType}`)
-            }
-          }).join("・")}
+      )}
+      {currentCoordInfo && currentCoordInfoPosition && (
+        <div
+          css={currentCoordInfoStyle}
+          style={{ left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y }}>
+          {currentCoordInfo
+            .map(infoType => {
+              if (infoType === 'gridIntersection') {
+                return 'グリッドの交点'
+              } else if (infoType === 'circleCenter') {
+                return '円の中心'
+              } else if (infoType === 'circumference') {
+                return '円周上'
+              } else if (infoType === 'lineEdge') {
+                return '線の端'
+              } else {
+                throw new Error(`Unknown infoType: ${infoType}`)
+              }
+            })
+            .join('・')}
         </div>
-      }
+      )}
     </div>
   )
-
 }
 
 export default Canvas
