@@ -220,6 +220,8 @@ const Canvas: React.FC<Props> = ({stageRef, onMouseDown, onMouseMove, onMouseup,
               return '円の中心'
             } else if (infoType === 'circumference') {
               return '円周上'
+            } else if (infoType === 'lineEdge') {
+              return '線の端'
             } else {
               throw new Error(`Unknown infoType: ${infoType}`)
             }

@@ -152,6 +152,10 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
         approximatedCoords: []
       }
 
+      enableSnapping(temporaryLineShape.start)
+      enableSnapping(temporaryLineShape.end)
+      addCoordInfo(temporaryLineShape.start, "lineEdge", shapes.length)
+      addCoordInfo(temporaryLineShape.end, "lineEdge", shapes.length)
       setTooltipContent(null)
       setShapes([...shapes, newLine])
       setTemporaryShape(null)
@@ -360,6 +364,51 @@ const Cadraw: React.FC<Props> = ({onExport}) => {
           }
         }
       }
+      return newState
+    })
+  }
+
+  const enableSnapping = (targetCoord: Coordinate) => {
+    setSnapDestinationCoord(prevState => {
+      const newState = {...prevState}
+
+      for (let dx = -4; dx <= 4; dx++) {
+        for (let dy = -4; dy <= 4; dy++) {
+          if (newState[targetCoord.x + dx] === undefined) {
+            newState[targetCoord.x + dx] = {}
+          }
+
+          let minimumDistance = newState[targetCoord.x + dx][targetCoord.y + dy]?.distance || Number.MAX_VALUE
+
+          const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
+          if (distance < minimumDistance) {
+            newState[targetCoord.x + dx][targetCoord.y + dy] = {x: targetCoord.x, y: targetCoord.y, distance}
+          }
+        }
+      }
+      return newState
+    })
+  }
+
+  const addCoordInfo = (coord: Coordinate, type: CoordInfo['type'], targetShapeId?: number) => {
+    setCoordInfo(prevState => {
+      const newState = {...prevState}
+
+      const coordInfoKey = `${coord.x}-${coord.y}`
+      if (newState[coordInfoKey] === undefined) {
+        newState[coordInfoKey] = []
+      }
+
+      if (type === 'gridIntersection') {
+        newState[coordInfoKey] = [...newState[coordInfoKey], { type } as CoordInfoGridIntersection]
+      } else {
+        if (targetShapeId !== undefined) {
+          newState[coordInfoKey] = [...newState[coordInfoKey], { type, targetShapeId } as ShapeRelatedCoordInfo]
+        } else {
+          throw new Error('targetShapeId is required if type !== "gridIntersection"')
+        }
+      }
+
       return newState
     })
   }

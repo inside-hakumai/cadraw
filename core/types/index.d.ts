@@ -44,19 +44,28 @@ interface TemporaryCircleShape extends TemporaryShape {
 }
 
 interface CoordInfo {
-  type: 'gridIntersection' | 'circleCenter' | 'circumference'
+  type: 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge'
 }
 
 interface CoordInfoGridIntersection extends CoordInfo {
   type: 'gridIntersection'
 }
 
-interface CoordInfoCircleCenter extends CoordInfo {
+interface ShapeRelatedCoordInfo extends CoordInfo {
+  targetShapeId: number
+}
+
+interface CoordInfoCircleCenter extends ShapeRelatedCoordInfo {
   type: 'circleCenter'
   targetShapeId: number
 }
 
-interface CoordInfoCircumference extends CoordInfo {
+interface CoordInfoCircumference extends ShapeRelatedCoordInfo {
   type: 'circumference'
+  targetShapeId: number
+}
+
+interface CoordInfoLineEdge extends ShapeRelatedCoordInfo {
+  type: 'lineEdge'
   targetShapeId: number
 }
