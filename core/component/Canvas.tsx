@@ -15,6 +15,13 @@ import {
   temporaryShapeState,
   tooltipContentState,
 } from '../container/states'
+import Grid from './Grid'
+import SupplementalLine from './shape/SupplementalLine'
+import TemporaryCircle from './shape/TemporaryCircle'
+import TemporaryLine from './shape/TemporaryLine'
+import Circle from './shape/Circle'
+import Line from './shape/Line'
+import SnapCircle from './shape/SnapCircle'
 
 const style = css`
   width: 100%;
@@ -23,6 +30,8 @@ const style = css`
 
 const svgStyle = css`
   position: absolute;
+  top: 0;
+  left: 0;
 `
 
 const tooltipStyle = css`
@@ -57,35 +66,6 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const snappingDotRef = React.useRef<SVGCircleElement>(null)
 
-  // グリッドを描画するためのline要素
-  const gridLines: React.ReactElement[] = []
-  for (let i = 0; i < window.innerWidth; i += 50) {
-    gridLines.push(
-      <line
-        key={`gridLine-vertical${i}`}
-        x1={i}
-        y1={0}
-        x2={i}
-        y2={window.innerHeight}
-        stroke='#DDDDDD'
-        strokeWidth={1}
-      />
-    )
-  }
-  for (let i = 0; i < window.innerHeight; i += 50) {
-    gridLines.push(
-      <line
-        key={`gridLine-horizontal${i}`}
-        x1={0}
-        y1={i}
-        x2={window.innerWidth}
-        y2={i}
-        stroke='#DDDDDD'
-        strokeWidth={1}
-      />
-    )
-  }
-
   let tooltipPosition: { x: number; y: number } | null = null
   if (temporaryCircleCenterRef.current) {
     tooltipPosition = {
@@ -109,12 +89,8 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
 
   return (
     <div css={style} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseup}>
-      <svg
-        viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
-        xmlns='http://www.w3.org/2000/svg'
-        css={svgStyle}>
-        {gridLines}
-      </svg>
+      {/* 背景のグリッド線 */}
+      <Grid css={svgStyle} />
 
       <svg
         id={'renderer'}
@@ -122,115 +98,49 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
         xmlns='http://www.w3.org/2000/svg'
         css={svgStyle}>
+        {/* エクスポート時には含まれない補助線 */}
         {supplementalLines &&
           supplementalLines.map((line, index) => (
-            <line
-              key={`guideLine-${index}`}
-              x1={line.start.x}
-              y1={line.start.y}
-              x2={line.end.x}
-              y2={line.end.y}
-              stroke='grey'
-              strokeDasharray={'3 3'}
-              strokeWidth={1}
-            />
+            <SupplementalLine key={`supplementalLine-${index}`} start={line.start} end={line.end} />
           ))}
 
+        {/* 作成中（確定前）の図形（円） */}
         {isTemporaryCircleShape(temporaryShape) && (
-          <>
-            <line
-              key={'temporaryCircleDiameter'}
-              x1={temporaryShape.diameterStart.x}
-              y1={temporaryShape.diameterStart.y}
-              x2={temporaryShape.diameterEnd.x}
-              y2={temporaryShape.diameterEnd.y}
-              stroke={'grey'}
-              strokeDasharray={'3 3'}
-              strokeWidth={1}
-            />
-            <circle
-              key={'temporaryCircle'}
-              cx={temporaryShape.center.x}
-              cy={temporaryShape.center.y}
-              r={temporaryShape.radius}
-              stroke={'grey'}
-              strokeWidth={1}
-              fill={'none'}
-            />
-            <circle
-              key={'temporaryCircleCenter'}
-              cx={temporaryShape.center.x}
-              cy={temporaryShape.center.y}
-              r={2}
-              fill='blue'
-              ref={temporaryCircleCenterRef}
-            />
-          </>
+          <TemporaryCircle shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
         )}
+
+        {/* 作成中（確定前）の図形（線） */}
         {isTemporaryLineShape(temporaryShape) && (
-          <>
-            <line
-              key={'temporaryLine'}
-              x1={temporaryShape.start.x}
-              y1={temporaryShape.start.y}
-              x2={temporaryShape.end.x}
-              y2={temporaryShape.end.y}
-              stroke={'grey'}
-              strokeWidth={1}
-            />
-            <circle
-              key={'temporaryLineStart'}
-              cx={temporaryShape.start.x}
-              cy={temporaryShape.start.y}
-              r={2}
-              fill='blue'
-              ref={temporaryLineStartRef}
-            />
-          </>
+          <TemporaryLine shape={temporaryShape} startCircleRef={temporaryLineStartRef} />
         )}
-        {shapes.map((shape, index) => {
+
+        {/* 作成した図形 */}
+        {shapes.map(shape => {
           if (isCircleShape(shape)) {
-            return (
-              <circle
-                key={`circle-${shape.id}`}
-                cx={shape.center.x}
-                cy={shape.center.y}
-                r={shape.radius}
-                stroke={'black'}
-                strokeWidth={1}
-                fill={'none'}
-              />
-            )
+            return <Circle key={`circle-${shape.id}`} shape={shape} />
           } else if (isLineShape(shape)) {
-            return (
-              <line
-                key={`line-${shape.id}`}
-                x1={shape.start.x}
-                y1={shape.start.y}
-                x2={shape.end.x}
-                y2={shape.end.y}
-                stroke={'black'}
-                strokeWidth={1}
-              />
-            )
+            return <Line key={`line-${shape.id}`} shape={shape} />
           }
         })}
+
+        {/* 近くの座標にスナップする際にスナップ先の示す点 */}
         {snappingCoord && (
-          <circle
-            key={'snappingDot'}
-            cx={snappingCoord.x}
-            cy={snappingCoord.y}
-            r={3}
-            fill='#008000'
-            ref={snappingDotRef}
+          <SnapCircle
+            key={'snappingCircleDot'}
+            coordinate={snappingCoord}
+            refObject={snappingDotRef}
           />
         )}
       </svg>
+
+      {/* 図形作成中に長さなどを表示するためのツールチップ */}
       {tooltipContent && tooltipPosition && (
         <div css={tooltipStyle} style={{ left: tooltipPosition.x, top: tooltipPosition.y }}>
           {tooltipContent}
         </div>
       )}
+
+      {/* スナップ発生時、その座標の情報を表示 */}
       {activeCoordInfo && currentCoordInfoPosition && (
         <div
           css={currentCoordInfoStyle}

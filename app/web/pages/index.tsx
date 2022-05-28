@@ -4,11 +4,7 @@ import dynamic from 'next/dynamic'
 const Cadraw = dynamic(() => import('../../../core/Cadraw'), { ssr: false })
 
 const Home: NextPage = () => {
-  return (
-    <div>
-      <Cadraw />
-    </div>
-  )
+  return <Cadraw />
 }
 
 export default Home

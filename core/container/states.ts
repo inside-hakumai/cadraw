@@ -159,7 +159,6 @@ export const activeCoordState = selector<Coordinate | null>({
   get: ({ get }) => {
     const pointingCoord = get(pointingCoordState)
     if (pointingCoord === null) {
-      console.warn('pointingCoord is null')
       return null
     }
 

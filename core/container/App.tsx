@@ -238,14 +238,14 @@ const App: React.FC<Props> = ({ onExport }) => {
   }
 
   return (
-    <div>
+    <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
         onActivateLineDraw={() => setOperationMode('line:point-start')}
         onActivateCircleDraw={() => setOperationMode('circle:point-center')}
         onClickExportButton={exportAsSvg}
       />
-    </div>
+    </>
   )
 }
 
