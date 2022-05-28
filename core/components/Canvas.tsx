@@ -6,12 +6,12 @@ import {
   isTemporaryCircleShape,
   isTemporaryLineShape,
 } from '../lib/typeguard'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { useRecoilValue } from 'recoil'
 import {
   activeCoordInfoState,
   shapesState,
   snappingCoordState,
-  supplementalLinesSelector,
+  supplementalLinesState,
   temporaryShapeState,
   tooltipContentState,
 } from '../states'
@@ -48,7 +48,7 @@ interface Props {
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
   const shapes = useRecoilValue(shapesState)
   const temporaryShape = useRecoilValue(temporaryShapeState)
-  const supplementalLines = useRecoilValue(supplementalLinesSelector)
+  const supplementalLines = useRecoilValue(supplementalLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const tooltipContent = useRecoilValue(tooltipContentState)
   const activeCoordInfo = useRecoilValue(activeCoordInfoState)
@@ -236,17 +236,17 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
           css={currentCoordInfoStyle}
           style={{ left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y }}>
           {activeCoordInfo
-            .map(infoType => {
-              if (infoType === 'gridIntersection') {
+            .map(info => {
+              if (info.type === 'gridIntersection') {
                 return 'グリッドの交点'
-              } else if (infoType === 'circleCenter') {
+              } else if (info.type === 'circleCenter') {
                 return '円の中心'
-              } else if (infoType === 'circumference') {
+              } else if (info.type === 'circumference') {
                 return '円周上'
-              } else if (infoType === 'lineEdge') {
+              } else if (info.type === 'lineEdge') {
                 return '線の端'
               } else {
-                throw new Error(`Unknown infoType: ${infoType}`)
+                throw new Error(`Unknown infoType: ${info.type}`)
               }
             })
             .join('・')}

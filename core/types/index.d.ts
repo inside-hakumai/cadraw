@@ -14,38 +14,54 @@ interface CoordinateWithDistance extends Coordinate {
   distance: number
 }
 
-interface Shape {
+interface ShapeSeed {
   type: string
-  id: number
-  approximatedCoords: Coordinate[]
 }
 
-interface Line {
+interface LineShapeSeed extends ShapeSeed {
+  type: 'line'
   start: Coordinate
   end: Coordinate
 }
 
-interface TemporaryShape {
-  type: string
-}
-
-interface LineShape extends Shape, Line {
-  type: 'line'
-}
-
-interface CircleShape extends Shape {
+interface CircleShapeSeed extends ShapeSeed {
   type: 'circle'
   center: Coordinate
   radius: number
 }
 
-interface TemporaryLineShape extends TemporaryShape, Line {
-  type: 'temporary-line'
+interface Shape {
+  id: number
+  approximatedCoords: Coordinate[]
 }
 
-interface TemporaryCircleShape extends TemporaryShape {
+interface LineShape extends Shape, LineShapeSeed {}
+
+interface CircleShape extends Shape, CircleShapeSeed {}
+
+interface TemporaryShapeBase extends ShapeSeed {
+  type: 'temporary-line' | 'temporary-circle'
+}
+
+interface TemporaryLineShapeBase extends TemporaryShapeBase {
+  type: 'temporary-line'
+  start: Coordinate
+}
+
+interface TemporaryCircleShapeBase extends TemporaryShape {
   type: 'temporary-circle'
   center: Coordinate
+}
+
+interface TemporaryShape extends ShapeSeed {
+  type: 'temporary-line' | 'temporary-circle'
+}
+
+interface TemporaryLineShape extends TemporaryLineShapeBase, TemporaryShape {
+  end: Coordinate
+}
+
+interface TemporaryCircleShape extends TemporaryCircleShapeBase, TemporaryShape {
   radius: number
   diameterStart: Coordinate
   diameterEnd: Coordinate
