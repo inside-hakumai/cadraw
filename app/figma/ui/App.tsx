@@ -1,5 +1,5 @@
 import React from 'react'
-import Cadraw from '../../../core/cadraw'
+import Cadraw from '../../../core/Cadraw'
 
 const App = () => {
   const copyToFigma = (svgString: string) => {

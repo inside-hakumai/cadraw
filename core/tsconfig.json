@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["@emotion/react/types/css-prop"],
+    "typeRoots": ["../node_modules/@types"],
+    "types": ["@emotion/react/types/css-prop", "node"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

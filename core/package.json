@@ -18,6 +18,7 @@
   "homepage": "https://github.com/inside-hakumai/cadraw#readme",
   "dependencies": {
     "react": "18.1.0",
-    "react-dom": "18.1.0"
+    "react-dom": "18.1.0",
+    "recoil": "^0.7.3-alpha.2"
   }
 }
