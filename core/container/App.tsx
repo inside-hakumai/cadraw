@@ -29,6 +29,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
   const setCoordInfo = useSetRecoilState(coordInfoState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
+  // const setDebugCoord = useSetRecoilState(debugCoordState)
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
@@ -40,7 +41,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     didMountRef.current = true
 
-    findGridNeighborCoords()
+    enableSnapToGridIntersection()
   }, [])
 
   const addLineShape = (newShapeSeed: LineShapeSeed, approximatedCoords?: Coordinate[]) => {
@@ -52,7 +53,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     setShapes([...shapes, newLineShape])
     addCoordInfo([newLineShape.start, newLineShape.end], 'lineEdge', newLineShape.id)
-    enableSnapping(newLineShape.start, newLineShape.end)
+    enableSnapping([newLineShape.start, newLineShape.end], 4)
   }
 
   const addCircleShape = (newCircleShapeSeed: CircleShapeSeed) => {
@@ -75,7 +76,8 @@ const App: React.FC<Props> = ({ onExport }) => {
     setShapes([...shapes, newCircle])
     addCoordInfo([center], 'circleCenter', newCircle.id)
     addCoordInfo(approximatedCoords, 'circumference', newCircle.id)
-    enableSnapping(...approximatedCoords, center)
+    // enableSnapping(...approximatedCoords, center)
+    enableSnapping([center], 4)
   }
 
   const handleMouseDown = () => {
@@ -161,7 +163,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   /**
    * グリッド線の交点に対するスナップが機能するように交点の近傍座標に対してスナップ先座標を設定する
    */
-  const findGridNeighborCoords = () => {
+  const enableSnapToGridIntersection = () => {
     const gridIntersections: Coordinate[] = []
     // x = 50ごとに垂直方向のグリッド線を引いている
     for (let x = 0; x <= window.innerWidth; x += 50) {
@@ -170,11 +172,11 @@ const App: React.FC<Props> = ({ onExport }) => {
         gridIntersections.push({ x, y })
       }
     }
-    enableSnapping(...gridIntersections)
+    enableSnapping(gridIntersections, 3)
     addCoordInfo(gridIntersections, 'gridIntersection')
   }
 
-  const enableSnapping = (...targetCoords: Coordinate[]) => {
+  const enableSnapping = (targetCoords: Coordinate[], priority: number) => {
     setSnapDestinationCoord(prevState => {
       const newState = { ...prevState }
 
@@ -183,18 +185,14 @@ const App: React.FC<Props> = ({ onExport }) => {
           for (let y = Math.floor(targetCoord.y) - 4; y <= Math.ceil(targetCoord.y) + 4; y++) {
             const key = `${x}-${y}`
 
-            let minimumDistance = newState[key]?.distance || Number.MAX_VALUE
-
-            const distance = Math.sqrt(
-              Math.pow(targetCoord.x - x, 2) + Math.pow(targetCoord.y - y, 2)
-            )
-            if (distance < minimumDistance) {
-              newState[key] = {
+            newState[key] = [
+              ...(newState[key] || []),
+              {
                 x: targetCoord.x,
                 y: targetCoord.y,
-                distance,
-              }
-            }
+                priority,
+              },
+            ]
           }
         }
       }

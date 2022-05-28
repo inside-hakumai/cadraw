@@ -1,4 +1,5 @@
 import { atom, DefaultValue, selector } from 'recoil'
+import { calcDistance, findIntersection } from '../lib/function'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -22,6 +23,14 @@ export const currentOperatingShapeSelector = selector<ShapeType | null>({
 export const shapesState = atom<Shape[]>({
   key: 'shapes',
   default: [],
+})
+
+export const circleShapesState = selector<CircleShape[]>({
+  key: 'circleShapes',
+  get: ({ get }) => {
+    const shapes = get(shapesState)
+    return shapes.filter(shape => shape.type === 'circle') as CircleShape[]
+  },
 })
 
 export const temporaryShapeBaseState = atom<TemporaryShapeBase | null>({
@@ -72,7 +81,7 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
   },
 })
 
-export const snapDestinationCoordState = atom<{ [xy: string]: CoordinateWithDistance }>({
+export const snapDestinationCoordState = atom<{ [xy: string]: SnappingCoordinate[] | undefined }>({
   key: 'snapDestinationCoord',
   default: {},
 })
@@ -121,8 +130,60 @@ export const snappingCoordState = selector<Coordinate | null>({
       return null
     }
 
+    const circleShapes = get(circleShapesState)
+    let minimumDistance = Number.MAX_VALUE
+    // 現在指している座標と円周との距離近い円をひとつ探す
+    let closestCircle: CircleShape | null = null
+    for (const circle of circleShapes) {
+      const distance = Math.abs(calcDistance(pointingCoord, circle.center) - circle.radius)
+      if (distance < minimumDistance) {
+        closestCircle = circle
+        minimumDistance = distance
+      }
+    }
+
+    let snappingToCircleCoord: Coordinate | null = null
+    // 現在指している座標と最も近い円の距離が1以下の場合はスナップとなる円周上の一点を特定する
+    if (closestCircle !== null && minimumDistance < 4) {
+      // 直線と円の交点を求めて、現在指している座標に近い方の点をスナップ先とする
+      const intersections = findIntersection(closestCircle, {
+        start: closestCircle.center,
+        end: pointingCoord,
+      })
+      switch (intersections.length) {
+        case 0:
+          break
+        case 1:
+          snappingToCircleCoord = intersections[0]
+          break
+        case 2:
+          const distance0 = calcDistance(pointingCoord, intersections[0])
+          const distance1 = calcDistance(pointingCoord, intersections[1])
+          snappingToCircleCoord = distance0 < distance1 ? intersections[0] : intersections[1]
+          break
+        default:
+          throw new Error(`Unexpected too many intersections ${intersections}`)
+      }
+    }
+
     const snapDestinationCoord = get(snapDestinationCoordState)
-    return snapDestinationCoord?.[`${pointingCoord.x}-${pointingCoord.y}`] || null
+    const snappingCoords = snapDestinationCoord[`${pointingCoord.x}-${pointingCoord.y}`]
+
+    const allSnappingCoords: SnappingCoordinate[] = [
+      ...(snappingCoords || ([] as SnappingCoordinate[])),
+      ...(snappingToCircleCoord ? [{ ...snappingToCircleCoord, priority: 1 }] : []),
+    ]
+
+    let maximumPriority = 0
+    let maximumPrioritySnappingCoord: Coordinate | null = null
+    for (const snappingCoord of allSnappingCoords) {
+      if (snappingCoord.priority > maximumPriority) {
+        maximumPriority = snappingCoord.priority
+        maximumPrioritySnappingCoord = snappingCoord
+      }
+    }
+
+    return maximumPrioritySnappingCoord
   },
 })
 
@@ -180,3 +241,9 @@ export const activeCoordInfoState = selector<CoordInfo[] | null>({
     return coordInfo[`${activeCoord.x}-${activeCoord.y}`] || null
   },
 })
+
+// // デバッグ用に点を描画する時に使う
+// export const debugCoordState = atom<Coordinate[]>({
+//   key: 'debugCoord',
+//   default: [],
+// })

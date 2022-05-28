@@ -62,6 +62,9 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const tooltipContent = useRecoilValue(tooltipContentState)
   const activeCoordInfo = useRecoilValue(activeCoordInfoState)
 
+  // デバッグ用
+  // const debugCoord = useRecoilValue(debugCoordState)
+
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const snappingDotRef = React.useRef<SVGCircleElement>(null)
@@ -131,6 +134,17 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
             refObject={snappingDotRef}
           />
         )}
+
+        {/*/!* デバッグ用の点 *!/*/}
+        {/*{debugCoord && debugCoord.map((coord, index) => (*/}
+        {/*  <circle*/}
+        {/*    key={`debugCircle-${index}`}*/}
+        {/*    cx={coord.x}*/}
+        {/*    cy={coord.y}*/}
+        {/*    r={3}*/}
+        {/*    fill={'red'}*/}
+        {/*  />*/}
+        {/*))}*/}
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}

@@ -10,8 +10,9 @@ interface Coordinate {
   y: number
 }
 
-interface CoordinateWithDistance extends Coordinate {
-  distance: number
+interface SnappingCoordinate extends Coordinate {
+  // distance: number
+  priority: number
 }
 
 interface ShapeSeed {
@@ -31,13 +32,18 @@ interface CircleShapeSeed extends ShapeSeed {
 }
 
 interface Shape {
+  type: 'circle' | 'line'
   id: number
   approximatedCoords: Coordinate[]
 }
 
-interface LineShape extends Shape, LineShapeSeed {}
+interface LineShape extends Shape, LineShapeSeed {
+  type: 'line'
+}
 
-interface CircleShape extends Shape, CircleShapeSeed {}
+interface CircleShape extends Shape, CircleShapeSeed {
+  type: 'circle'
+}
 
 interface TemporaryShapeBase extends ShapeSeed {
   type: 'temporary-line' | 'temporary-circle'
