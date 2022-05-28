@@ -1,31 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import ToolWindow from './components/ToolWindow'
 
 import Canvas from './components/Canvas'
-import { useRecoilState } from 'recoil'
-import { operationModeState } from './Cadraw'
+import { useRecoilState, useSetRecoilState } from 'recoil'
+import {
+  activeCoordInfoState,
+  coordInfoState,
+  operationModeState,
+  pointingCoordState,
+  shapesState,
+  snapDestinationCoordState,
+  snappingCoordState,
+  supplementalLinesSelector,
+  temporaryShapeState,
+  tooltipContentState,
+} from './states'
 
 interface Props {
   onExport?: (data: string) => void
 }
 
 const App: React.FC<Props> = ({ onExport }) => {
+  const [operationMode, setOperationMode] = useRecoilState(operationModeState)
+  const [shapes, setShapes] = useRecoilState(shapesState)
+  const [temporaryShape, setTemporaryShape] = useRecoilState(temporaryShapeState)
+  const [snapDestinationCoord, setSnapDestinationCoord] = useRecoilState(snapDestinationCoordState)
+  const setSupplementalLines = useSetRecoilState(supplementalLinesSelector)
+  const [coordInfo, setCoordInfo] = useRecoilState(coordInfoState)
+  const [pointingCoord, setPointingCoord] = useRecoilState(pointingCoordState)
+  const [snappingCoord, setSnappingCoord] = useRecoilState(snappingCoordState)
+  const setTooltipContent = useSetRecoilState(tooltipContentState)
+  const setActiveCoordInfo = useSetRecoilState(activeCoordInfoState)
+
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
-
-  const [operationMode, setOperationMode] = useRecoilState(operationModeState)
-  const [temporaryShape, setTemporaryShape] = useState<TemporaryShape | null>(null)
-  const [shapes, setShapes] = useState<Shape[]>([])
-  const [snapDestinationCoord, setSnapDestinationCoord] = useState<{
-    [x: number]: { [y: number]: { x: number; y: number; distance: number } }
-  }>({})
-  // const [snapDestinationCoord, setClosestDot] = useState<Coordinate[][] | null>(null)
-  const [guideLines, setGuideLines] = useState<{ start: Coordinate; end: Coordinate }[]>([])
-  const [coordInfo, setCoordInfo] = useState<{ [xy: string]: CoordInfo[] }>({})
-  const [pointingCoord, setPointingCoord] = useState<Coordinate | null>(null)
-  const [snappingCoord, setSnappingCoord] = useState<Coordinate | null>(null)
-  const [tooltipContent, setTooltipContent] = useState<string | null>(null)
-  const [currentCoordInfo, setCurrentCoordInfo] = useState<string[] | null>(null)
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -117,7 +125,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       })
       enableSnapping(center)
       setTooltipContent(null)
-      setShapes([...shapes, newCircle])
+      setShapes(oldShapes => [...oldShapes, newCircle])
       setTemporaryShape(null)
       setOperationMode('circle:point-center')
       scanClosestDot(newCircle)
@@ -142,7 +150,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       enableSnapping(temporaryLineShape.start, temporaryLineShape.end)
       addCoordInfo([temporaryLineShape.start, temporaryLineShape.end], 'lineEdge', shapes.length)
       setTooltipContent(null)
-      setShapes([...shapes, newLine])
+      setShapes(oldShapes => [...oldShapes, newLine])
       setTemporaryShape(null)
       setOperationMode('line:point-start')
     } else {
@@ -153,12 +161,12 @@ const App: React.FC<Props> = ({ onExport }) => {
   const handleMouseMove = (event: React.MouseEvent) => {
     const pointingCoord = convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY })
     setPointingCoord(pointingCoord)
-    setSnappingCoord(snapDestinationCoord?.[pointingCoord.x]?.[pointingCoord.y] || null)
+    setSnappingCoord(snapDestinationCoord?.[`${pointingCoord.x}-${pointingCoord.y}`] || null)
     const coord = snappingCoord ? snappingCoord : pointingCoord
 
     const pointingCoordInfo = coordInfo?.[`${coord.x}-${coord.y}`]
     if (pointingCoordInfo) {
-      setCurrentCoordInfo(pointingCoordInfo.map(info => info.type))
+      setActiveCoordInfo(pointingCoordInfo.map(info => info.type))
       const guides = pointingCoordInfo
         .filter(cInfo => cInfo.type === 'circleCenter')
         .map(cInfo => {
@@ -172,10 +180,11 @@ const App: React.FC<Props> = ({ onExport }) => {
           }
         })
       console.debug(guides)
-      setGuideLines(guides)
+
+      setSupplementalLines(guides)
     } else {
-      setCurrentCoordInfo(null)
-      setGuideLines([])
+      setActiveCoordInfo(null)
+      setSupplementalLines([])
     }
 
     if (
@@ -269,38 +278,38 @@ const App: React.FC<Props> = ({ onExport }) => {
       return
     }
 
-    const tmpClosestDot: {
-      [key: number]: { [key: number]: { x: number; y: number; distance: number } }
-    } = snapDestinationCoord
+    setSnapDestinationCoord(previous => {
+      const newValue: {
+        [xy: string]: { x: number; y: number; distance: number }
+      } = { ...previous }
 
-    shape.approximatedCoords.forEach(circleDot => {
-      const { x: circleX, y: circleY } = circleDot
+      shape.approximatedCoords.forEach(circleDot => {
+        const { x: circleX, y: circleY } = circleDot
 
-      const scanCoordRange = {
-        xStart: Math.floor(circleX) - 4,
-        xEnd: Math.ceil(circleX) + 4,
-        yStart: Math.floor(circleY) - 4,
-        yEnd: Math.ceil(circleY) + 4,
-      }
+        const scanCoordRange = {
+          xStart: Math.floor(circleX) - 4,
+          xEnd: Math.ceil(circleX) + 4,
+          yStart: Math.floor(circleY) - 4,
+          yEnd: Math.ceil(circleY) + 4,
+        }
 
-      for (let i = scanCoordRange.xStart; i <= scanCoordRange.xEnd; i++) {
-        for (let j = scanCoordRange.yStart; j < scanCoordRange.yEnd; j++) {
-          if (tmpClosestDot[i] === undefined) {
-            tmpClosestDot[i] = {}
-          }
+        for (let i = scanCoordRange.xStart; i <= scanCoordRange.xEnd; i++) {
+          for (let j = scanCoordRange.yStart; j < scanCoordRange.yEnd; j++) {
+            const key = `${i}-${j}`
 
-          let minimumDistance = tmpClosestDot[i][j]?.distance || Number.MAX_VALUE
+            let minimumDistance = newValue[key]?.distance || Number.MAX_VALUE
 
-          const distance = Math.sqrt(Math.pow(circleX - i, 2) + Math.pow(circleY - j, 2))
-          if (distance < minimumDistance) {
-            tmpClosestDot[i][j] = { x: circleX, y: circleY, distance }
+            const distance = Math.sqrt(Math.pow(circleX - i, 2) + Math.pow(circleY - j, 2))
+            if (distance < minimumDistance) {
+              newValue[key] = { x: circleX, y: circleY, distance }
+            }
           }
         }
-      }
-    })
+      })
 
-    console.debug(tmpClosestDot)
-    setSnapDestinationCoord(tmpClosestDot)
+      console.debug(newValue)
+      return newValue
+    })
   }
 
   /**
@@ -312,6 +321,8 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
 
     setSnapDestinationCoord(previous => {
+      const newValue = { ...previous }
+
       // x = 50ごとに垂直方向のグリッド線を引いている
       for (let x = 0; x <= window.innerWidth; x += 50) {
         // y = 50ごとに水平方向のグリッド線を引いている
@@ -329,21 +340,19 @@ const App: React.FC<Props> = ({ onExport }) => {
                 continue
               }
 
-              if (previous[x + dx] === undefined) {
-                previous[x + dx] = {}
-              }
+              const key = `${x + dx}-${y + dy}`
 
-              let minimumDistance = previous[x + dx][y + dy]?.distance || Number.MAX_VALUE
+              let minimumDistance = newValue[key]?.distance || Number.MAX_VALUE
 
               const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
               if (distance < minimumDistance) {
-                previous[x + dx][y + dy] = { x, y, distance }
+                newValue[key] = { x, y, distance }
               }
             }
           }
         }
       }
-      return previous
+      return newValue
     })
 
     setCoordInfo(prevState => {
@@ -372,16 +381,13 @@ const App: React.FC<Props> = ({ onExport }) => {
       for (let targetCoord of targetCoords) {
         for (let dx = -4; dx <= 4; dx++) {
           for (let dy = -4; dy <= 4; dy++) {
-            if (newState[targetCoord.x + dx] === undefined) {
-              newState[targetCoord.x + dx] = {}
-            }
+            const key = `${targetCoord.x + dx}-${targetCoord.y + dy}`
 
-            let minimumDistance =
-              newState[targetCoord.x + dx][targetCoord.y + dy]?.distance || Number.MAX_VALUE
+            let minimumDistance = newState[key]?.distance || Number.MAX_VALUE
 
             const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
             if (distance < minimumDistance) {
-              newState[targetCoord.x + dx][targetCoord.y + dy] = {
+              newState[key] = {
                 x: targetCoord.x,
                 y: targetCoord.y,
                 distance,
@@ -431,25 +437,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
   return (
     <div>
-      <Canvas
-        stageRef={stageRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        shapes={shapes}
-        temporaryShape={temporaryShape}
-        guideLines={guideLines}
-        snappingDot={snappingCoord}
-        tooltipContent={tooltipContent}
-        currentCoordInfo={currentCoordInfo}
-      />
+      <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
-        activeShape={
-          operationMode.startsWith('line:')
-            ? 'line'
-            : operationMode.startsWith('circle:')
-            ? 'circle'
-            : null
-        }
         onActivateLineDraw={() => {
           changeDrawShape('line')
         }}
@@ -457,8 +446,6 @@ const App: React.FC<Props> = ({ onExport }) => {
           changeDrawShape('circle')
         }}
         onClickExportButton={exportAsSvg}
-        pointingCoord={pointingCoord}
-        snappingCoord={snappingCoord}
       />
     </div>
   )

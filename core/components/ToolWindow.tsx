@@ -1,13 +1,12 @@
 import React from 'react'
 import { css } from '@emotion/react'
+import { useRecoilValue } from 'recoil'
+import { currentOperatingShapeSelector, pointingCoordState, snappingCoordState } from '../states'
 
 interface Props {
-  activeShape: ShapeType | null
   onActivateLineDraw: () => void
   onActivateCircleDraw: () => void
   onClickExportButton: () => void
-  pointingCoord: Coordinate | null
-  snappingCoord: Coordinate | null
 }
 
 const style = css`
@@ -22,29 +21,31 @@ const style = css`
 `
 
 const ToolWindow: React.FC<Props> = ({
-  activeShape,
   onActivateLineDraw,
   onActivateCircleDraw,
   onClickExportButton,
-  pointingCoord,
-  snappingCoord,
 }) => {
+  const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
+  const pointingCoord = useRecoilValue(pointingCoordState)
+  const snappingCoord = useRecoilValue(snappingCoordState)
+
   return (
     <div css={style}>
       {pointingCoord &&
         (snappingCoord ? (
           <span>
-            {snappingCoord.x}, {snappingCoord.y} &lt;- {pointingCoord.x}, {pointingCoord.y}
+            {snappingCoord.x.toFixed(2)}, {snappingCoord.y.toFixed(2)} &lt;- {pointingCoord.x},{' '}
+            {pointingCoord.y}
           </span>
         ) : (
           <span>
             {pointingCoord.x}, {pointingCoord.y}
           </span>
         ))}
-      <button onClick={onActivateLineDraw} disabled={activeShape === 'line'}>
+      <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
         線
       </button>
-      <button onClick={onActivateCircleDraw} disabled={activeShape === 'circle'}>
+      <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
         丸
       </button>
       <button onClick={onClickExportButton}>Export</button>

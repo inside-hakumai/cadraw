@@ -10,20 +10,27 @@ interface Coordinate {
   y: number
 }
 
+interface CoordinateWithDistance extends Coordinate {
+  distance: number
+}
+
 interface Shape {
   type: string
   id: number
   approximatedCoords: Coordinate[]
 }
 
+interface Line {
+  start: Coordinate
+  end: Coordinate
+}
+
 interface TemporaryShape {
   type: string
 }
 
-interface LineShape extends Shape {
+interface LineShape extends Shape, Line {
   type: 'line'
-  start: Coordinate
-  end: Coordinate
 }
 
 interface CircleShape extends Shape {
@@ -32,10 +39,8 @@ interface CircleShape extends Shape {
   radius: number
 }
 
-interface TemporaryLineShape extends TemporaryShape {
+interface TemporaryLineShape extends TemporaryShape, Line {
   type: 'temporary-line'
-  start: Coordinate
-  end: Coordinate
 }
 
 interface TemporaryCircleShape extends TemporaryShape {

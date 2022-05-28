@@ -6,6 +6,15 @@ import {
   isTemporaryCircleShape,
   isTemporaryLineShape,
 } from '../lib/typeguard'
+import { useRecoilState, useRecoilValue } from 'recoil'
+import {
+  activeCoordInfoState,
+  shapesState,
+  snappingCoordState,
+  supplementalLinesSelector,
+  temporaryShapeState,
+  tooltipContentState,
+} from '../states'
 
 const style = css`
   width: 100%;
@@ -34,31 +43,16 @@ interface Props {
   onMouseDown?: (event: React.MouseEvent) => void
   onMouseMove?: (event: React.MouseEvent) => void
   onMouseup?: (event: React.MouseEvent) => void
-  shapes: Shape[]
-  temporaryShape: TemporaryShape | null
-  guideLines:
-    | {
-        start: Coordinate
-        end: Coordinate
-      }[]
-    | null
-  snappingDot: Coordinate | null
-  tooltipContent: string | null
-  currentCoordInfo: string[] | null
 }
 
-const Canvas: React.FC<Props> = ({
-  stageRef,
-  onMouseDown,
-  onMouseMove,
-  onMouseup,
-  shapes,
-  temporaryShape,
-  guideLines,
-  snappingDot,
-  tooltipContent,
-  currentCoordInfo,
-}) => {
+const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
+  const shapes = useRecoilValue(shapesState)
+  const temporaryShape = useRecoilValue(temporaryShapeState)
+  const supplementalLines = useRecoilValue(supplementalLinesSelector)
+  const snappingCoord = useRecoilValue(snappingCoordState)
+  const tooltipContent = useRecoilValue(tooltipContentState)
+  const activeCoordInfo = useRecoilValue(activeCoordInfoState)
+
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const snappingDotRef = React.useRef<SVGCircleElement>(null)
@@ -128,8 +122,8 @@ const Canvas: React.FC<Props> = ({
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
         xmlns='http://www.w3.org/2000/svg'
         css={svgStyle}>
-        {guideLines &&
-          guideLines.map((line, index) => (
+        {supplementalLines &&
+          supplementalLines.map((line, index) => (
             <line
               key={`guideLine-${index}`}
               x1={line.start.x}
@@ -198,7 +192,7 @@ const Canvas: React.FC<Props> = ({
           if (isCircleShape(shape)) {
             return (
               <circle
-                key={`circle-${index}`}
+                key={`circle-${shape.id}`}
                 cx={shape.center.x}
                 cy={shape.center.y}
                 r={shape.radius}
@@ -210,7 +204,7 @@ const Canvas: React.FC<Props> = ({
           } else if (isLineShape(shape)) {
             return (
               <line
-                key={`line-${index}`}
+                key={`line-${shape.id}`}
                 x1={shape.start.x}
                 y1={shape.start.y}
                 x2={shape.end.x}
@@ -221,11 +215,11 @@ const Canvas: React.FC<Props> = ({
             )
           }
         })}
-        {snappingDot && (
+        {snappingCoord && (
           <circle
             key={'snappingDot'}
-            cx={snappingDot.x}
-            cy={snappingDot.y}
+            cx={snappingCoord.x}
+            cy={snappingCoord.y}
             r={3}
             fill='#008000'
             ref={snappingDotRef}
@@ -237,11 +231,11 @@ const Canvas: React.FC<Props> = ({
           {tooltipContent}
         </div>
       )}
-      {currentCoordInfo && currentCoordInfoPosition && (
+      {activeCoordInfo && currentCoordInfoPosition && (
         <div
           css={currentCoordInfoStyle}
           style={{ left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y }}>
-          {currentCoordInfo
+          {activeCoordInfo
             .map(infoType => {
               if (infoType === 'gridIntersection') {
                 return 'グリッドの交点'

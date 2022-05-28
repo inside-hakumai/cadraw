@@ -1,12 +1,7 @@
 import App from './App'
-import { atom, RecoilRoot } from 'recoil'
+import { RecoilRoot } from 'recoil'
 import DebugObserver from './lib/DebugObserver'
 import React from 'react'
-
-export const operationModeState = atom<OperationMode>({
-  key: 'operationMode',
-  default: 'circle:point-center',
-})
 
 interface Props {
   onExport?: (data: string) => void
