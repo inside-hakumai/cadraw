@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
-import ToolWindow from './components/ToolWindow'
+import ToolWindow from '../component/ToolWindow'
 
-import Canvas from './components/Canvas'
+import Canvas from '../component/Canvas'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,

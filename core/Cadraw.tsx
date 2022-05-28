@@ -1,4 +1,4 @@
-import App from './App'
+import App from './container/App'
 import { RecoilRoot } from 'recoil'
 import DebugObserver from './lib/DebugObserver'
 import React from 'react'

@@ -1,7 +1,11 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
-import { currentOperatingShapeSelector, pointingCoordState, snappingCoordState } from '../states'
+import {
+  currentOperatingShapeSelector,
+  pointingCoordState,
+  snappingCoordState,
+} from '../container/states'
 
 interface Props {
   onActivateLineDraw: () => void

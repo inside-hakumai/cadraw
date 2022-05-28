@@ -14,7 +14,7 @@ import {
   supplementalLinesState,
   temporaryShapeState,
   tooltipContentState,
-} from '../states'
+} from '../container/states'
 
 const style = css`
   width: 100%;
