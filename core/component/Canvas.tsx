@@ -8,7 +8,9 @@ import {
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
-  shapesState,
+  shapeIdsState,
+  shapesSelector,
+  filteredShapeIdsSelector,
   snappingCoordState,
   supplementalLinesState,
   temporaryShapeState,
@@ -54,7 +56,9 @@ interface Props {
 }
 
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
-  const shapes = useRecoilValue(shapesState)
+  const shapes = useRecoilValue(shapesSelector)
+  const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
+  const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const supplementalLines = useRecoilValue(supplementalLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
@@ -116,13 +120,12 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         )}
 
         {/* 作成した図形 */}
-        {shapes.map(shape => {
-          if (isCircleShape(shape)) {
-            return <Circle key={`circle-${shape.id}`} shape={shape} />
-          } else if (isLineShape(shape)) {
-            return <Line key={`line-${shape.id}`} shape={shape} />
-          }
-        })}
+        {circleShapeIds.map(shapeId => (
+          <Circle key={`circle-${shapeId}`} shapeId={shapeId} />
+        ))}
+        {lineShapeIds.map(shapeId => (
+          <Line key={`line-${shapeId}`} shapeId={shapeId} />
+        ))}
 
         {/* 近くの座標にスナップする際にスナップ先の示す点 */}
         {snappingCoord && (

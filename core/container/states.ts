@@ -1,4 +1,4 @@
-import { atom, selector } from 'recoil'
+import { atom, atomFamily, selector, selectorFamily, useRecoilCallback, waitForAll } from 'recoil'
 import { calcDistance, findIntersection } from '../lib/function'
 
 export const operationModeState = atom<OperationMode>({
@@ -20,16 +20,51 @@ export const currentOperatingShapeSelector = selector<ShapeType | null>({
   },
 })
 
-export const shapesState = atom<Shape[]>({
-  key: 'shapes',
+/*
+ * 作成した図形を管理するAtom、Selector
+ */
+
+// IDをキーにして図形を管理するAtomFamily
+export const shapeStateFamily = atomFamily<Shape, number>({
+  key: 'shape',
+})
+
+// 図形のIDの一覧を管理するAtom
+export const shapeIdsState = atom<number[]>({
+  key: 'shapeIds',
   default: [],
 })
 
-export const circleShapesState = selector<CircleShape[]>({
-  key: 'circleShapes',
+// 特定の形状の図形に限定してIDのリストを返すSelectorFamily
+export const filteredShapeIdsSelector = selectorFamily<number[], ShapeType>({
+  key: 'shapeTypeFilteredShapeIds',
+  get:
+    (shapeType: ShapeType) =>
+    ({ get }) => {
+      const allShapes = get(shapesSelector)
+      const allShapeIds = get(shapeIdsState)
+
+      return allShapeIds.filter(id => allShapes.find(shape => shape.id === id)?.type === shapeType)
+    },
+})
+
+// 特定の形状の図形に限定して図形のリストを返すSelectorFamily
+export const filteredShapesSelector = selectorFamily<Shape[], ShapeType>({
+  key: 'shapeTypeFilteredShapeIds',
+  get:
+    (shapeType: ShapeType) =>
+    ({ get }) => {
+      const allShapes = get(shapesSelector)
+      return allShapes.filter(shape => shape.type === shapeType)
+    },
+})
+
+// すべての図形を返すSelector
+export const shapesSelector = selector<Shape[]>({
+  key: 'allShapes',
   get: ({ get }) => {
-    const shapes = get(shapesState)
-    return shapes.filter(shape => shape.type === 'circle') as CircleShape[]
+    const shapeIds = get(shapeIdsState)
+    return get(waitForAll(shapeIds.map(id => shapeStateFamily(id))))
   },
 })
 
@@ -91,7 +126,7 @@ export const snapDestinationCoordState = atom<{
 export const supplementalLinesState = selector<LineShapeSeed[]>({
   key: 'supplementalLinesSelector',
   get: ({ get }) => {
-    const shapes = get(shapesState)
+    const shapes = get(shapesSelector)
 
     const snappingCoordInfo = get(snappingCoordInfoState)
     if (snappingCoordInfo === null) {
@@ -127,7 +162,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       return null
     }
 
-    const circleShapes = get(circleShapesState)
+    const circleShapes = get(filteredShapesSelector('circle')) as CircleShape[]
     // 現在指している座標と円周との距離近い円を探す
     let closeCircles: CircleShape[] = []
     for (const circle of circleShapes) {

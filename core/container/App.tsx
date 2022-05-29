@@ -2,15 +2,17 @@ import React, { useEffect, useRef } from 'react'
 import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
+  shapesSelector,
   operationModeState,
   pointingCoordState,
-  shapesState,
+  shapeStateFamily,
   snapDestinationCoordState,
   temporaryShapeBaseState,
   temporaryShapeState,
+  shapeIdsState,
 } from './states'
 
 interface Props {
@@ -19,10 +21,10 @@ interface Props {
 
 const App: React.FC<Props> = ({ onExport }) => {
   const [operationMode, setOperationMode] = useRecoilState(operationModeState)
-  const [shapes, setShapes] = useRecoilState(shapesState)
 
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const activeCoord = useRecoilValue(activeCoordState)
+  const shapes = useRecoilValue(shapesSelector)
 
   const setTemporaryShapeBase = useSetRecoilState(temporaryShapeBaseState)
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
@@ -31,6 +33,15 @@ const App: React.FC<Props> = ({ onExport }) => {
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
+
+  const setShape = useRecoilCallback(
+    ({ set }) =>
+      (shape: Shape) => {
+        set(shapeIdsState, oldValue => [...oldValue, shape.id])
+        set(shapeStateFamily(shape.id), shape)
+      },
+    []
+  )
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -48,7 +59,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       id: shapes.length,
     }
 
-    setShapes([...shapes, newLineShape])
+    setShape(newLineShape)
     enableSnapping([newLineShape.start, newLineShape.end], 4, {
       type: 'lineEdge',
       targetShapeId: newLineShape.id,
@@ -63,7 +74,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       id: shapes.length,
     }
 
-    setShapes([...shapes, newCircle])
+    setShape(newCircle)
     enableSnapping([center], 4, {
       type: 'circleCenter',
       targetShapeId: newCircle.id,
