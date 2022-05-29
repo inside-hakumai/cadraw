@@ -4,15 +4,20 @@ type OperationMode =
   | 'line:point-end'
   | 'circle:point-center'
   | 'circle:fix-radius'
+type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge'
 
 interface Coordinate {
   x: number
   y: number
 }
 
-interface SnappingCoordinate extends Coordinate {
-  // distance: number
+interface SnappingCoordCandidate extends Coordinate {
   priority: number
+  snapInfo: SnapInfo
+}
+
+interface SnappingCoordinate extends Coordinate {
+  snapInfoList: SnapInfo[]
 }
 
 interface ShapeSeed {
@@ -34,7 +39,6 @@ interface CircleShapeSeed extends ShapeSeed {
 interface Shape {
   type: 'circle' | 'line'
   id: number
-  approximatedCoords: Coordinate[]
 }
 
 interface LineShape extends Shape, LineShapeSeed {
@@ -73,29 +77,29 @@ interface TemporaryCircleShape extends TemporaryCircleShapeBase, TemporaryShape 
   diameterEnd: Coordinate
 }
 
-interface CoordInfo {
-  type: 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge'
+interface SnapInfo {
+  type: SnapType
 }
 
-interface CoordInfoGridIntersection extends CoordInfo {
+interface SnapInfoGridIntersection extends SnapInfo {
   type: 'gridIntersection'
 }
 
-interface ShapeRelatedCoordInfo extends CoordInfo {
+interface ShapeRelatedSnapInfo extends SnapInfo {
   targetShapeId: number
 }
 
-interface CoordInfoCircleCenter extends ShapeRelatedCoordInfo {
+interface SnapInfoCircleCenter extends ShapeRelatedSnapInfo {
   type: 'circleCenter'
   targetShapeId: number
 }
 
-interface CoordInfoCircumference extends ShapeRelatedCoordInfo {
+interface SnapInfoCircumference extends ShapeRelatedSnapInfo {
   type: 'circumference'
   targetShapeId: number
 }
 
-interface CoordInfoLineEdge extends ShapeRelatedCoordInfo {
+interface SnapInfoLineEdge extends ShapeRelatedSnapInfo {
   type: 'lineEdge'
   targetShapeId: number
 }

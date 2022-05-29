@@ -8,7 +8,6 @@ import {
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
-  activeCoordInfoState,
   shapesState,
   snappingCoordState,
   supplementalLinesState,
@@ -60,7 +59,6 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const supplementalLines = useRecoilValue(supplementalLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const tooltipContent = useRecoilValue(tooltipContentState)
-  const activeCoordInfo = useRecoilValue(activeCoordInfoState)
 
   // デバッグ用
   // const debugCoord = useRecoilValue(debugCoordState)
@@ -155,11 +153,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       )}
 
       {/* スナップ発生時、その座標の情報を表示 */}
-      {activeCoordInfo && currentCoordInfoPosition && (
+      {snappingCoord && currentCoordInfoPosition && (
         <div
           css={currentCoordInfoStyle}
           style={{ left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y }}>
-          {activeCoordInfo
+          {snappingCoord.snapInfoList
             .map(info => {
               if (info.type === 'gridIntersection') {
                 return 'グリッドの交点'

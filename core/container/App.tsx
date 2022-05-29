@@ -5,7 +5,6 @@ import Canvas from '../component/Canvas'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
-  coordInfoState,
   operationModeState,
   pointingCoordState,
   shapesState,
@@ -27,7 +26,6 @@ const App: React.FC<Props> = ({ onExport }) => {
 
   const setTemporaryShapeBase = useSetRecoilState(temporaryShapeBaseState)
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
-  const setCoordInfo = useSetRecoilState(coordInfoState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
 
@@ -44,40 +42,32 @@ const App: React.FC<Props> = ({ onExport }) => {
     enableSnapToGridIntersection()
   }, [])
 
-  const addLineShape = (newShapeSeed: LineShapeSeed, approximatedCoords?: Coordinate[]) => {
+  const addLineShape = (newShapeSeed: LineShapeSeed) => {
     const newLineShape: LineShape = {
       ...newShapeSeed,
       id: shapes.length,
-      approximatedCoords: approximatedCoords || [],
     }
 
     setShapes([...shapes, newLineShape])
-    addCoordInfo([newLineShape.start, newLineShape.end], 'lineEdge', newLineShape.id)
-    enableSnapping([newLineShape.start, newLineShape.end], 4)
+    enableSnapping([newLineShape.start, newLineShape.end], 4, {
+      type: 'lineEdge',
+      targetShapeId: newLineShape.id,
+    } as SnapInfoLineEdge)
   }
 
   const addCircleShape = (newCircleShapeSeed: CircleShapeSeed) => {
-    const { center, radius } = newCircleShapeSeed
-
-    // 0.5度間隔で円を構成する720個の座標を特定する
-    const approximatedCoords: { x: number; y: number }[] = []
-    for (let i = 0; i < 720; i++) {
-      const x = center.x + radius * Math.cos((2 * Math.PI * i) / 720)
-      const y = center.y + radius * Math.sin((2 * Math.PI * i) / 720)
-      approximatedCoords.push({ x, y })
-    }
+    const { center } = newCircleShapeSeed
 
     const newCircle: Shape = {
       ...newCircleShapeSeed,
-      approximatedCoords,
       id: shapes.length,
     }
 
     setShapes([...shapes, newCircle])
-    addCoordInfo([center], 'circleCenter', newCircle.id)
-    addCoordInfo(approximatedCoords, 'circumference', newCircle.id)
-    // enableSnapping(...approximatedCoords, center)
-    enableSnapping([center], 4)
+    enableSnapping([center], 4, {
+      type: 'circleCenter',
+      targetShapeId: newCircle.id,
+    } as SnapInfoCircleCenter)
   }
 
   const handleMouseDown = () => {
@@ -172,11 +162,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         gridIntersections.push({ x, y })
       }
     }
-    enableSnapping(gridIntersections, 3)
-    addCoordInfo(gridIntersections, 'gridIntersection')
+    enableSnapping(gridIntersections, 3, { type: 'gridIntersection' } as SnapInfoGridIntersection)
   }
 
-  const enableSnapping = (targetCoords: Coordinate[], priority: number) => {
+  const enableSnapping = (targetCoords: Coordinate[], priority: number, snapInfo: SnapInfo) => {
     setSnapDestinationCoord(prevState => {
       const newState = { ...prevState }
 
@@ -185,52 +174,10 @@ const App: React.FC<Props> = ({ onExport }) => {
           for (let y = Math.floor(targetCoord.y) - 4; y <= Math.ceil(targetCoord.y) + 4; y++) {
             const key = `${x}-${y}`
 
-            newState[key] = [
-              ...(newState[key] || []),
-              {
-                x: targetCoord.x,
-                y: targetCoord.y,
-                priority,
-              },
-            ]
+            newState[key] = [...(newState[key] || []), { ...targetCoord, snapInfo, priority }]
           }
         }
       }
-      return newState
-    })
-  }
-
-  const addCoordInfo = (
-    targetCoords: Coordinate[],
-    type: CoordInfo['type'],
-    targetShapeId?: number
-  ) => {
-    setCoordInfo(prevState => {
-      const newState = { ...prevState }
-
-      for (let targetCoord of targetCoords) {
-        const coordInfoKey = `${targetCoord.x}-${targetCoord.y}`
-        if (newState[coordInfoKey] === undefined) {
-          newState[coordInfoKey] = []
-        }
-
-        if (type === 'gridIntersection') {
-          newState[coordInfoKey] = [
-            ...newState[coordInfoKey],
-            { type } as CoordInfoGridIntersection,
-          ]
-        } else {
-          if (targetShapeId !== undefined) {
-            newState[coordInfoKey] = [
-              ...newState[coordInfoKey],
-              { type, targetShapeId } as ShapeRelatedCoordInfo,
-            ]
-          } else {
-            throw new Error('targetShapeId is required if type !== "gridIntersection"')
-          }
-        }
-      }
-
       return newState
     })
   }

@@ -1,4 +1,4 @@
-import { atom, DefaultValue, selector } from 'recoil'
+import { atom, selector } from 'recoil'
 import { calcDistance, findIntersection } from '../lib/function'
 
 export const operationModeState = atom<OperationMode>({
@@ -81,7 +81,9 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
   },
 })
 
-export const snapDestinationCoordState = atom<{ [xy: string]: SnappingCoordinate[] | undefined }>({
+export const snapDestinationCoordState = atom<{
+  [xy: string]: SnappingCoordCandidate[] | undefined
+}>({
   key: 'snapDestinationCoord',
   default: {},
 })
@@ -91,15 +93,15 @@ export const supplementalLinesState = selector<LineShapeSeed[]>({
   get: ({ get }) => {
     const shapes = get(shapesState)
 
-    const activeCoordInfo = get(activeCoordInfoState)
-    if (activeCoordInfo === null) {
+    const snappingCoordInfo = get(snappingCoordInfoState)
+    if (snappingCoordInfo === null) {
       return []
     }
 
-    return activeCoordInfo
-      .filter(cInfo => cInfo.type === 'circleCenter')
-      .map(cInfo => {
-        const circleCenterCoordInfo = cInfo as CoordInfoCircleCenter
+    return snappingCoordInfo
+      .filter(snapInfo => snapInfo.type === 'circleCenter')
+      .map(snapInfo => {
+        const circleCenterCoordInfo = snapInfo as SnapInfoCircumference
         const circle = shapes.find(
           shape => shape.id === circleCenterCoordInfo.targetShapeId
         ) as CircleShape
@@ -112,17 +114,12 @@ export const supplementalLinesState = selector<LineShapeSeed[]>({
   },
 })
 
-export const coordInfoState = atom<{ [xy: string]: CoordInfo[] }>({
-  key: 'coordInfo',
-  default: {},
-})
-
 export const pointingCoordState = atom<Coordinate | null>({
   key: 'pointingCoord',
   default: null,
 })
 
-export const snappingCoordState = selector<Coordinate | null>({
+export const snappingCoordState = selector<SnappingCoordinate | null>({
   key: 'snappingCoord',
   get: ({ get }) => {
     const pointingCoord = get(pointingCoordState)
@@ -131,35 +128,39 @@ export const snappingCoordState = selector<Coordinate | null>({
     }
 
     const circleShapes = get(circleShapesState)
-    let minimumDistance = Number.MAX_VALUE
-    // 現在指している座標と円周との距離近い円をひとつ探す
-    let closestCircle: CircleShape | null = null
+    // 現在指している座標と円周との距離近い円を探す
+    let closeCircles: CircleShape[] = []
     for (const circle of circleShapes) {
       const distance = Math.abs(calcDistance(pointingCoord, circle.center) - circle.radius)
-      if (distance < minimumDistance) {
-        closestCircle = circle
-        minimumDistance = distance
+      if (distance < 10) {
+        closeCircles = [...closeCircles, circle]
       }
     }
 
-    let snappingToCircleCoord: Coordinate | null = null
+    let snapDestinationCoordOnCircle: [circleId: number, snapCoord: Coordinate][] = []
     // 現在指している座標と最も近い円の距離が1以下の場合はスナップとなる円周上の一点を特定する
-    if (closestCircle !== null && minimumDistance < 4) {
+    for (let closeCircle of closeCircles) {
       // 直線と円の交点を求めて、現在指している座標に近い方の点をスナップ先とする
-      const intersections = findIntersection(closestCircle, {
-        start: closestCircle.center,
+      const intersections = findIntersection(closeCircle, {
+        start: closeCircle.center,
         end: pointingCoord,
       })
       switch (intersections.length) {
         case 0:
           break
         case 1:
-          snappingToCircleCoord = intersections[0]
+          snapDestinationCoordOnCircle = [
+            ...snapDestinationCoordOnCircle,
+            [closeCircle.id, intersections[0]],
+          ]
           break
         case 2:
           const distance0 = calcDistance(pointingCoord, intersections[0])
           const distance1 = calcDistance(pointingCoord, intersections[1])
-          snappingToCircleCoord = distance0 < distance1 ? intersections[0] : intersections[1]
+          snapDestinationCoordOnCircle = [
+            ...snapDestinationCoordOnCircle,
+            [closeCircle.id, distance0 < distance1 ? intersections[0] : intersections[1]],
+          ]
           break
         default:
           throw new Error(`Unexpected too many intersections ${intersections}`)
@@ -169,17 +170,47 @@ export const snappingCoordState = selector<Coordinate | null>({
     const snapDestinationCoord = get(snapDestinationCoordState)
     const snappingCoords = snapDestinationCoord[`${pointingCoord.x}-${pointingCoord.y}`]
 
-    const allSnappingCoords: SnappingCoordinate[] = [
-      ...(snappingCoords || ([] as SnappingCoordinate[])),
-      ...(snappingToCircleCoord ? [{ ...snappingToCircleCoord, priority: 1 }] : []),
+    const allSnappingCoords: SnappingCoordCandidate[] = [
+      ...(snappingCoords || ([] as SnappingCoordCandidate[])),
+      ...snapDestinationCoordOnCircle.map(entry => {
+        const [circleId, coord] = entry
+        return {
+          ...coord,
+          priority: 1,
+          snapInfo: { type: 'circumference', targetShapeId: circleId } as SnapInfoCircumference,
+        }
+      }),
     ]
 
+    console.debug(allSnappingCoords)
+
     let maximumPriority = 0
-    let maximumPrioritySnappingCoord: Coordinate | null = null
+    let maximumPrioritySnappingCoord: SnappingCoordinate | null = null
     for (const snappingCoord of allSnappingCoords) {
-      if (snappingCoord.priority > maximumPriority) {
+      const { x, y, priority, snapInfo } = snappingCoord
+
+      if (maximumPrioritySnappingCoord === null) {
         maximumPriority = snappingCoord.priority
-        maximumPrioritySnappingCoord = snappingCoord
+        maximumPrioritySnappingCoord = {
+          x,
+          y,
+          snapInfoList: [snappingCoord.snapInfo],
+        }
+      } else {
+        maximumPriority = Math.max(maximumPriority, priority)
+        if (x === maximumPrioritySnappingCoord.x && y === maximumPrioritySnappingCoord.y) {
+          maximumPrioritySnappingCoord = {
+            x,
+            y,
+            snapInfoList: [...maximumPrioritySnappingCoord.snapInfoList, snapInfo],
+          }
+        } else {
+          maximumPrioritySnappingCoord = {
+            x: priority > maximumPriority ? x : maximumPrioritySnappingCoord.x,
+            y: priority > maximumPriority ? y : maximumPrioritySnappingCoord.y,
+            snapInfoList: [...maximumPrioritySnappingCoord.snapInfoList, snapInfo],
+          }
+        }
       }
     }
 
@@ -228,17 +259,11 @@ export const activeCoordState = selector<Coordinate | null>({
   },
 })
 
-export const activeCoordInfoState = selector<CoordInfo[] | null>({
-  key: 'activeCoordInfoSelector',
+export const snappingCoordInfoState = selector<SnapInfo[]>({
+  key: 'snappingCoordInfoSelector',
   get: ({ get }) => {
-    const coordInfo = get(coordInfoState)
-    const activeCoord = get(activeCoordState)
-
-    if (activeCoord === null) {
-      return null
-    }
-
-    return coordInfo[`${activeCoord.x}-${activeCoord.y}`] || null
+    const snappingCoord = get(snappingCoordState)
+    return snappingCoord?.snapInfoList || []
   },
 })
 
