@@ -27,6 +27,19 @@ const style = css`
   }
 `
 
+const coordViewerStyle = css`
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  color: #787878;
+  font-size: 14px;
+
+  span.snap {
+    padding-left: 5px;
+    color: #008000;
+  }
+`
+
 const ToolWindow: React.FC<Props> = ({
   onActivateLineDraw,
   onActivateCircleDraw,
@@ -40,29 +53,32 @@ const ToolWindow: React.FC<Props> = ({
   const currentSnapshotVersion = useRecoilValue(currentSnapshotVersionState)
 
   return (
-    <div css={style}>
-      {pointingCoord &&
-        (snappingCoord ? (
+    <>
+      <div css={style}>
+        <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
+          線
+        </button>
+        <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
+          丸
+        </button>
+        <button onClick={onUndo} disabled={!canUndo}>
+          元に戻す({currentSnapshotVersion ?? 'null'})
+        </button>
+        <button onClick={onClickExportButton}>Export</button>
+      </div>
+      {pointingCoord && (
+        <div css={coordViewerStyle}>
           <span>
-            {snappingCoord.x.toFixed(2)}, {snappingCoord.y.toFixed(2)} &lt;- {pointingCoord.x},{' '}
-            {pointingCoord.y}
+            座標: ({pointingCoord.x}, {pointingCoord.y})
           </span>
-        ) : (
-          <span>
-            {pointingCoord.x}, {pointingCoord.y}
-          </span>
-        ))}
-      <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
-        線
-      </button>
-      <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
-        丸
-      </button>
-      <button onClick={onUndo} disabled={!canUndo}>
-        元に戻す({currentSnapshotVersion ?? 'null'})
-      </button>
-      <button onClick={onClickExportButton}>Export</button>
-    </div>
+          {snappingCoord && (
+            <span className={'snap'}>
+              =&gt; スナップ先: ({snappingCoord.x.toFixed(2)}, {snappingCoord.y.toFixed(2)})
+            </span>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 
