@@ -26,12 +26,16 @@ import {
   canUndoSelector,
   currentSnapshotVersionState,
 } from './states'
+import { css } from '@emotion/react'
+import useKeyboardEvent from './useKeyboardEvent'
 
 interface Props {
   onExport?: (data: string) => void
 }
 
 const App: React.FC<Props> = ({ onExport }) => {
+  useKeyboardEvent()
+
   const snapshot = useRecoilSnapshot()
   const [currentSnapshotVersion, setCurrentSnapshotVersion] = useRecoilState(
     currentSnapshotVersionState
