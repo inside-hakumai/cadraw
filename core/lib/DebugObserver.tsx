@@ -10,10 +10,11 @@ const DebugObserver: React.FC = () => {
     )
 
     if (nodes.length > 0) {
-      console.debug('The following atoms were modified:')
-      for (const node of nodes) {
-        console.debug(node.key, snapshot.getLoadable(node))
-      }
+      const entries = nodes.map(node => {
+        const { key } = node
+        return [key, node]
+      })
+      console.debug('The following atoms were modified: ', Object.fromEntries(entries))
     }
   }, [snapshot])
 

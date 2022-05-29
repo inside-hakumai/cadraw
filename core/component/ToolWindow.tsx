@@ -2,7 +2,9 @@ import React from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
 import {
+  canUndoSelector,
   currentOperatingShapeSelector,
+  currentSnapshotVersionState,
   pointingCoordState,
   snappingCoordState,
 } from '../container/states'
@@ -10,6 +12,7 @@ import {
 interface Props {
   onActivateLineDraw: () => void
   onActivateCircleDraw: () => void
+  onUndo: () => void
   onClickExportButton: () => void
 }
 
@@ -27,11 +30,14 @@ const style = css`
 const ToolWindow: React.FC<Props> = ({
   onActivateLineDraw,
   onActivateCircleDraw,
+  onUndo,
   onClickExportButton,
 }) => {
   const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
   const pointingCoord = useRecoilValue(pointingCoordState)
   const snappingCoord = useRecoilValue(snappingCoordState)
+  const canUndo = useRecoilValue(canUndoSelector)
+  const currentSnapshotVersion = useRecoilValue(currentSnapshotVersionState)
 
   return (
     <div css={style}>
@@ -51,6 +57,9 @@ const ToolWindow: React.FC<Props> = ({
       </button>
       <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
         丸
+      </button>
+      <button onClick={onUndo} disabled={!canUndo}>
+        元に戻す({currentSnapshotVersion ?? 'null'})
       </button>
       <button onClick={onClickExportButton}>Export</button>
     </div>

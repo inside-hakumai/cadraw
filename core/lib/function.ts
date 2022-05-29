@@ -1,3 +1,9 @@
+/**
+ * 2つの座標間の距離を返します。
+ * @param coord1 座標1
+ * @param coord2 座標2
+ * @returns 距離
+ */
 export const calcDistance = (coord1: Coordinate, coord2: Coordinate): number => {
   return Math.sqrt(Math.pow(coord1.x - coord2.x, 2) + Math.pow(coord1.y - coord2.y, 2))
 }
@@ -57,4 +63,51 @@ export const findIntersection = (
       { x: x2, y: y2 },
     ]
   }
+}
+
+/**
+ * グリッド線の交点の座標のリストを返します。
+ * @returns グリッド線の交点の座標のリスト
+ */
+export const getGridIntersections = (): Coordinate[] => {
+  const gridIntersections: Coordinate[] = []
+  // x = 50ごとに垂直方向のグリッド線を引いている
+  for (let x = 0; x <= window.innerWidth; x += 50) {
+    // y = 50ごとに水平方向のグリッド線を引いている
+    for (let y = 0; y <= window.innerHeight; y += 50) {
+      gridIntersections.push({ x, y })
+    }
+  }
+
+  return gridIntersections
+}
+
+/**
+ * state.ts に定義されているsnapDestinationCoordのデフォルト値を返します。
+ * グリッドの交点に対するスナップが機能するための座標情報が含まれています。
+ * @returns snapDestinationCoordのデフォルト値
+ */
+export const getSnapDestinationCoordDefaultValue = (): {
+  [xy: string]: SnappingCoordCandidate[] | undefined
+} => {
+  const defaultValue: { [xy: string]: SnappingCoordCandidate[] | undefined } = {}
+
+  for (let targetCoord of getGridIntersections()) {
+    for (let x = Math.floor(targetCoord.x) - 4; x <= Math.ceil(targetCoord.x) + 4; x++) {
+      for (let y = Math.floor(targetCoord.y) - 4; y <= Math.ceil(targetCoord.y) + 4; y++) {
+        const key = `${x}-${y}`
+
+        defaultValue[key] = [
+          ...(defaultValue[key] || []),
+          {
+            ...targetCoord,
+            snapInfo: { type: 'gridIntersection' } as SnapInfoGridIntersection,
+            priority: 3,
+          },
+        ]
+      }
+    }
+  }
+
+  return defaultValue
 }

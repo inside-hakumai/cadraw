@@ -1,8 +1,17 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
-import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import {
+  Snapshot,
+  useGotoRecoilSnapshot,
+  useRecoilCallback,
+  useRecoilSnapshot,
+  useRecoilState,
+  useRecoilValue,
+  useResetRecoilState,
+  useSetRecoilState,
+} from 'recoil'
 import {
   activeCoordState,
   shapesSelector,
@@ -13,6 +22,9 @@ import {
   temporaryShapeBaseState,
   temporaryShapeState,
   shapeIdsState,
+  snapshotsState,
+  canUndoSelector,
+  currentSnapshotVersionState,
 } from './states'
 
 interface Props {
@@ -20,6 +32,14 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ onExport }) => {
+  const snapshot = useRecoilSnapshot()
+  const [currentSnapshotVersion, setCurrentSnapshotVersion] = useRecoilState(
+    currentSnapshotVersionState
+  )
+  const gotoSnapshot = useGotoRecoilSnapshot()
+  const [snapshots, setSnapshots] = useRecoilState(snapshotsState)
+  const canUndo = useRecoilValue(canUndoSelector)
+
   const [operationMode, setOperationMode] = useRecoilState(operationModeState)
 
   const temporaryShape = useRecoilValue(temporaryShapeState)
@@ -30,6 +50,8 @@ const App: React.FC<Props> = ({ onExport }) => {
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
+
+  const resetPointingCoord = useResetRecoilState(pointingCoordState)
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
@@ -50,17 +72,37 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     didMountRef.current = true
 
-    enableSnapToGridIntersection()
+    setSnapshots([snapshot])
+    setCurrentSnapshotVersion(0)
   }, [])
 
+  useEffect(() => {
+    addSnapshot()
+  }, [snapshot])
+
+  const addSnapshot = () => {
+    const isShapeUpdated = Array.from(snapshot.getNodes_UNSTABLE({ isModified: true })).some(
+      node => node.key === 'shapeIds'
+    )
+
+    if (isShapeUpdated && snapshots.every(s => s.getID() !== snapshot.getID())) {
+      snapshot.retain()
+      console.debug(`Added snapshot: ID = ${snapshot.getID()}`)
+      setSnapshots(oldValue => [...oldValue, snapshot])
+      setCurrentSnapshotVersion(snapshots.length)
+    }
+  }
+
   const addLineShape = (newShapeSeed: LineShapeSeed) => {
+    const { start, end } = newShapeSeed
+
     const newLineShape: LineShape = {
       ...newShapeSeed,
       id: shapes.length,
     }
 
     setShape(newLineShape)
-    enableSnapping([newLineShape.start, newLineShape.end], 4, {
+    enableSnapping([start, end], 4, {
       type: 'lineEdge',
       targetShapeId: newLineShape.id,
     } as SnapInfoLineEdge)
@@ -133,6 +175,19 @@ const App: React.FC<Props> = ({ onExport }) => {
     setPointingCoord(convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY }))
   }
 
+  const undo = () => {
+    if (!canUndo) {
+      console.warn('Few snapshots. Cannot undo.')
+    } else if (currentSnapshotVersion === null) {
+      console.warn('currentSnapshotVersion is null. Cannot undo.')
+    } else if (currentSnapshotVersion === 0) {
+      console.warn('currentSnapshotVersion is 0. Cannot undo.')
+    } else {
+      gotoSnapshot(snapshots[currentSnapshotVersion - 1])
+      resetPointingCoord()
+    }
+  }
+
   const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate => {
     const point = stageRef.current!.createSVGPoint()
     point.x = domCoord.x
@@ -161,21 +216,6 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
   }
 
-  /**
-   * グリッド線の交点に対するスナップが機能するように交点の近傍座標に対してスナップ先座標を設定する
-   */
-  const enableSnapToGridIntersection = () => {
-    const gridIntersections: Coordinate[] = []
-    // x = 50ごとに垂直方向のグリッド線を引いている
-    for (let x = 0; x <= window.innerWidth; x += 50) {
-      // y = 50ごとに水平方向のグリッド線を引いている
-      for (let y = 0; y <= window.innerHeight; y += 50) {
-        gridIntersections.push({ x, y })
-      }
-    }
-    enableSnapping(gridIntersections, 3, { type: 'gridIntersection' } as SnapInfoGridIntersection)
-  }
-
   const enableSnapping = (targetCoords: Coordinate[], priority: number, snapInfo: SnapInfo) => {
     setSnapDestinationCoord(prevState => {
       const newState = { ...prevState }
@@ -199,6 +239,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       <ToolWindow
         onActivateLineDraw={() => setOperationMode('line:point-start')}
         onActivateCircleDraw={() => setOperationMode('circle:point-center')}
+        onUndo={undo}
         onClickExportButton={exportAsSvg}
       />
     </>

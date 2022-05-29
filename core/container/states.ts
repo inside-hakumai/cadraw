@@ -1,5 +1,17 @@
-import { atom, atomFamily, selector, selectorFamily, useRecoilCallback, waitForAll } from 'recoil'
-import { calcDistance, findIntersection } from '../lib/function'
+import {
+  atom,
+  atomFamily,
+  selector,
+  selectorFamily,
+  Snapshot,
+  useRecoilCallback,
+  waitForAll,
+} from 'recoil'
+import {
+  calcDistance,
+  findIntersection,
+  getSnapDestinationCoordDefaultValue,
+} from '../lib/function'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -120,7 +132,7 @@ export const snapDestinationCoordState = atom<{
   [xy: string]: SnappingCoordCandidate[] | undefined
 }>({
   key: 'snapDestinationCoord',
-  default: {},
+  default: getSnapDestinationCoordDefaultValue(),
 })
 
 export const supplementalLinesState = selector<LineShapeSeed[]>({
@@ -217,8 +229,6 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }),
     ]
 
-    console.debug(allSnappingCoords)
-
     let maximumPriority = 0
     let maximumPrioritySnappingCoord: SnappingCoordinate | null = null
     for (const snappingCoord of allSnappingCoords) {
@@ -299,6 +309,35 @@ export const snappingCoordInfoState = selector<SnapInfo[]>({
   get: ({ get }) => {
     const snappingCoord = get(snappingCoordState)
     return snappingCoord?.snapInfoList || []
+  },
+})
+
+/*
+ * Undo用のスナップショット管理用のAtom
+ */
+
+// スナップショットのリストを管理するAtom
+export const snapshotsState = atom<Snapshot[]>({
+  key: 'snapshots',
+  default: [],
+  dangerouslyAllowMutability: true,
+})
+
+// 現在描画されている状態を示しているスナップショットのバージョン
+export const currentSnapshotVersionState = atom<number | null>({
+  key: 'currentSnapshotVersion',
+  default: null,
+})
+
+// Undoの可否をboolean値で返すSelector
+export const canUndoSelector = selector<boolean>({
+  key: 'canUndoSelector',
+  get: ({ get }) => {
+    const snapshots = get(snapshotsState)
+
+    // 図形が最低1つ存在する状態でのみUndoを実行できる
+    // （ = 初期状態と1つ目の図形を追加した状態の2つスナップショットが存在している状態）
+    return snapshots.length >= 2
   },
 })
 
