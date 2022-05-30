@@ -1,33 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
-import {
-  Snapshot,
-  useGotoRecoilSnapshot,
-  useRecoilCallback,
-  useRecoilSnapshot,
-  useRecoilState,
-  useRecoilValue,
-  useResetRecoilState,
-  useSetRecoilState,
-} from 'recoil'
+import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
-  shapesSelector,
   operationModeState,
   pointingCoordState,
+  shapeIdsState,
+  shapesSelector,
   shapeStateFamily,
   snapDestinationCoordState,
   temporaryShapeBaseState,
   temporaryShapeState,
-  shapeIdsState,
-  snapshotsState,
-  canUndoSelector,
-  currentSnapshotVersionState,
 } from './states'
-import { css } from '@emotion/react'
-import useKeyboardEvent from './useKeyboardEvent'
+import useKeyboardEvent from './hooks/useKeyboardEvent'
+import useHistory from './hooks/useHistory'
+import useHistoryUpdater from './hooks/useHistoryUpdater'
 
 interface Props {
   onExport?: (data: string) => void
@@ -35,14 +24,8 @@ interface Props {
 
 const App: React.FC<Props> = ({ onExport }) => {
   useKeyboardEvent()
-
-  const snapshot = useRecoilSnapshot()
-  const [currentSnapshotVersion, setCurrentSnapshotVersion] = useRecoilState(
-    currentSnapshotVersionState
-  )
-  const gotoSnapshot = useGotoRecoilSnapshot()
-  const [snapshots, setSnapshots] = useRecoilState(snapshotsState)
-  const canUndo = useRecoilValue(canUndoSelector)
+  const { initializeHistory } = useHistoryUpdater()
+  const { undo } = useHistory()
 
   const [operationMode, setOperationMode] = useRecoilState(operationModeState)
 
@@ -54,8 +37,6 @@ const App: React.FC<Props> = ({ onExport }) => {
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
-
-  const resetPointingCoord = useResetRecoilState(pointingCoordState)
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
@@ -76,26 +57,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     didMountRef.current = true
 
-    setSnapshots([snapshot])
-    setCurrentSnapshotVersion(0)
+    initializeHistory()
   }, [])
-
-  useEffect(() => {
-    addSnapshot()
-  }, [snapshot])
-
-  const addSnapshot = () => {
-    const isShapeUpdated = Array.from(snapshot.getNodes_UNSTABLE({ isModified: true })).some(
-      node => node.key === 'shapeIds'
-    )
-
-    if (isShapeUpdated && snapshots.every(s => s.getID() !== snapshot.getID())) {
-      snapshot.retain()
-      console.debug(`Added snapshot: ID = ${snapshot.getID()}`)
-      setSnapshots(oldValue => [...oldValue, snapshot])
-      setCurrentSnapshotVersion(snapshots.length)
-    }
-  }
 
   const addLineShape = (newShapeSeed: LineShapeSeed) => {
     const { start, end } = newShapeSeed
@@ -177,19 +140,6 @@ const App: React.FC<Props> = ({ onExport }) => {
 
   const handleMouseMove = (event: React.MouseEvent) => {
     setPointingCoord(convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY }))
-  }
-
-  const undo = () => {
-    if (!canUndo) {
-      console.warn('Few snapshots. Cannot undo.')
-    } else if (currentSnapshotVersion === null) {
-      console.warn('currentSnapshotVersion is null. Cannot undo.')
-    } else if (currentSnapshotVersion === 0) {
-      console.warn('currentSnapshotVersion is 0. Cannot undo.')
-    } else {
-      gotoSnapshot(snapshots[currentSnapshotVersion - 1])
-      resetPointingCoord()
-    }
   }
 
   const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate => {

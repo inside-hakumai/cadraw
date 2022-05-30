@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useRecoilState, useResetRecoilState } from 'recoil'
-import { operationModeState, temporaryShapeBaseState } from './states'
+import { operationModeState, temporaryShapeBaseState } from '../states'
+import useHistory from './useHistory'
 
 /**
  * キー操作をキャプチャして処理を行うカスタムフックです。
  */
 const useKeyboardEvent = () => {
+  const { undo } = useHistory()
+
   const [operationMode, setOperationMode] = useRecoilState(operationModeState)
   const resetTemporaryShapeBase = useResetRecoilState(temporaryShapeBaseState)
 
@@ -21,7 +24,7 @@ const useKeyboardEvent = () => {
   }, [])
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
-    console.debug(`Key pressed: ${e.key}`)
+    console.debug(`Key pressed: ${e.key} Meta: ${e.metaKey} `)
 
     // 図形の描画中の場合は描画中の図形を破棄する
     if (e.key === 'Escape') {
@@ -38,6 +41,10 @@ const useKeyboardEvent = () => {
           // noop
           break
       }
+    }
+
+    if (e.metaKey && e.key === 'z') {
+      undo()
     }
   }, [])
 }
