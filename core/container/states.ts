@@ -40,8 +40,9 @@ export const currentOperatingShapeSelector = selector<ShapeType | null>({
  */
 
 // IDをキーにして図形を管理するAtomFamily
-export const shapeStateFamily = atomFamily<Shape, number>({
+export const shapeStateFamily = atomFamily<Shape | undefined, number>({
   key: 'shape',
+  default: undefined,
 })
 
 // 図形のIDの一覧を管理するAtom
@@ -96,7 +97,7 @@ export const shapesSelector = selector<Shape[]>({
   key: 'allShapes',
   get: ({ get }) => {
     const shapeIds = get(shapeIdsState)
-    return get(waitForAll(shapeIds.map(id => shapeStateFamily(id))))
+    return get(waitForAll(shapeIds.map(id => shapeStateFamily(id)))) as Shape[]
   },
 })
 

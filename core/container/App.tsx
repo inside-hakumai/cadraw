@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
@@ -25,7 +25,7 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ onExport }) => {
-  useKeyboardEvent()
+  const { addKeyListener } = useKeyboardEvent()
   const { initializeHistory } = useHistoryUpdater()
   const { undo } = useHistory()
 
@@ -54,6 +54,18 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const removeSelectedShape = useRecoilCallback(
+    ({ snapshot, set }) =>
+      async () => {
+        const selectedShapeIdList = await snapshot.getPromise(selectedShapeIdsState)
+        set(shapeIdsState, oldValue => oldValue.filter(id => !selectedShapeIdList.includes(id)))
+        for (const shapeId of selectedShapeIdList) {
+          set(shapeStateFamily(shapeId), undefined)
+        }
+      },
+    []
+  )
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -62,6 +74,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     didMountRef.current = true
 
     initializeHistory()
+    addKeyListener('remove', removeSelectedShape)
   }, [])
 
   const addLineShape = (newShapeSeed: LineShapeSeed) => {

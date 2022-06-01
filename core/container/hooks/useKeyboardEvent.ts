@@ -3,6 +3,8 @@ import { useRecoilState, useResetRecoilState } from 'recoil'
 import { operationModeState, temporaryShapeConstraintsState } from '../states'
 import useHistory from './useHistory'
 
+type eventList = 'remove'
+
 /**
  * キー操作をキャプチャして処理を行うカスタムフックです。
  */
@@ -11,6 +13,10 @@ const useKeyboardEvent = () => {
 
   const [operationMode, setOperationMode] = useRecoilState(operationModeState)
   const resetTemporaryShapeBase = useResetRecoilState(temporaryShapeConstraintsState)
+
+  const keyLister = useRef<{ [key in eventList]: ((event: KeyboardEvent) => void) | null }>({
+    remove: null,
+  })
 
   // operationModeの更新を検知して値を取得する
   const operationModeRef = useRef(operationMode)
@@ -21,6 +27,10 @@ const useKeyboardEvent = () => {
   useEffect(() => {
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  const addKeyListener = useCallback((event: eventList, callback: () => void) => {
+    keyLister.current[event] = callback
   }, [])
 
   const onKeyDown = useCallback((e: KeyboardEvent) => {
@@ -43,10 +53,19 @@ const useKeyboardEvent = () => {
       }
     }
 
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      const listener = keyLister.current['remove']
+      if (listener) {
+        listener(e)
+      }
+    }
+
     if (e.metaKey && e.key === 'z') {
       undo()
     }
   }, [])
+
+  return { addKeyListener }
 }
 
 export default useKeyboardEvent
