@@ -11,7 +11,7 @@ import {
   shapesSelector,
   shapeStateFamily,
   snapDestinationCoordState,
-  temporaryShapeBaseState,
+  temporaryShapeConstraintsState,
   temporaryShapeState,
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
@@ -33,7 +33,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const activeCoord = useRecoilValue(activeCoordState)
   const shapes = useRecoilValue(shapesSelector)
 
-  const setTemporaryShapeBase = useSetRecoilState(temporaryShapeBaseState)
+  const setTemporaryShapeBase = useSetRecoilState(temporaryShapeConstraintsState)
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
@@ -133,8 +133,9 @@ const App: React.FC<Props> = ({ onExport }) => {
       addLineShape(newLineSeed)
       setTemporaryShapeBase(null)
       setOperationMode('line:point-start')
+    } else if (operationMode === 'select') {
     } else {
-      throw new Error(`Unknown operation mode: ${operationMode}`)
+      console.warn(`Unknown operation mode: ${operationMode}`)
     }
   }
 
@@ -191,6 +192,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
+        onActivateShapeSelect={() => setOperationMode('select')}
         onActivateLineDraw={() => setOperationMode('line:point-start')}
         onActivateCircleDraw={() => setOperationMode('circle:point-center')}
         onUndo={undo}

@@ -4,6 +4,7 @@ type OperationMode =
   | 'line:point-end'
   | 'circle:point-center'
   | 'circle:fix-radius'
+  | 'select'
 type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge'
 
 interface Coordinate {
@@ -49,11 +50,11 @@ interface CircleShape extends Shape, CircleShapeSeed {
   type: 'circle'
 }
 
-interface TemporaryShapeBase extends ShapeSeed {
+interface TemporaryShapeConstraints extends ShapeSeed {
   type: 'temporary-line' | 'temporary-circle'
 }
 
-interface TemporaryLineShapeBase extends TemporaryShapeBase {
+interface TemporaryLineShapeBase extends TemporaryShapeConstraints {
   type: 'temporary-line'
   start: Coordinate
 }

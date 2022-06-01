@@ -15,6 +15,7 @@ import {
   supplementalLinesState,
   temporaryShapeState,
   tooltipContentState,
+  debugCoordState,
 } from '../container/states'
 import Grid from './Grid'
 import SupplementalLine from './shape/SupplementalLine'
@@ -65,7 +66,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const tooltipContent = useRecoilValue(tooltipContentState)
 
   // デバッグ用
-  // const debugCoord = useRecoilValue(debugCoordState)
+  const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
 
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
@@ -136,16 +137,12 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
           />
         )}
 
-        {/*/!* デバッグ用の点 *!/*/}
-        {/*{debugCoord && debugCoord.map((coord, index) => (*/}
-        {/*  <circle*/}
-        {/*    key={`debugCircle-${index}`}*/}
-        {/*    cx={coord.x}*/}
-        {/*    cy={coord.y}*/}
-        {/*    r={3}*/}
-        {/*    fill={'red'}*/}
-        {/*  />*/}
-        {/*))}*/}
+        {/* デバッグ用の点 */}
+        {process.env.NODE_ENV === 'development' &&
+          debugCoord &&
+          debugCoord.map((coord, index) => (
+            <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />
+          ))}
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}

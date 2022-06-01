@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
-import { shapeStateFamily } from '../../container/states'
+import { indicatingShape, shapeStateFamily } from '../../container/states'
 import { isCircleShape } from '../../lib/typeguard'
 
 interface Props {
@@ -9,6 +9,9 @@ interface Props {
 
 const Circle: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeStateFamily(shapeId)) as CircleShape
+  const indicatingShapeId = useRecoilValue(indicatingShape)
+
+  const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
     if (!isCircleShape(shape)) {
@@ -19,7 +22,14 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
   const { center, radius } = shape
 
   return (
-    <circle cx={center.x} cy={center.y} r={radius} stroke={'black'} strokeWidth={1} fill={'none'} />
+    <circle
+      cx={center.x}
+      cy={center.y}
+      r={radius}
+      strokeWidth={1}
+      fill={'none'}
+      stroke={isFocused ? 'red' : 'black'}
+    />
   )
 }
 

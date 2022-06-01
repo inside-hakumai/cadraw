@@ -5,11 +5,13 @@ import {
   canUndoSelector,
   currentOperatingShapeSelector,
   currentSnapshotVersionState,
+  operationModeState,
   pointingCoordState,
   snappingCoordState,
 } from '../container/states'
 
 interface Props {
+  onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
   onActivateCircleDraw: () => void
   onUndo: () => void
@@ -41,11 +43,13 @@ const coordViewerStyle = css`
 `
 
 const ToolWindow: React.FC<Props> = ({
+  onActivateShapeSelect,
   onActivateLineDraw,
   onActivateCircleDraw,
   onUndo,
   onClickExportButton,
 }) => {
+  const operationMode = useRecoilValue(operationModeState)
   const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
   const pointingCoord = useRecoilValue(pointingCoordState)
   const snappingCoord = useRecoilValue(snappingCoordState)
@@ -55,6 +59,9 @@ const ToolWindow: React.FC<Props> = ({
   return (
     <>
       <div css={style}>
+        <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
+          選択
+        </button>
         <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
           線
         </button>

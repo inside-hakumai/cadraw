@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useRecoilState, useResetRecoilState } from 'recoil'
-import { operationModeState, temporaryShapeBaseState } from '../states'
+import { operationModeState, temporaryShapeConstraintsState } from '../states'
 import useHistory from './useHistory'
 
 /**
@@ -10,7 +10,7 @@ const useKeyboardEvent = () => {
   const { undo } = useHistory()
 
   const [operationMode, setOperationMode] = useRecoilState(operationModeState)
-  const resetTemporaryShapeBase = useResetRecoilState(temporaryShapeBaseState)
+  const resetTemporaryShapeBase = useResetRecoilState(temporaryShapeConstraintsState)
 
   // operationModeの更新を検知して値を取得する
   const operationModeRef = useRef(operationMode)

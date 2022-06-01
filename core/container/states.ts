@@ -1,17 +1,20 @@
 import {
   atom,
   atomFamily,
+  RecoilValueReadOnly,
   selector,
   selectorFamily,
   Snapshot,
-  useRecoilCallback,
   waitForAll,
 } from 'recoil'
 import {
   calcDistance,
-  findIntersection,
+  calcDistanceFromCircumference,
+  findIntersectionOfCircleAndLine,
+  findNearestPointOnLine,
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
+import { isCircleShape, isLineShape } from '../lib/typeguard'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -80,16 +83,22 @@ export const shapesSelector = selector<Shape[]>({
   },
 })
 
-export const temporaryShapeBaseState = atom<TemporaryShapeBase | null>({
-  key: 'temporaryShapeBase',
+/*
+ * 作成中の図形を管理するAtom、Selector
+ */
+
+// 作成中の図形の拘束条件を管理するAtom
+export const temporaryShapeConstraintsState = atom<TemporaryShapeConstraints | null>({
+  key: 'temporaryShapeConstraints',
   default: null,
 })
 
+// 作成中の図形のプレビュー表示を返すSelector
 export const temporaryShapeState = selector<TemporaryShape | null>({
   key: 'temporaryShape',
   get: ({ get }) => {
     const operationMode = get(operationModeState)
-    const temporaryShapeBase = get(temporaryShapeBaseState)
+    const temporaryShapeBase = get(temporaryShapeConstraintsState)
     const coord = get(activeCoordState)
 
     if (temporaryShapeBase === null || coord === null) {
@@ -128,6 +137,94 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
   },
 })
 
+// 図形作成中に表示されるツールチップの中身テキストを返すSelector
+export const tooltipContentState = selector<string | null>({
+  key: 'tooltipContent',
+  get: ({ get }) => {
+    const temporaryShape = get(temporaryShapeState)
+    const coord = get(activeCoordState)
+
+    if (temporaryShape === null || coord === null) {
+      return null
+    }
+
+    if (temporaryShape.type === 'temporary-circle') {
+      const temporaryCircleShape = temporaryShape as TemporaryCircleShape
+      return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
+    } else if (temporaryShape.type === 'temporary-line') {
+      const temporaryLineShape = temporaryShape as TemporaryLineShape
+
+      return (
+        Math.sqrt(
+          Math.pow(temporaryLineShape.start.x - coord.x, 2) +
+            Math.pow(temporaryLineShape.start.y - coord.y, 2)
+        ).toFixed(2) + 'px'
+      )
+    } else {
+      return null
+    }
+  },
+})
+
+/*
+ * マウスカーソルが指している座標を管理するAtom、Selector
+ */
+
+// カーソル位置の座標を管理するAtom
+export const pointingCoordState = atom<Coordinate | null>({
+  key: 'pointingCoord',
+  default: null,
+})
+
+// カーソル位置をもとに操作の対象となる図形のIDを返すSelector
+export const indicatingShape = selector<number | null>({
+  key: 'indicatingShape',
+  get: ({ get }) => {
+    // 選択モードでない場合は操作対象を取らない
+    if (get(operationModeState) !== 'select') {
+      return null
+    }
+
+    const pointingCoord = get(pointingCoordState)
+    if (pointingCoord === null) {
+      return null
+    }
+
+    const shapes = get(shapesSelector)
+
+    let nearestIndex = -1
+    let minimumDistance = Number.MAX_VALUE
+    for (let i = 0; i < shapes.length; i++) {
+      const shape = shapes[i]
+      if (isCircleShape(shape)) {
+        const distance = calcDistanceFromCircumference(pointingCoord, shape)
+        if (distance < minimumDistance) {
+          minimumDistance = distance
+          nearestIndex = i
+        }
+      } else if (isLineShape(shape)) {
+        const nearest = findNearestPointOnLine(pointingCoord, shape)
+        if (nearest.distance < minimumDistance) {
+          minimumDistance = nearest.distance
+          nearestIndex = i
+        }
+      } else {
+        throw new Error(`unknown shape type: ${shape.type}`)
+      }
+    }
+
+    if (nearestIndex !== -1 && minimumDistance < 10) {
+      return shapes[nearestIndex].id
+    } else {
+      return null
+    }
+  },
+})
+
+/*
+ * 座標スナップに必要な情報を管理するAtom、Selector
+ */
+
 export const snapDestinationCoordState = atom<{
   [xy: string]: SnappingCoordCandidate[] | undefined
 }>({
@@ -161,11 +258,6 @@ export const supplementalLinesState = selector<LineShapeSeed[]>({
   },
 })
 
-export const pointingCoordState = atom<Coordinate | null>({
-  key: 'pointingCoord',
-  default: null,
-})
-
 export const snappingCoordState = selector<SnappingCoordinate | null>({
   key: 'snappingCoord',
   get: ({ get }) => {
@@ -188,7 +280,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     // 現在指している座標と最も近い円の距離が1以下の場合はスナップとなる円周上の一点を特定する
     for (let closeCircle of closeCircles) {
       // 直線と円の交点を求めて、現在指している座標に近い方の点をスナップ先とする
-      const intersections = findIntersection(closeCircle, {
+      const intersections = findIntersectionOfCircleAndLine(closeCircle, {
         start: closeCircle.center,
         end: pointingCoord,
       })
@@ -263,34 +355,6 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
   },
 })
 
-export const tooltipContentState = selector<string | null>({
-  key: 'tooltipContent',
-  get: ({ get }) => {
-    const temporaryShape = get(temporaryShapeState)
-    const coord = get(activeCoordState)
-
-    if (temporaryShape === null || coord === null) {
-      return null
-    }
-
-    if (temporaryShape.type === 'temporary-circle') {
-      const temporaryCircleShape = temporaryShape as TemporaryCircleShape
-      return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
-    } else if (temporaryShape.type === 'temporary-line') {
-      const temporaryLineShape = temporaryShape as TemporaryLineShape
-
-      return (
-        Math.sqrt(
-          Math.pow(temporaryLineShape.start.x - coord.x, 2) +
-            Math.pow(temporaryLineShape.start.y - coord.y, 2)
-        ).toFixed(2) + 'px'
-      )
-    } else {
-      return null
-    }
-  },
-})
-
 export const activeCoordState = selector<Coordinate | null>({
   key: 'activeCoord',
   get: ({ get }) => {
@@ -341,8 +405,16 @@ export const canUndoSelector = selector<boolean>({
   },
 })
 
-// // デバッグ用に点を描画する時に使う
-// export const debugCoordState = atom<Coordinate[]>({
-//   key: 'debugCoord',
-//   default: [],
-// })
+// デバッグ用に点を描画する時に使う
+// export let debugCoordState: RecoilState<Coordinate[]> | undefined = undefined
+export let debugCoordState: RecoilValueReadOnly<Coordinate[]> | undefined = undefined
+if (process.env.NODE_ENV === 'development') {
+  // debugCoordState = atom<Coordinate[]>({
+  //   key: 'debugCoord',
+  //   default: [],
+  // })
+  // debugCoordState = selector<Coordinate[]>({
+  //   key: 'debugCoord',
+  //   get: ({ get }) => [],
+  // })
+}
