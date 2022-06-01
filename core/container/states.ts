@@ -74,6 +74,23 @@ export const filteredShapesSelector = selectorFamily<Shape[], ShapeType>({
     },
 })
 
+// クリックして選択状態になっている図形のIDを管理するAtom
+export const selectedShapeIdsState = atom<number[]>({
+  key: 'selectedShapeIds',
+  default: [],
+})
+
+// 図形が選択されているかどうかを返すSelectorFamily
+export const isShapeSelectedSelectorFamily = selectorFamily<boolean, number>({
+  key: 'isShapeSelected',
+  get:
+    (shapeId: number) =>
+    ({ get }) => {
+      const selectedShapeIds = get(selectedShapeIdsState)
+      return selectedShapeIds.includes(shapeId)
+    },
+})
+
 // すべての図形を返すSelector
 export const shapesSelector = selector<Shape[]>({
   key: 'allShapes',
@@ -167,7 +184,7 @@ export const tooltipContentState = selector<string | null>({
 })
 
 /*
- * マウスカーソルが指している座標を管理するAtom、Selector
+ * マウスカーソルが指している座標や図形を管理するAtom、Selector
  */
 
 // カーソル位置の座標を管理するAtom
@@ -177,7 +194,7 @@ export const pointingCoordState = atom<Coordinate | null>({
 })
 
 // カーソル位置をもとに操作の対象となる図形のIDを返すSelector
-export const indicatingShape = selector<number | null>({
+export const indicatingShapeIdState = selector<number | null>({
   key: 'indicatingShape',
   get: ({ get }) => {
     // 選択モードでない場合は操作対象を取らない

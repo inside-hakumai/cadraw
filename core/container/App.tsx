@@ -5,8 +5,10 @@ import Canvas from '../component/Canvas'
 import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
+  indicatingShapeIdState,
   operationModeState,
   pointingCoordState,
+  selectedShapeIdsState,
   shapeIdsState,
   shapesSelector,
   shapeStateFamily,
@@ -32,10 +34,12 @@ const App: React.FC<Props> = ({ onExport }) => {
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const activeCoord = useRecoilValue(activeCoordState)
   const shapes = useRecoilValue(shapesSelector)
+  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const setTemporaryShapeBase = useSetRecoilState(temporaryShapeConstraintsState)
   const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
+  const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
 
   const didMountRef = useRef(false)
@@ -115,13 +119,17 @@ const App: React.FC<Props> = ({ onExport }) => {
       addCircleShape(newCircleSeed)
       setTemporaryShapeBase(null)
       setOperationMode('circle:point-center')
-    } else if (operationMode === 'line:point-start') {
+    }
+
+    if (operationMode === 'line:point-start') {
       setTemporaryShapeBase({
         type: 'temporary-line',
         start: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryLineShapeBase)
       setOperationMode('line:point-end')
-    } else if (operationMode === 'line:point-end') {
+    }
+
+    if (operationMode === 'line:point-end') {
       const temporaryLineShape = temporaryShape as TemporaryLineShape
 
       const newLineSeed: LineShapeSeed = {
@@ -133,9 +141,18 @@ const App: React.FC<Props> = ({ onExport }) => {
       addLineShape(newLineSeed)
       setTemporaryShapeBase(null)
       setOperationMode('line:point-start')
-    } else if (operationMode === 'select') {
-    } else {
-      console.warn(`Unknown operation mode: ${operationMode}`)
+    }
+
+    if (operationMode === 'select') {
+      if (indicatingShapeId !== null) {
+        setSelectedShapeIds(oldValue => {
+          if (oldValue.includes(indicatingShapeId)) {
+            return oldValue.filter(id => id !== indicatingShapeId)
+          } else {
+            return [...oldValue, indicatingShapeId]
+          }
+        })
+      }
     }
   }
 
@@ -188,13 +205,18 @@ const App: React.FC<Props> = ({ onExport }) => {
     })
   }
 
+  const changeOperationMode = (mode: OperationMode) => {
+    setSelectedShapeIds([])
+    setOperationMode(mode)
+  }
+
   return (
     <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
-        onActivateShapeSelect={() => setOperationMode('select')}
-        onActivateLineDraw={() => setOperationMode('line:point-start')}
-        onActivateCircleDraw={() => setOperationMode('circle:point-center')}
+        onActivateShapeSelect={() => changeOperationMode('select')}
+        onActivateLineDraw={() => changeOperationMode('line:point-start')}
+        onActivateCircleDraw={() => changeOperationMode('circle:point-center')}
         onUndo={undo}
         onClickExportButton={exportAsSvg}
       />

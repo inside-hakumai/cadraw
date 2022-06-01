@@ -7,6 +7,7 @@ import {
   currentSnapshotVersionState,
   operationModeState,
   pointingCoordState,
+  selectedShapeIdsState,
   snappingCoordState,
 } from '../container/states'
 
@@ -55,12 +56,13 @@ const ToolWindow: React.FC<Props> = ({
   const snappingCoord = useRecoilValue(snappingCoordState)
   const canUndo = useRecoilValue(canUndoSelector)
   const currentSnapshotVersion = useRecoilValue(currentSnapshotVersionState)
+  const selectedShapeIds = useRecoilValue(selectedShapeIdsState)
 
   return (
     <>
       <div css={style}>
         <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
-          選択
+          選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
         </button>
         <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
           線

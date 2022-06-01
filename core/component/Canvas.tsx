@@ -16,6 +16,7 @@ import {
   temporaryShapeState,
   tooltipContentState,
   debugCoordState,
+  indicatingShapeIdState,
 } from '../container/states'
 import Grid from './Grid'
 import SupplementalLine from './shape/SupplementalLine'
@@ -35,6 +36,14 @@ const svgStyle = css`
   top: 0;
   left: 0;
 `
+
+const rendererStyle = (isShapeFocused: boolean) =>
+  css(
+    svgStyle,
+    css`
+      cursor: ${isShapeFocused ? 'pointer' : 'default'};
+    `
+  )
 
 const tooltipStyle = css`
   position: absolute;
@@ -58,6 +67,7 @@ interface Props {
 
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
   const shapes = useRecoilValue(shapesSelector)
+  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
   const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
   const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
   const temporaryShape = useRecoilValue(temporaryShapeState)
@@ -103,7 +113,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         ref={stageRef}
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
         xmlns='http://www.w3.org/2000/svg'
-        css={svgStyle}>
+        css={rendererStyle(indicatingShapeId !== null)}>
         {/* エクスポート時には含まれない補助線 */}
         {supplementalLines &&
           supplementalLines.map((line, index) => (
