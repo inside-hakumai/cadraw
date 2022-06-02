@@ -6,6 +6,7 @@ type OperationMode =
   | 'circle:fix-radius'
   | 'select'
 type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge'
+type ConstraintType = 'circleCenter' | 'lineEdge'
 
 interface Coordinate {
   x: number
@@ -22,7 +23,7 @@ interface SnappingCoordinate extends Coordinate {
 }
 
 interface ShapeSeed {
-  type: string
+  type: 'circle' | 'line'
 }
 
 interface LineShapeSeed extends ShapeSeed {

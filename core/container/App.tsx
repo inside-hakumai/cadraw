@@ -12,7 +12,6 @@ import {
   shapeIdsState,
   shapesSelector,
   shapeStateFamily,
-  snapDestinationCoordState,
   temporaryShapeConstraintsState,
   temporaryShapeState,
 } from './states'
@@ -37,7 +36,6 @@ const App: React.FC<Props> = ({ onExport }) => {
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const setTemporaryShapeBase = useSetRecoilState(temporaryShapeConstraintsState)
-  const setSnapDestinationCoord = useSetRecoilState(snapDestinationCoordState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
@@ -77,34 +75,12 @@ const App: React.FC<Props> = ({ onExport }) => {
     addKeyListener('remove', removeSelectedShape)
   }, [addKeyListener, initializeHistory, removeSelectedShape])
 
-  const addLineShape = (newShapeSeed: LineShapeSeed) => {
-    const { start, end } = newShapeSeed
-
-    const newLineShape: LineShape = {
+  const addShape = (newShapeSeed: ShapeSeed) => {
+    const newShape: Shape = {
       ...newShapeSeed,
       id: shapes.length,
     }
-
-    setShape(newLineShape)
-    enableSnapping([start, end], 4, {
-      type: 'lineEdge',
-      targetShapeId: newLineShape.id,
-    } as SnapInfoLineEdge)
-  }
-
-  const addCircleShape = (newCircleShapeSeed: CircleShapeSeed) => {
-    const { center } = newCircleShapeSeed
-
-    const newCircle: Shape = {
-      ...newCircleShapeSeed,
-      id: shapes.length,
-    }
-
-    setShape(newCircle)
-    enableSnapping([center], 4, {
-      type: 'circleCenter',
-      targetShapeId: newCircle.id,
-    } as SnapInfoCircleCenter)
+    setShape(newShape)
   }
 
   const handleMouseDown = () => {
@@ -129,7 +105,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         radius,
       }
 
-      addCircleShape(newCircleSeed)
+      addShape(newCircleSeed)
       setTemporaryShapeBase(null)
       setOperationMode('circle:point-center')
     }
@@ -151,7 +127,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         end: { x: temporaryLineShape.end.x, y: temporaryLineShape.end.y },
       }
 
-      addLineShape(newLineSeed)
+      addShape(newLineSeed)
       setTemporaryShapeBase(null)
       setOperationMode('line:point-start')
     }
@@ -210,23 +186,6 @@ const App: React.FC<Props> = ({ onExport }) => {
       anchor.click()
       anchor.remove()
     }
-  }
-
-  const enableSnapping = (targetCoords: Coordinate[], priority: number, snapInfo: SnapInfo) => {
-    setSnapDestinationCoord(prevState => {
-      const newState = { ...prevState }
-
-      for (const targetCoord of targetCoords) {
-        for (let x = Math.floor(targetCoord.x) - 4; x <= Math.ceil(targetCoord.x) + 4; x++) {
-          for (let y = Math.floor(targetCoord.y) - 4; y <= Math.ceil(targetCoord.y) + 4; y++) {
-            const key = `${x}-${y}`
-
-            newState[key] = [...(newState[key] || []), { ...targetCoord, snapInfo, priority }]
-          }
-        }
-      }
-      return newState
-    })
   }
 
   const changeOperationMode = (mode: OperationMode) => {
