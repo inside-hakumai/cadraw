@@ -5,7 +5,7 @@ type OperationMode =
   | 'circle:point-center'
   | 'circle:fix-radius'
   | 'select'
-type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge'
+type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge' | 'onLine'
 type ConstraintType = 'circleCenter' | 'lineEdge'
 
 interface Coordinate {

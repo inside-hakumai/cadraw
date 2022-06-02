@@ -168,6 +168,8 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
                 return '円周上'
               } else if (info.type === 'lineEdge') {
                 return '線の端'
+              } else if (info.type === 'onLine') {
+                return '線上'
               } else {
                 throw new Error(`Unknown infoType: ${info.type}`)
               }

@@ -31,6 +31,7 @@ export const calcDistanceFromCircumference = (point: Coordinate, circle: CircleS
  * 点からの線分上の最近傍点とその距離を返します。
  * @param point 点の座標
  * @param line 線分。両端座標の情報を持ちます。
+ * @returns 最近傍点の情報
  */
 export const findNearestPointOnLine = (
   point: Coordinate,
@@ -38,6 +39,7 @@ export const findNearestPointOnLine = (
 ): {
   nearestCoord: Coordinate
   distance: number
+  isLineTerminal: boolean
 } => {
   const lineLength = calcDistance(line.start, line.end)
 
@@ -76,18 +78,20 @@ export const findNearestPointOnLine = (
   console.debug(cosNB, cosNC)
 
   // cosNBが負の場合、最近傍点が線分の始点から外側に出てしまっているので、最近傍点は始点となる
-  if (cosNB < 0) {
+  if (cosNB <= 0) {
     return {
       nearestCoord: line.start,
       distance: calcDistance(point, line.start),
+      isLineTerminal: true,
     }
   }
 
   // cosInverseNCが負の場合、最近傍点が線分の終点から外側に出てしまっているので、最近傍点は終点となる
-  if (cosNC < 0) {
+  if (cosNC <= 0) {
     return {
       nearestCoord: line.end,
       distance: calcDistance(point, line.end),
+      isLineTerminal: true,
     }
   }
 
@@ -95,6 +99,7 @@ export const findNearestPointOnLine = (
   return {
     nearestCoord,
     distance: calcDistance(point, nearestCoord),
+    isLineTerminal: false,
   }
 }
 

@@ -7,6 +7,7 @@ import {
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
 import { isCircleShape, isLineShape } from '../lib/typeguard'
+import assert from 'assert'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -362,69 +363,96 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       return null
     }
 
-    const circleShapes = get(filteredShapesSelector('circle')) as CircleShape[]
-    // 現在指している座標と円周との距離近い円を探す
-    let closeCircles: CircleShape[] = []
-    for (const circle of circleShapes) {
-      const distance = Math.abs(calcDistance(pointingCoord, circle.center) - circle.radius)
-      if (distance < 10) {
-        closeCircles = [...closeCircles, circle]
+    const shapes = get(shapesSelector)
+
+    // 現在指している座標と図形の最近傍点との距離が近い図形を探す
+    let closeShapes: Shape[] = []
+    for (const shape of shapes) {
+      if (shape.type === 'circle') {
+        const circle = shape as CircleShape
+
+        const distance = Math.abs(calcDistance(pointingCoord, circle.center) - circle.radius)
+        if (distance < 10) {
+          closeShapes = [...closeShapes, circle]
+        }
+      }
+
+      if (shape.type === 'line') {
+        const line = shape as LineShape
+
+        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line)
+        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
+        if (distance < 10 && !isLineTerminal) {
+          closeShapes = [...closeShapes, line]
+        }
       }
     }
 
-    let snapDestinationCoordOnCircle: [circleId: number, snapCoord: Coordinate][] = []
-    // 現在指している座標と最も近い円の距離が1以下の場合はスナップとなる円周上の一点を特定する
-    for (const closeCircle of closeCircles) {
-      // 円の中心点とカーソル座標を含む直線と円の交点を求める
-      const intersections = findIntersectionOfCircleAndLine(closeCircle, {
-        start: closeCircle.center,
-        end: pointingCoord,
-      })
-      switch (intersections.length) {
-        case 0:
-          // 交点がない場合はスナップしない（ただし状況的にはあり得なさそう）
-          break
-        case 1:
-          // 交点が1つだけの場合はそれをスナップ先とする（ただし状況的にはあり得なさそう）
-          snapDestinationCoordOnCircle = [
-            ...snapDestinationCoordOnCircle,
-            [closeCircle.id, intersections[0]],
-          ]
-          break
-        case 2: {
-          // 交点が2つの場合は円周に近いほうをスナップ先とする
-          const distance0 = calcDistance(pointingCoord, intersections[0])
-          const distance1 = calcDistance(pointingCoord, intersections[1])
-          snapDestinationCoordOnCircle = [
-            ...snapDestinationCoordOnCircle,
-            [closeCircle.id, distance0 < distance1 ? intersections[0] : intersections[1]],
-          ]
-          break
-        }
-        default:
-          throw new Error(`Unexpected too many intersections ${intersections}`)
+    let snapDestinationCoordOnShape: [
+      shapeId: number,
+      snapCoord: Coordinate,
+      snapType: SnapType
+    ][] = []
+    // カーソル座標と図形の最近傍点間の距離が1以下の場合は、スナップ先となる図形上の一点を特定する
+    for (const shape of closeShapes) {
+      if (shape.type === 'circle') {
+        const circle = shape as CircleShape
+
+        // 円の中心点とカーソル座標を含む直線と円の交点を求める
+        const intersections = findIntersectionOfCircleAndLine(circle, {
+          start: circle.center,
+          end: pointingCoord,
+        })
+
+        // 交点が必ず2つあることを確認し、円周に近いほうをスナップ先とする
+        assert(intersections.length === 2)
+        const distance0 = calcDistance(pointingCoord, intersections[0])
+        const distance1 = calcDistance(pointingCoord, intersections[1])
+        snapDestinationCoordOnShape = [
+          ...snapDestinationCoordOnShape,
+          [circle.id, distance0 < distance1 ? intersections[0] : intersections[1], 'circumference'],
+        ]
+      }
+
+      if (shape.type === 'line') {
+        const line = shape as LineShape
+        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line)
+        snapDestinationCoordOnShape = [
+          ...snapDestinationCoordOnShape,
+          [line.id, nearestCoord, 'onLine'],
+        ]
       }
     }
 
     const snapToGridIntersectionMap = get(snapToGridIntersectionState)
     const snappingGridIntersection =
-      snapToGridIntersectionMap[`${pointingCoord.x}-${pointingCoord.y}`]
+      snapToGridIntersectionMap[`${pointingCoord.x}-${pointingCoord.y}`] ||
+      ([] as SnappingCoordCandidate[])
 
     const snapToConstraintPointMap = get(snapToShapeConstraintPointSelector)
     const snappingConstraintPoint =
-      snapToConstraintPointMap[`${pointingCoord.x}-${pointingCoord.y}`]
+      snapToConstraintPointMap[`${pointingCoord.x}-${pointingCoord.y}`] ||
+      ([] as SnappingCoordCandidate[])
 
     const allSnappingCoords: SnappingCoordCandidate[] = [
-      ...(snappingGridIntersection || ([] as SnappingCoordCandidate[])),
-      ...(snappingConstraintPoint || ([] as SnappingCoordCandidate[])),
-      ...snapDestinationCoordOnCircle.map(entry => {
-        const [circleId, coord] = entry
-        return {
-          ...coord,
-          priority: 1,
-          snapInfo: { type: 'circumference', targetShapeId: circleId } as SnapInfoCircumference,
-        }
-      }),
+      ...snappingGridIntersection,
+      ...snappingConstraintPoint,
+      ...snapDestinationCoordOnShape
+        .filter(entry => {
+          // 図形上の拘束点にスナップが可能な場合、同じ図形上の拘束点以外へのスナップは行わない
+          const [shapeId] = entry
+          return !snappingConstraintPoint.some(
+            constraint => (constraint.snapInfo as ShapeRelatedSnapInfo).targetShapeId === shapeId
+          )
+        })
+        .map(entry => {
+          const [shapeId, coord, snapType] = entry
+          return {
+            ...coord,
+            priority: 1,
+            snapInfo: { type: snapType, targetShapeId: shapeId } as SnapInfoCircumference,
+          }
+        }),
     ]
 
     let maximumPriority = 0
