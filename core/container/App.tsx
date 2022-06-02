@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
@@ -75,7 +75,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     initializeHistory()
     addKeyListener('remove', removeSelectedShape)
-  }, [])
+  }, [addKeyListener, initializeHistory, removeSelectedShape])
 
   const addLineShape = (newShapeSeed: LineShapeSeed) => {
     const { start, end } = newShapeSeed
@@ -173,11 +173,22 @@ const App: React.FC<Props> = ({ onExport }) => {
     setPointingCoord(convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY }))
   }
 
-  const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate => {
-    const point = stageRef.current!.createSVGPoint()
+  const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate | null => {
+    const stage = stageRef.current
+    if (stage === null) {
+      return null
+    }
+
+    const point = stage.createSVGPoint()
     point.x = domCoord.x
     point.y = domCoord.y
-    return point.matrixTransform(stageRef.current!.getScreenCTM()!.inverse())
+
+    const domMatrix = stage.getScreenCTM()
+    if (domMatrix === null) {
+      return null
+    }
+
+    return point.matrixTransform(domMatrix.inverse())
   }
 
   const exportAsSvg = () => {
@@ -205,7 +216,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     setSnapDestinationCoord(prevState => {
       const newState = { ...prevState }
 
-      for (let targetCoord of targetCoords) {
+      for (const targetCoord of targetCoords) {
         for (let x = Math.floor(targetCoord.x) - 4; x <= Math.ceil(targetCoord.x) + 4; x++) {
           for (let y = Math.floor(targetCoord.y) - 4; y <= Math.ceil(targetCoord.y) + 4; y++) {
             const key = `${x}-${y}`

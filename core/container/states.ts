@@ -1,12 +1,4 @@
-import {
-  atom,
-  atomFamily,
-  RecoilValueReadOnly,
-  selector,
-  selectorFamily,
-  Snapshot,
-  waitForAll,
-} from 'recoil'
+import { atom, atomFamily, selector, selectorFamily, Snapshot, waitForAll } from 'recoil'
 import {
   calcDistance,
   calcDistanceFromCircumference,
@@ -268,7 +260,7 @@ export const supplementalLinesState = selector<LineShapeSeed[]>({
           shape => shape.id === circleCenterCoordInfo.targetShapeId
         ) as CircleShape
         return {
-          type: 'line' as 'line',
+          type: 'line' as const,
           start: { x: circle.center.x - circle.radius, y: circle.center.y },
           end: { x: circle.center.x + circle.radius, y: circle.center.y },
         }
@@ -296,7 +288,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
 
     let snapDestinationCoordOnCircle: [circleId: number, snapCoord: Coordinate][] = []
     // 現在指している座標と最も近い円の距離が1以下の場合はスナップとなる円周上の一点を特定する
-    for (let closeCircle of closeCircles) {
+    for (const closeCircle of closeCircles) {
       // 直線と円の交点を求めて、現在指している座標に近い方の点をスナップ先とする
       const intersections = findIntersectionOfCircleAndLine(closeCircle, {
         start: closeCircle.center,
@@ -311,7 +303,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
             [closeCircle.id, intersections[0]],
           ]
           break
-        case 2:
+        case 2: {
           const distance0 = calcDistance(pointingCoord, intersections[0])
           const distance1 = calcDistance(pointingCoord, intersections[1])
           snapDestinationCoordOnCircle = [
@@ -319,6 +311,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
             [closeCircle.id, distance0 < distance1 ? intersections[0] : intersections[1]],
           ]
           break
+        }
         default:
           throw new Error(`Unexpected too many intersections ${intersections}`)
       }
@@ -425,14 +418,14 @@ export const canUndoSelector = selector<boolean>({
 
 // デバッグ用に点を描画する時に使う
 // export let debugCoordState: RecoilState<Coordinate[]> | undefined = undefined
-export let debugCoordState: RecoilValueReadOnly<Coordinate[]> | undefined = undefined
-if (process.env.NODE_ENV === 'development') {
-  // debugCoordState = atom<Coordinate[]>({
-  //   key: 'debugCoord',
-  //   default: [],
-  // })
-  // debugCoordState = selector<Coordinate[]>({
-  //   key: 'debugCoord',
-  //   get: ({ get }) => [],
-  // })
-}
+// export const debugCoordState: RecoilValueReadOnly<Coordinate[]> | undefined = undefined
+// if (process.env.NODE_ENV === 'development') {
+// debugCoordState = atom<Coordinate[]>({
+//   key: 'debugCoord',
+//   default: [],
+// })
+// debugCoordState = selector<Coordinate[]>({
+//   key: 'debugCoord',
+//   get: ({ get }) => [],
+// })
+// }

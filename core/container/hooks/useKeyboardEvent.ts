@@ -24,46 +24,49 @@ const useKeyboardEvent = () => {
     operationModeRef.current = operationMode
   }, [operationMode])
 
-  useEffect(() => {
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [])
-
   const addKeyListener = useCallback((event: eventList, callback: () => void) => {
     keyLister.current[event] = callback
   }, [])
 
-  const onKeyDown = useCallback((e: KeyboardEvent) => {
-    console.debug(`Key pressed: ${e.key} Meta: ${e.metaKey} `)
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      console.debug(`Key pressed: ${e.key} Meta: ${e.metaKey} `)
 
-    // 図形の描画中の場合は描画中の図形を破棄する
-    if (e.key === 'Escape') {
-      switch (operationModeRef.current) {
-        case 'circle:fix-radius':
-          setOperationMode('circle:point-center')
-          resetTemporaryShapeBase()
-          break
-        case 'line:point-end':
-          setOperationMode('line:point-start')
-          resetTemporaryShapeBase()
-          break
-        default:
-          // noop
-          break
+      // 図形の描画中の場合は描画中の図形を破棄する
+      if (e.key === 'Escape') {
+        switch (operationModeRef.current) {
+          case 'circle:fix-radius':
+            setOperationMode('circle:point-center')
+            resetTemporaryShapeBase()
+            break
+          case 'line:point-end':
+            setOperationMode('line:point-start')
+            resetTemporaryShapeBase()
+            break
+          default:
+            // noop
+            break
+        }
       }
-    }
 
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-      const listener = keyLister.current['remove']
-      if (listener) {
-        listener(e)
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const listener = keyLister.current['remove']
+        if (listener) {
+          listener(e)
+        }
       }
-    }
 
-    if (e.metaKey && e.key === 'z') {
-      undo()
-    }
-  }, [])
+      if (e.metaKey && e.key === 'z') {
+        undo()
+      }
+    },
+    [resetTemporaryShapeBase, setOperationMode, undo]
+  )
+
+  useEffect(() => {
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onKeyDown])
 
   return { addKeyListener }
 }

@@ -15,34 +15,6 @@ const useHistoryUpdater = () => {
 
   const _canUndo = useRecoilValue(canUndoSelector)
 
-  const snapshotRef = useRef(_snapshot)
-  useEffect(() => {
-    snapshotRef.current = _snapshot
-    addSnapshot()
-  }, [_snapshot])
-
-  const snapshotsRef = useRef(_snapshots)
-  useEffect(() => {
-    snapshotsRef.current = _snapshots
-  }, [_snapshots])
-
-  const currentSnapshotVersionRef = useRef(_currentSnapshotVersion)
-  useEffect(() => {
-    currentSnapshotVersionRef.current = _currentSnapshotVersion
-  }, [_currentSnapshotVersion])
-
-  const canUndoRef = useRef(_canUndo)
-  useEffect(() => {
-    canUndoRef.current = _canUndo
-  }, [_canUndo])
-
-  const initializeHistory = useCallback(() => {
-    const snapshot = snapshotRef.current
-
-    setSnapshots([snapshot])
-    setCurrentSnapshotVersion(0)
-  }, [])
-
   const addSnapshot = useCallback(() => {
     const snapshot = snapshotRef.current
     const snapshots = snapshotsRef.current
@@ -75,7 +47,35 @@ const useHistoryUpdater = () => {
       })
       setCurrentSnapshotVersion(newSnapshotVersion)
     }
-  }, [])
+  }, [setCurrentSnapshotVersion, setSnapshots])
+
+  const snapshotRef = useRef(_snapshot)
+  useEffect(() => {
+    snapshotRef.current = _snapshot
+    addSnapshot()
+  }, [_snapshot, addSnapshot])
+
+  const snapshotsRef = useRef(_snapshots)
+  useEffect(() => {
+    snapshotsRef.current = _snapshots
+  }, [_snapshots])
+
+  const currentSnapshotVersionRef = useRef(_currentSnapshotVersion)
+  useEffect(() => {
+    currentSnapshotVersionRef.current = _currentSnapshotVersion
+  }, [_currentSnapshotVersion])
+
+  const canUndoRef = useRef(_canUndo)
+  useEffect(() => {
+    canUndoRef.current = _canUndo
+  }, [_canUndo])
+
+  const initializeHistory = useCallback(() => {
+    const snapshot = snapshotRef.current
+
+    setSnapshots([snapshot])
+    setCurrentSnapshotVersion(0)
+  }, [setCurrentSnapshotVersion, setSnapshots])
 
   return {
     initializeHistory,

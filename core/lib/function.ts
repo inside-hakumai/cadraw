@@ -182,7 +182,7 @@ export const getSnapDestinationCoordDefaultValue = (): {
 } => {
   const defaultValue: { [xy: string]: SnappingCoordCandidate[] | undefined } = {}
 
-  for (let targetCoord of getGridIntersections()) {
+  for (const targetCoord of getGridIntersections()) {
     for (let x = Math.floor(targetCoord.x) - 4; x <= Math.ceil(targetCoord.x) + 4; x++) {
       for (let y = Math.floor(targetCoord.y) - 4; y <= Math.ceil(targetCoord.y) + 4; y++) {
         const key = `${x}-${y}`

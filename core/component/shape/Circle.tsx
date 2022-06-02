@@ -27,7 +27,7 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
     if (!isCircleShape(shape)) {
       throw new Error(`Shape(ID = ${shapeId} is not a circle`)
     }
-  }, [shape])
+  }, [shapeId, shape])
 
   const { center, radius } = shape
 

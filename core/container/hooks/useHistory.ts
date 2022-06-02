@@ -60,7 +60,7 @@ const useHistory = () => {
       gotoSnapshot(snapshots[currentSnapshotVersion - 1])
       resetPointingCoord()
     }
-  }, [])
+  }, [gotoSnapshot, resetPointingCoord])
 
   return {
     undo,

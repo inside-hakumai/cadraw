@@ -1,21 +1,13 @@
 import React from 'react'
 import { css } from '@emotion/react'
-import {
-  isCircleShape,
-  isLineShape,
-  isTemporaryCircleShape,
-  isTemporaryLineShape,
-} from '../lib/typeguard'
+import { isTemporaryCircleShape, isTemporaryLineShape } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
-  shapeIdsState,
-  shapesSelector,
   filteredShapeIdsSelector,
   snappingCoordState,
   supplementalLinesState,
   temporaryShapeState,
   tooltipContentState,
-  debugCoordState,
   indicatingShapeIdState,
 } from '../container/states'
 import Grid from './Grid'
@@ -66,7 +58,6 @@ interface Props {
 }
 
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
-  const shapes = useRecoilValue(shapesSelector)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
   const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
   const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
@@ -76,7 +67,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const tooltipContent = useRecoilValue(tooltipContentState)
 
   // デバッグ用
-  const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
+  // const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
 
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
@@ -148,11 +139,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         )}
 
         {/* デバッグ用の点 */}
-        {process.env.NODE_ENV === 'development' &&
-          debugCoord &&
-          debugCoord.map((coord, index) => (
-            <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />
-          ))}
+        {/*{process.env.NODE_ENV === 'development' &&*/}
+        {/*  debugCoord &&*/}
+        {/*  debugCoord.map((coord, index) => (*/}
+        {/*    <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />*/}
+        {/*  ))}*/}
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}

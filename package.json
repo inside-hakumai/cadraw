@@ -55,6 +55,9 @@
   },
   "packageManager": "yarn@3.2.1",
   "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
+    "**/*": [
+      "eslint --fix",
+      "prettier --write --ignore-unknown"
+    ]
   }
 }

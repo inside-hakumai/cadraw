@@ -27,7 +27,7 @@ const Line: React.FC<Props> = ({ shapeId }) => {
     if (!isLineShape(shape)) {
       throw new Error(`Shape(ID = ${shapeId} is not a line`)
     }
-  }, [shape])
+  }, [shapeId, shape])
 
   const { start, end } = shape
 
