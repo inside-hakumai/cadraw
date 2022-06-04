@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
@@ -90,11 +90,13 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     if (operationMode === 'circle:point-center') {
       setTemporaryShapeBase({
-        type: 'temporary-circle',
+        type: 'tmp-circle',
         center: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryCircleShapeBase)
       setOperationMode('circle:fix-radius')
-    } else if (operationMode === 'circle:fix-radius' && temporaryShape) {
+    }
+
+    if (operationMode === 'circle:fix-radius' && temporaryShape) {
       const temporaryCircleShape = temporaryShape as TemporaryCircleShape
 
       const { center, radius } = temporaryCircleShape
@@ -112,7 +114,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     if (operationMode === 'line:point-start') {
       setTemporaryShapeBase({
-        type: 'temporary-line',
+        type: 'tmp-line',
         start: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryLineShapeBase)
       setOperationMode('line:point-end')
@@ -130,6 +132,31 @@ const App: React.FC<Props> = ({ onExport }) => {
       addShape(newLineSeed)
       setTemporaryShapeBase(null)
       setOperationMode('line:point-start')
+    }
+
+    if (operationMode === 'supplementalLine:point-start') {
+      setTemporaryShapeBase({
+        type: 'tmp-supplementalLine',
+        start: { x: activeCoord.x, y: activeCoord.y },
+      } as TemporarySupplementalLineShapeBase)
+      setOperationMode('supplementalLine:point-end')
+    }
+
+    if (operationMode === 'supplementalLine:point-end') {
+      const temporarySupplementalLineShape = temporaryShape as TemporarySupplementalLineShape
+
+      const newLineSeed: SupplementalShapeSeed = {
+        type: 'supplementalLine',
+        start: {
+          x: temporarySupplementalLineShape.start.x,
+          y: temporarySupplementalLineShape.start.y,
+        },
+        end: { x: temporarySupplementalLineShape.end.x, y: temporarySupplementalLineShape.end.y },
+      }
+
+      addShape(newLineSeed)
+      setTemporaryShapeBase(null)
+      setOperationMode('supplementalLine:point-start')
     }
 
     if (operationMode === 'select') {
@@ -197,9 +224,13 @@ const App: React.FC<Props> = ({ onExport }) => {
     <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
-        onActivateShapeSelect={() => changeOperationMode('select')}
-        onActivateLineDraw={() => changeOperationMode('line:point-start')}
-        onActivateCircleDraw={() => changeOperationMode('circle:point-center')}
+        onActivateSupplementalLineDraw={useCallback(
+          () => changeOperationMode('supplementalLine:point-start'),
+          []
+        )}
+        onActivateShapeSelect={useCallback(() => changeOperationMode('select'), [])}
+        onActivateLineDraw={useCallback(() => changeOperationMode('line:point-start'), [])}
+        onActivateCircleDraw={useCallback(() => changeOperationMode('circle:point-center'), [])}
         onUndo={undo}
         onClickExportButton={exportAsSvg}
       />

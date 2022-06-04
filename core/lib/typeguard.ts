@@ -5,8 +5,9 @@ export const isObject = (value: any): boolean => {
 }
 
 export const isLineShape = (shape: any): shape is LineShape => {
+  const expectedType: ShapeType = 'line'
   return (
-    shape?.type === 'line' &&
+    shape?.type === expectedType &&
     isObject(shape?.start) &&
     typeof shape?.start?.x === 'number' &&
     typeof shape?.start?.y === 'number' &&
@@ -17,8 +18,9 @@ export const isLineShape = (shape: any): shape is LineShape => {
 }
 
 export const isCircleShape = (shape: any): shape is CircleShape => {
+  const expectedType: ShapeType = 'circle'
   return (
-    shape?.type === 'circle' &&
+    shape?.type === expectedType &&
     isObject(shape?.center) &&
     typeof shape?.center?.x === 'number' &&
     typeof shape?.center?.y === 'number' &&
@@ -26,9 +28,23 @@ export const isCircleShape = (shape: any): shape is CircleShape => {
   )
 }
 
-export const isTemporaryLineShape = (shape: any): shape is TemporaryLineShape => {
+export const isSupplementalLineShape = (shape: any): shape is SupplementalLineShape => {
+  const expectedType: ShapeType = 'supplementalLine'
   return (
-    shape?.type === 'temporary-line' &&
+    shape?.type === expectedType &&
+    isObject(shape?.start) &&
+    typeof shape?.start?.x === 'number' &&
+    typeof shape?.start?.y === 'number' &&
+    isObject(shape?.end) &&
+    typeof shape?.end?.x === 'number' &&
+    typeof shape?.end?.y === 'number'
+  )
+}
+
+export const isTemporaryLineShape = (shape: any): shape is TemporaryLineShape => {
+  const expectedType: TemporaryShapeType = 'tmp-line'
+  return (
+    shape?.type === expectedType &&
     isObject(shape?.start) &&
     typeof shape?.start?.x === 'number' &&
     typeof shape?.start?.y === 'number' &&
@@ -39,8 +55,9 @@ export const isTemporaryLineShape = (shape: any): shape is TemporaryLineShape =>
 }
 
 export const isTemporaryCircleShape = (shape: any): shape is TemporaryCircleShape => {
+  const expectedType: TemporaryShapeType = 'tmp-circle'
   return (
-    shape?.type === 'temporary-circle' &&
+    shape?.type === expectedType &&
     isObject(shape?.center) &&
     typeof shape?.center.x === 'number' &&
     typeof shape?.center.y === 'number' &&
@@ -51,5 +68,18 @@ export const isTemporaryCircleShape = (shape: any): shape is TemporaryCircleShap
     isObject(shape?.diameterEnd) &&
     typeof shape?.diameterEnd?.x === 'number' &&
     typeof shape?.diameterEnd?.y === 'number'
+  )
+}
+
+export const isTemporarySupplementalLineShape = (shape: any): shape is TemporaryLineShape => {
+  const expectedType: TemporaryShapeType = 'tmp-supplementalLine'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.start) &&
+    typeof shape?.start?.x === 'number' &&
+    typeof shape?.start?.y === 'number' &&
+    isObject(shape?.end) &&
+    typeof shape?.end?.x === 'number' &&
+    typeof shape?.end?.y === 'number'
   )
 }

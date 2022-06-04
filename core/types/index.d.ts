@@ -1,10 +1,13 @@
-type ShapeType = 'line' | 'circle'
+type ShapeType = 'line' | 'circle' | 'supplementalLine'
+type TemporaryShapeType = 'tmp-line' | 'tmp-circle' | 'tmp-supplementalLine'
 type OperationMode =
   | 'line:point-start'
   | 'line:point-end'
   | 'circle:point-center'
   | 'circle:fix-radius'
   | 'select'
+  | 'supplementalLine:point-start'
+  | 'supplementalLine:point-end'
 type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge' | 'onLine'
 type ConstraintType = 'circleCenter' | 'lineEdge'
 
@@ -23,7 +26,7 @@ interface SnappingCoordinate extends Coordinate {
 }
 
 interface ShapeSeed {
-  type: 'circle' | 'line'
+  type: ShapeType
 }
 
 interface LineShapeSeed extends ShapeSeed {
@@ -38,8 +41,14 @@ interface CircleShapeSeed extends ShapeSeed {
   radius: number
 }
 
+interface SupplementalShapeSeed extends ShapeSeed {
+  type: 'supplementalLine'
+  start: Coordinate
+  end: Coordinate
+}
+
 interface Shape {
-  type: 'circle' | 'line'
+  type: ShapeType
   id: number
 }
 
@@ -51,32 +60,40 @@ interface CircleShape extends Shape, CircleShapeSeed {
   type: 'circle'
 }
 
-interface TemporaryShapeConstraints extends ShapeSeed {
-  type: 'temporary-line' | 'temporary-circle'
-}
-
-interface TemporaryLineShapeBase extends TemporaryShapeConstraints {
-  type: 'temporary-line'
-  start: Coordinate
-}
-
-interface TemporaryCircleShapeBase extends TemporaryShape {
-  type: 'temporary-circle'
-  center: Coordinate
+interface SupplementalLineShape extends Shape, SupplementalShapeSeed {
+  type: 'supplementalLine'
 }
 
 interface TemporaryShape extends ShapeSeed {
-  type: 'temporary-line' | 'temporary-circle'
+  type: TemporaryShapeType
 }
 
+interface TemporaryLineShapeBase extends TemporaryShape {
+  type: 'tmp-line'
+  start: Coordinate
+}
 interface TemporaryLineShape extends TemporaryLineShapeBase, TemporaryShape {
   end: Coordinate
 }
 
+interface TemporaryCircleShapeBase extends TemporaryShape {
+  type: 'tmp-circle'
+  center: Coordinate
+}
 interface TemporaryCircleShape extends TemporaryCircleShapeBase, TemporaryShape {
   radius: number
   diameterStart: Coordinate
   diameterEnd: Coordinate
+}
+
+interface TemporarySupplementalLineShapeBase extends TemporaryShape {
+  type: 'tmp-supplementalLine'
+  start: Coordinate
+}
+interface TemporarySupplementalLineShape
+  extends TemporarySupplementalLineShapeBase,
+    TemporaryShape {
+  end: Coordinate
 }
 
 interface SnapInfo {

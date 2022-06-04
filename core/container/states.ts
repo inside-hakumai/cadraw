@@ -22,6 +22,8 @@ export const currentOperatingShapeSelector = selector<ShapeType | null>({
       return 'line'
     } else if (operationMode.startsWith('circle:')) {
       return 'circle'
+    } else if (operationMode.startsWith('supplementalLine:')) {
+      return 'supplementalLine'
     } else {
       return null
     }
@@ -132,6 +134,21 @@ export const shapeConstraintPointsSelector = selector<
             },
           ]
         }
+        if (shape.type === 'supplementalLine') {
+          const lineShape = shape as SupplementalLineShape
+          return [
+            {
+              coord: lineShape.start,
+              targetShapeId: shape.id,
+              constraintType: 'lineEdge' as const,
+            },
+            {
+              coord: lineShape.end,
+              targetShapeId: shape.id,
+              constraintType: 'lineEdge' as const,
+            },
+          ]
+        }
 
         return []
       })
@@ -144,7 +161,7 @@ export const shapeConstraintPointsSelector = selector<
  */
 
 // 作成中の図形の拘束条件を管理するAtom
-export const temporaryShapeConstraintsState = atom<TemporaryShapeConstraints | null>({
+export const temporaryShapeConstraintsState = atom<TemporaryShape | null>({
   key: 'temporaryShapeConstraints',
   default: null,
 })
@@ -180,16 +197,27 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
         diameterStart: temporaryCircleDiameterStart,
         diameterEnd: temporaryCircleDiameterEnd,
       } as TemporaryCircleShape
-    } else if (operationMode === 'line:point-end') {
+    }
+
+    if (operationMode === 'line:point-end') {
       const temporaryLineShapeBase = temporaryShapeBase as TemporaryLineShapeBase
 
       return {
         ...temporaryLineShapeBase,
         end: coord,
       } as TemporaryLineShape
-    } else {
-      return null
     }
+
+    if (operationMode === 'supplementalLine:point-end') {
+      const temporaryLineShapeBase = temporaryShapeBase as TemporarySupplementalLineShapeBase
+
+      return {
+        ...temporaryLineShapeBase,
+        end: coord,
+      } as TemporarySupplementalLineShape
+    }
+
+    return null
   },
 })
 
@@ -204,10 +232,10 @@ export const tooltipContentState = selector<string | null>({
       return null
     }
 
-    if (temporaryShape.type === 'temporary-circle') {
+    if (temporaryShape.type === 'tmp-circle') {
       const temporaryCircleShape = temporaryShape as TemporaryCircleShape
       return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
-    } else if (temporaryShape.type === 'temporary-line') {
+    } else if (temporaryShape.type === 'tmp-line') {
       const temporaryLineShape = temporaryShape as TemporaryLineShape
 
       return (
@@ -386,6 +414,16 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
           closeShapes = [...closeShapes, line]
         }
       }
+
+      if (shape.type === 'supplementalLine') {
+        const line = shape as SupplementalLineShape
+
+        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line)
+        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
+        if (distance < 10 && !isLineTerminal) {
+          closeShapes = [...closeShapes, line]
+        }
+      }
     }
 
     let snapDestinationCoordOnShape: [
@@ -416,6 +454,15 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
 
       if (shape.type === 'line') {
         const line = shape as LineShape
+        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line)
+        snapDestinationCoordOnShape = [
+          ...snapDestinationCoordOnShape,
+          [line.id, nearestCoord, 'onLine'],
+        ]
+      }
+
+      if (shape.type === 'supplementalLine') {
+        const line = shape as SupplementalLineShape
         const { nearestCoord } = findNearestPointOnLine(pointingCoord, line)
         snapDestinationCoordOnShape = [
           ...snapDestinationCoordOnShape,

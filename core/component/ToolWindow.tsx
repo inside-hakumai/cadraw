@@ -11,14 +11,6 @@ import {
   snappingCoordState,
 } from '../container/states'
 
-interface Props {
-  onActivateShapeSelect: () => void
-  onActivateLineDraw: () => void
-  onActivateCircleDraw: () => void
-  onUndo: () => void
-  onClickExportButton: () => void
-}
-
 const style = css`
   position: absolute;
   bottom: 10px;
@@ -43,7 +35,17 @@ const coordViewerStyle = css`
   }
 `
 
+interface Props {
+  onActivateSupplementalLineDraw: () => void
+  onActivateShapeSelect: () => void
+  onActivateLineDraw: () => void
+  onActivateCircleDraw: () => void
+  onUndo: () => void
+  onClickExportButton: () => void
+}
+
 const ToolWindow: React.FC<Props> = ({
+  onActivateSupplementalLineDraw,
   onActivateShapeSelect,
   onActivateLineDraw,
   onActivateCircleDraw,
@@ -61,6 +63,11 @@ const ToolWindow: React.FC<Props> = ({
   return (
     <>
       <div css={style}>
+        <button
+          onClick={onActivateSupplementalLineDraw}
+          disabled={currentOperatingShape === 'supplementalLine'}>
+          補助線
+        </button>
         <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
           選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
         </button>

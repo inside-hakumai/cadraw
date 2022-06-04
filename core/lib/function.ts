@@ -75,8 +75,6 @@ export const findNearestPointOnLine = (
   // nの逆ベクトル（終点から始点に向かうベクトル）とベクトルc（終点からpointに向かうベクトル）のなす角のcos
   const cosNC = (-n.x * c.x + -n.y * c.y) / calcVectorLength(c)
 
-  console.debug(cosNB, cosNC)
-
   // cosNBが負の場合、最近傍点が線分の始点から外側に出てしまっているので、最近傍点は始点となる
   if (cosNB <= 0) {
     return {

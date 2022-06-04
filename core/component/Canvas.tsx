@@ -1,6 +1,10 @@
 import React from 'react'
 import { css } from '@emotion/react'
-import { isTemporaryCircleShape, isTemporaryLineShape } from '../lib/typeguard'
+import {
+  isTemporaryCircleShape,
+  isTemporaryLineShape,
+  isTemporarySupplementalLineShape,
+} from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
   filteredShapeIdsSelector,
@@ -61,6 +65,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
   const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
   const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
+  const supplementalLineShapeIds = useRecoilValue(filteredShapeIdsSelector('supplementalLine'))
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const supplementalLines = useRecoilValue(supplementalLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
@@ -100,6 +105,17 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       <Grid css={svgStyle} />
 
       <svg
+        id={'supplementalRenderer'}
+        viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
+        xmlns='http://www.w3.org/2000/svg'
+        css={svgStyle}>
+        {/* 補助線 */}
+        {supplementalLineShapeIds.map(shapeId => (
+          <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} isSupplementalLine={true} />
+        ))}
+      </svg>
+
+      <svg
         id={'renderer'}
         ref={stageRef}
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
@@ -119,6 +135,13 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {/* 作成中（確定前）の図形（線） */}
         {isTemporaryLineShape(temporaryShape) && (
           <TemporaryLine shape={temporaryShape} startCircleRef={temporaryLineStartRef} />
+        )}
+        {isTemporarySupplementalLineShape(temporaryShape) && (
+          <TemporaryLine
+            shape={temporaryShape}
+            startCircleRef={temporaryLineStartRef}
+            isSupplementalLine={true}
+          />
         )}
 
         {/* 作成した図形 */}

@@ -3,9 +3,10 @@ import React from 'react'
 interface Props {
   shape: TemporaryLineShape
   startCircleRef: React.Ref<SVGCircleElement>
+  isSupplementalLine?: boolean
 }
 
-const TemporaryLine: React.FC<Props> = ({ shape, startCircleRef }) => {
+const TemporaryLine: React.FC<Props> = ({ shape, startCircleRef, isSupplementalLine = false }) => {
   const { start, end } = shape
 
   return (
@@ -18,6 +19,7 @@ const TemporaryLine: React.FC<Props> = ({ shape, startCircleRef }) => {
         y2={end.y}
         stroke={'grey'}
         strokeWidth={1}
+        strokeDasharray={isSupplementalLine ? '3 3' : ''}
       />
       <circle
         key={'temporaryLineStart'}
