@@ -159,6 +159,24 @@ export const findIntersectionOfCircleAndLine = (
 }
 
 /**
+ * y=0、x>0である円周上の一点との間の中心角をもとに、円上の一点の座標を返します。
+ * @param center 円の中心点の座標
+ * @param radius 円の半径
+ * @param degree 座標を求める円周上の一点の中心角
+ * @returns 座標
+ */
+export const calcCircumferenceCoordFromDegree = (
+  center: Coordinate,
+  radius: number,
+  degree: number
+): Coordinate => {
+  const radian = (degree * Math.PI) / 180
+  const x = center.x + radius * Math.cos(radian)
+  const y = center.y - radius * Math.sin(radian) // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
+  return { x, y }
+}
+
+/**
  * 円周上の一点を指定し、y=0、x>0である円周上の一点との間の中心角を返します。
  * @param circle 円周上の一点の座標
  * @param center 円の中心座標

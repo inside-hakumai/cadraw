@@ -11,12 +11,18 @@ type OperationMode =
   | 'select'
   | 'supplementalLine:point-start'
   | 'supplementalLine:point-end'
-type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge' | 'onLine'
-type ConstraintType = 'circleCenter' | 'lineEdge'
+type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
+type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine'
 
 interface Coordinate {
   x: number
   y: number
+}
+
+interface ShapeConstraintPoint {
+  coord: Coordinate
+  targetShapeId: number
+  constraintType: ConstraintType
 }
 
 interface SnappingCoordCandidate extends Coordinate {

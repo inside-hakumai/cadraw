@@ -2,6 +2,7 @@ import { atom, atomFamily, selector, selectorFamily, Snapshot, waitForAll } from
 import {
   assert,
   calcCentralAngleFromHorizontalLine,
+  calcCircumferenceCoordFromDegree,
   calcDistance,
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
@@ -106,13 +107,7 @@ export const shapesSelector = selector<Shape[]>({
 })
 
 // 図形の拘束点を返すSelector
-export const shapeConstraintPointsSelector = selector<
-  {
-    coord: Coordinate
-    targetShapeId: number
-    constraintType: ConstraintType
-  }[]
->({
+export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
   key: 'shapeConstraintPoints',
   get: ({ get }) => {
     const shapes = get(shapesSelector)
@@ -125,14 +120,15 @@ export const shapeConstraintPointsSelector = selector<
               coord: lineShape.start,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
             {
               coord: lineShape.end,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
           ]
         }
+
         if (shape.type === 'circle') {
           const circleShape = shape as CircleShape
           return [
@@ -140,9 +136,32 @@ export const shapeConstraintPointsSelector = selector<
               coord: circleShape.center,
               targetShapeId: shape.id,
               constraintType: 'circleCenter' as const,
-            },
+            } as ShapeConstraintPoint,
           ]
         }
+
+        if (shape.type === 'arc') {
+          const { id, center, radius, startAngle, endAngle } = shape as ArcShape
+
+          return [
+            {
+              coord: center,
+              targetShapeId: id,
+              constraintType: 'arcCenter' as const,
+            } as ShapeConstraintPoint,
+            {
+              coord: calcCircumferenceCoordFromDegree(center, radius, startAngle),
+              targetShapeId: id,
+              constraintType: 'arcEdge' as const,
+            } as ShapeConstraintPoint,
+            {
+              coord: calcCircumferenceCoordFromDegree(center, radius, endAngle),
+              targetShapeId: shape.id,
+              constraintType: 'arcEdge' as const,
+            } as ShapeConstraintPoint,
+          ]
+        }
+
         if (shape.type === 'supplementalLine') {
           const lineShape = shape as SupplementalLineShape
           return [
@@ -150,16 +169,16 @@ export const shapeConstraintPointsSelector = selector<
               coord: lineShape.start,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
             {
               coord: lineShape.end,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
           ]
         }
 
-        return []
+        return [] as ShapeConstraintPoint[]
       })
       .flat()
   },

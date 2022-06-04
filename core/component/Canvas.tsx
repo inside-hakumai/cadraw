@@ -196,6 +196,10 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
                 return '円の中心'
               } else if (info.type === 'circumference') {
                 return '円周上'
+              } else if (info.type === 'arcCenter') {
+                return '円弧の中心'
+              } else if (info.type === 'arcEdge') {
+                return '円弧の端'
               } else if (info.type === 'lineEdge') {
                 return '線の端'
               } else if (info.type === 'onLine') {

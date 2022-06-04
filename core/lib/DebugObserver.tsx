@@ -6,7 +6,7 @@ const DebugObserver: React.FC = () => {
 
   useEffect(() => {
     const nodes = Array.from(snapshot.getNodes_UNSTABLE({ isModified: true })).filter(
-      node => node.key !== 'pointingCoord'
+      node => node.key !== 'pointingCoord' && node.key !== 'cursorClientPosition'
     )
 
     if (nodes.length > 0) {
