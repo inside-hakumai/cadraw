@@ -7,7 +7,7 @@ import {
   findNearestPointOnLine,
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
-import { isCircleShape, isLineShape } from '../lib/typeguard'
+import { isCircleShape, isLineShape, isSupplementalLineShape } from '../lib/typeguard'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -287,6 +287,12 @@ export const indicatingShapeIdState = selector<number | null>({
           nearestIndex = i
         }
       } else if (isLineShape(shape)) {
+        const nearest = findNearestPointOnLine(pointingCoord, shape)
+        if (nearest.distance < minimumDistance) {
+          minimumDistance = nearest.distance
+          nearestIndex = i
+        }
+      } else if (isSupplementalLineShape(shape)) {
         const nearest = findNearestPointOnLine(pointingCoord, shape)
         if (nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance

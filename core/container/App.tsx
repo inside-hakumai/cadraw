@@ -60,6 +60,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         for (const shapeId of selectedShapeIdList) {
           set(shapeStateFamily(shapeId), undefined)
         }
+        set(selectedShapeIdsState, [])
       },
     []
   )
