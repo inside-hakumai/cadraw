@@ -108,6 +108,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       {/* 背景のグリッド線 */}
       <Grid css={svgStyle} />
 
+      {/* エクスポート時に生成物に載せない図形をレンダリングするSVG */}
       <svg
         id={'supplementalRenderer'}
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
@@ -117,6 +118,22 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {supplementalLineShapeIds.map(shapeId => (
           <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} isSupplementalLine={true} />
         ))}
+
+        {/* 近くの座標にスナップする際にスナップ先を示す点 */}
+        {snappingCoord && (
+          <SnapCircle
+            key={'snappingCircleDot'}
+            coordinate={snappingCoord}
+            refObject={snappingDotRef}
+          />
+        )}
+
+        {/* デバッグ用の点 */}
+        {/*{process.env.NODE_ENV === 'development' &&*/}
+        {/*  debugCoord &&*/}
+        {/*  debugCoord.map((coord, index) => (*/}
+        {/*    <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />*/}
+        {/*  ))}*/}
       </svg>
 
       <svg
@@ -163,22 +180,6 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {arcShapeIds.map(shapeId => (
           <Arc key={`arc-${shapeId}`} shapeId={shapeId} />
         ))}
-
-        {/* 近くの座標にスナップする際にスナップ先の示す点 */}
-        {snappingCoord && (
-          <SnapCircle
-            key={'snappingCircleDot'}
-            coordinate={snappingCoord}
-            refObject={snappingDotRef}
-          />
-        )}
-
-        {/* デバッグ用の点 */}
-        {/*{process.env.NODE_ENV === 'development' &&*/}
-        {/*  debugCoord &&*/}
-        {/*  debugCoord.map((coord, index) => (*/}
-        {/*    <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />*/}
-        {/*  ))}*/}
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}
