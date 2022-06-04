@@ -216,10 +216,13 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
   }
 
-  const changeOperationMode = (mode: OperationMode) => {
-    setSelectedShapeIds([])
-    setOperationMode(mode)
-  }
+  const changeOperationMode = useCallback(
+    (mode: OperationMode) => {
+      setSelectedShapeIds([])
+      setOperationMode(mode)
+    },
+    [setSelectedShapeIds, setOperationMode]
+  )
 
   return (
     <>
@@ -227,11 +230,20 @@ const App: React.FC<Props> = ({ onExport }) => {
       <ToolWindow
         onActivateSupplementalLineDraw={useCallback(
           () => changeOperationMode('supplementalLine:point-start'),
-          []
+          [changeOperationMode]
         )}
-        onActivateShapeSelect={useCallback(() => changeOperationMode('select'), [])}
-        onActivateLineDraw={useCallback(() => changeOperationMode('line:point-start'), [])}
-        onActivateCircleDraw={useCallback(() => changeOperationMode('circle:point-center'), [])}
+        onActivateShapeSelect={useCallback(
+          () => changeOperationMode('select'),
+          [changeOperationMode]
+        )}
+        onActivateLineDraw={useCallback(
+          () => changeOperationMode('line:point-start'),
+          [changeOperationMode]
+        )}
+        onActivateCircleDraw={useCallback(
+          () => changeOperationMode('circle:point-center'),
+          [changeOperationMode]
+        )}
         onUndo={undo}
         onClickExportButton={exportAsSvg}
       />
