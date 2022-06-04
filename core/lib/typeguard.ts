@@ -28,6 +28,19 @@ export const isCircleShape = (shape: any): shape is CircleShape => {
   )
 }
 
+export const isArcShape = (shape: any): shape is ArcShape => {
+  const expectedType: ShapeType = 'arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.center) &&
+    typeof shape?.center.x === 'number' &&
+    typeof shape?.center.y === 'number' &&
+    typeof shape?.radius === 'number' &&
+    typeof shape?.startAngle === 'number' &&
+    typeof shape?.endAngle === 'number'
+  )
+}
+
 export const isSupplementalLineShape = (shape: any): shape is SupplementalLineShape => {
   const expectedType: ShapeType = 'supplementalLine'
   return (
@@ -68,6 +81,31 @@ export const isTemporaryCircleShape = (shape: any): shape is TemporaryCircleShap
     isObject(shape?.diameterEnd) &&
     typeof shape?.diameterEnd?.x === 'number' &&
     typeof shape?.diameterEnd?.y === 'number'
+  )
+}
+
+export const isTemporaryArcRadius = (shape: any): shape is TemporaryArcRadius => {
+  const expectedType: TemporaryShapeType = 'tmp-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.center) &&
+    typeof shape?.center.x === 'number' &&
+    typeof shape?.center.y === 'number' &&
+    typeof shape?.radius === 'number' &&
+    typeof shape?.startAngle === 'number'
+  )
+}
+
+export const isTemporaryArcShape = (shape: any): shape is TemporaryArcShape => {
+  const expectedType: TemporaryShapeType = 'tmp-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.center) &&
+    typeof shape?.center.x === 'number' &&
+    typeof shape?.center.y === 'number' &&
+    typeof shape?.radius === 'number' &&
+    typeof shape?.startAngle === 'number' &&
+    typeof shape?.endAngle === 'number'
   )
 }
 

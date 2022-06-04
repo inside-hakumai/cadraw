@@ -1,6 +1,7 @@
 import { atom, atomFamily, selector, selectorFamily, Snapshot, waitForAll } from 'recoil'
 import {
   assert,
+  calcCentralAngleFromHorizontalLine,
   calcDistance,
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
@@ -22,6 +23,8 @@ export const currentOperatingShapeSelector = selector<ShapeType | null>({
       return 'line'
     } else if (operationMode.startsWith('circle:')) {
       return 'circle'
+    } else if (operationMode.startsWith('arc:')) {
+      return 'arc'
     } else if (operationMode.startsWith('supplementalLine:')) {
       return 'supplementalLine'
     } else {
@@ -197,6 +200,37 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
         diameterStart: temporaryCircleDiameterStart,
         diameterEnd: temporaryCircleDiameterEnd,
       } as TemporaryCircleShape
+    }
+
+    if (operationMode === 'arc:fix-radius') {
+      const temporaryArcCenter = temporaryShapeBase as TemporaryArcCenter
+
+      const temporaryRadius = Math.sqrt(
+        Math.pow(temporaryArcCenter.center.x - coord.x, 2) +
+          Math.pow(temporaryArcCenter.center.y - coord.y, 2)
+      )
+
+      const temporaryStartAngle = calcCentralAngleFromHorizontalLine(
+        coord,
+        temporaryArcCenter.center
+      )
+
+      return {
+        ...temporaryShapeBase,
+        radius: temporaryRadius,
+        startAngle: temporaryStartAngle === null ? undefined : temporaryStartAngle,
+      } as TemporaryArcRadius
+    }
+
+    if (operationMode === 'arc:fix-angle') {
+      const temporaryArcRadius = temporaryShapeBase as TemporaryArcRadius
+
+      const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, temporaryArcRadius.center)
+
+      return {
+        ...temporaryShapeBase,
+        endAngle: temporaryEndAngle === null ? undefined : temporaryEndAngle,
+      } as TemporaryArcShape
     }
 
     if (operationMode === 'line:point-end') {

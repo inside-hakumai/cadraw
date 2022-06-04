@@ -159,6 +159,27 @@ export const findIntersectionOfCircleAndLine = (
 }
 
 /**
+ * 円周上の一点を指定し、y=0、x>0である円周上の一点との間の中心角を返します。
+ * @param circle 円周上の一点の座標
+ * @param center 円の中心座標
+ * @returns 中心角。 0 <= angle < 360 の範囲で返します。circleとcenterの座標が一致する場合はnullを返します。
+ */
+export const calcCentralAngleFromHorizontalLine = (coord: Coordinate, center: Coordinate) => {
+  const x = coord.x - center.x
+  const y = -1 * (coord.y - center.y) // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
+
+  const radius = calcDistance(center, coord)
+
+  const degree = (Math.acos(x / radius) * 180) / Math.PI
+
+  if (isNaN(degree)) {
+    return null
+  }
+
+  return y >= 0 ? degree : 360 - degree
+}
+
+/**
  * グリッド線の交点の座標のリストを返します。
  * @returns グリッド線の交点の座標のリスト
  */

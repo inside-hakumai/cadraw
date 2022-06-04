@@ -39,6 +39,7 @@ interface Props {
   onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
+  onActivateArcDraw: () => void
   onActivateCircleDraw: () => void
   onUndo: () => void
   onClickExportButton: () => void
@@ -49,6 +50,7 @@ const ToolWindow: React.FC<Props> = ({
   onActivateShapeSelect,
   onActivateLineDraw,
   onActivateCircleDraw,
+  onActivateArcDraw,
   onUndo,
   onClickExportButton,
 }) => {
@@ -74,8 +76,11 @@ const ToolWindow: React.FC<Props> = ({
         <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
           線
         </button>
+        <button onClick={onActivateArcDraw} disabled={currentOperatingShape === 'arc'}>
+          円弧
+        </button>
         <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
-          丸
+          円
         </button>
         <button onClick={onUndo} disabled={!canUndo}>
           元に戻す({currentSnapshotVersion ?? 'null'})

@@ -35,7 +35,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const shapes = useRecoilValue(shapesSelector)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
-  const setTemporaryShapeBase = useSetRecoilState(temporaryShapeConstraintsState)
+  const setTemporaryShapeConstraints = useSetRecoilState(temporaryShapeConstraintsState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
@@ -90,7 +90,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
 
     if (operationMode === 'circle:point-center') {
-      setTemporaryShapeBase({
+      setTemporaryShapeConstraints({
         type: 'tmp-circle',
         center: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryCircleShapeBase)
@@ -109,12 +109,50 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       addShape(newCircleSeed)
-      setTemporaryShapeBase(null)
+      setTemporaryShapeConstraints(null)
       setOperationMode('circle:point-center')
     }
 
+    if (operationMode === 'arc:point-center') {
+      setTemporaryShapeConstraints({
+        type: 'tmp-arc',
+        center: { x: activeCoord.x, y: activeCoord.y },
+      } as TemporaryArcCenter)
+      setOperationMode('arc:fix-radius')
+    }
+
+    if (operationMode === 'arc:fix-radius') {
+      const temporaryArcRadius = temporaryShape as TemporaryArcRadius
+      setTemporaryShapeConstraints(
+        oldValue =>
+          ({
+            ...oldValue,
+            radius: temporaryArcRadius.radius,
+            startAngle: temporaryArcRadius.startAngle,
+          } as TemporaryArcRadius)
+      )
+      setOperationMode('arc:fix-angle')
+    }
+
+    if (operationMode === 'arc:fix-angle') {
+      const temporaryArcShape = temporaryShape as TemporaryArcShape
+      const { center, radius, startAngle, endAngle } = temporaryArcShape
+
+      const newArcSeed: ArcShapeSeed = {
+        type: 'arc',
+        center,
+        radius,
+        startAngle,
+        endAngle,
+      }
+
+      addShape(newArcSeed)
+      setTemporaryShapeConstraints(null)
+      setOperationMode('arc:point-center')
+    }
+
     if (operationMode === 'line:point-start') {
-      setTemporaryShapeBase({
+      setTemporaryShapeConstraints({
         type: 'tmp-line',
         start: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryLineShapeBase)
@@ -131,12 +169,12 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       addShape(newLineSeed)
-      setTemporaryShapeBase(null)
+      setTemporaryShapeConstraints(null)
       setOperationMode('line:point-start')
     }
 
     if (operationMode === 'supplementalLine:point-start') {
-      setTemporaryShapeBase({
+      setTemporaryShapeConstraints({
         type: 'tmp-supplementalLine',
         start: { x: activeCoord.x, y: activeCoord.y },
       } as TemporarySupplementalLineShapeBase)
@@ -156,7 +194,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       addShape(newLineSeed)
-      setTemporaryShapeBase(null)
+      setTemporaryShapeConstraints(null)
       setOperationMode('supplementalLine:point-start')
     }
 
@@ -238,6 +276,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         )}
         onActivateLineDraw={useCallback(
           () => changeOperationMode('line:point-start'),
+          [changeOperationMode]
+        )}
+        onActivateArcDraw={useCallback(
+          () => changeOperationMode('arc:point-center'),
           [changeOperationMode]
         )}
         onActivateCircleDraw={useCallback(

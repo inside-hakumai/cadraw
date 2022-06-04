@@ -1,6 +1,7 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import {
+  isTemporaryArcRadius,
   isTemporaryCircleShape,
   isTemporaryLineShape,
   isTemporarySupplementalLineShape,
@@ -21,6 +22,8 @@ import TemporaryLine from './shape/TemporaryLine'
 import Circle from './shape/Circle'
 import Line from './shape/Line'
 import SnapCircle from './shape/SnapCircle'
+import TemporaryArc from './shape/TemporaryArc'
+import Arc from './shape/Arc'
 
 const style = css`
   width: 100%;
@@ -65,6 +68,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
   const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
   const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
+  const arcShapeIds = useRecoilValue(filteredShapeIdsSelector('arc'))
   const supplementalLineShapeIds = useRecoilValue(filteredShapeIdsSelector('supplementalLine'))
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const supplementalLines = useRecoilValue(supplementalLinesState)
@@ -132,6 +136,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
           <TemporaryCircle shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
         )}
 
+        {/* 作成中（確定前）の図形（円弧） */}
+        {isTemporaryArcRadius(temporaryShape) && (
+          <TemporaryArc shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
+        )}
+
         {/* 作成中（確定前）の図形（線） */}
         {isTemporaryLineShape(temporaryShape) && (
           <TemporaryLine shape={temporaryShape} startCircleRef={temporaryLineStartRef} />
@@ -150,6 +159,9 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         ))}
         {lineShapeIds.map(shapeId => (
           <Line key={`line-${shapeId}`} shapeId={shapeId} />
+        ))}
+        {arcShapeIds.map(shapeId => (
+          <Arc key={`arc-${shapeId}`} shapeId={shapeId} />
         ))}
 
         {/* 近くの座標にスナップする際にスナップ先の示す点 */}
