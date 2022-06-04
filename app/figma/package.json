@@ -2,6 +2,7 @@
   "name": "cadraw-figma",
   "version": "0.0.1",
   "description": "Your Figma Plugin",
+  "private": true,
   "main": "code.js",
   "scripts": {
     "dev": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" NODE_ENV=\"development\" webpack --progress --watch",
