@@ -1,5 +1,6 @@
 import { atom, atomFamily, selector, selectorFamily, Snapshot, waitForAll } from 'recoil'
 import {
+  assert,
   calcDistance,
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
@@ -7,7 +8,6 @@ import {
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
 import { isCircleShape, isLineShape } from '../lib/typeguard'
-import assert from 'assert'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -443,7 +443,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         })
 
         // 交点が必ず2つあることを確認し、円周に近いほうをスナップ先とする
-        assert(intersections.length === 2)
+        assert(intersections.length === 2, "Assertion 'intersections.length === 2' failed")
         const distance0 = calcDistance(pointingCoord, intersections[0])
         const distance1 = calcDistance(pointingCoord, intersections[1])
         snapDestinationCoordOnShape = [
