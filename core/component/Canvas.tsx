@@ -14,6 +14,7 @@ import {
   temporaryShapeState,
   tooltipContentState,
   indicatingShapeIdState,
+  cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
 import SupplementalLine from './shape/SupplementalLine'
@@ -74,6 +75,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const supplementalLines = useRecoilValue(supplementalLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const tooltipContent = useRecoilValue(tooltipContentState)
+  const cursorClientPosition = useRecoilValue(cursorClientPositionState)
 
   // デバッグ用
   // const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
@@ -81,19 +83,6 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const snappingDotRef = React.useRef<SVGCircleElement>(null)
-
-  let tooltipPosition: { x: number; y: number } | null = null
-  if (temporaryCircleCenterRef.current) {
-    tooltipPosition = {
-      x: temporaryCircleCenterRef.current.getBoundingClientRect().x,
-      y: temporaryCircleCenterRef.current.getBoundingClientRect().y - 15,
-    }
-  } else if (temporaryLineStartRef.current) {
-    tooltipPosition = {
-      x: temporaryLineStartRef.current.getBoundingClientRect().x,
-      y: temporaryLineStartRef.current.getBoundingClientRect().y - 15,
-    }
-  }
 
   let currentCoordInfoPosition: { x: number; y: number } | null = null
   if (snappingDotRef.current) {
@@ -183,8 +172,13 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}
-      {tooltipContent && tooltipPosition && (
-        <div css={tooltipStyle} style={{ left: tooltipPosition.x, top: tooltipPosition.y }}>
+      {tooltipContent && cursorClientPosition && (
+        <div
+          css={tooltipStyle}
+          style={{
+            left: cursorClientPosition.x,
+            top: cursorClientPosition.y - 30,
+          }}>
           {tooltipContent}
         </div>
       )}

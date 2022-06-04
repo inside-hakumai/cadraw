@@ -8,7 +8,13 @@ import {
   findNearestPointOnLine,
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
-import { isCircleShape, isLineShape, isSupplementalLineShape } from '../lib/typeguard'
+import {
+  isCircleShape,
+  isLineShape,
+  isSupplementalLineShape,
+  isTemporaryArcRadius,
+  isTemporaryArcShape,
+} from '../lib/typeguard'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -269,7 +275,9 @@ export const tooltipContentState = selector<string | null>({
     if (temporaryShape.type === 'tmp-circle') {
       const temporaryCircleShape = temporaryShape as TemporaryCircleShape
       return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
-    } else if (temporaryShape.type === 'tmp-line') {
+    }
+
+    if (temporaryShape.type === 'tmp-line') {
       const temporaryLineShape = temporaryShape as TemporaryLineShape
 
       return (
@@ -278,9 +286,29 @@ export const tooltipContentState = selector<string | null>({
             Math.pow(temporaryLineShape.start.y - coord.y, 2)
         ).toFixed(2) + 'px'
       )
-    } else {
-      return null
     }
+
+    if (temporaryShape.type === 'tmp-arc') {
+      if (isTemporaryArcShape(temporaryShape)) {
+        const { startAngle, endAngle } = temporaryShape
+
+        let counterClockWiseAngle
+        if (startAngle === endAngle) {
+          counterClockWiseAngle = 0
+        } else if (startAngle < endAngle) {
+          counterClockWiseAngle = endAngle - startAngle
+        } else {
+          counterClockWiseAngle = 360 - (temporaryShape.startAngle - temporaryShape.endAngle)
+        }
+        return counterClockWiseAngle.toFixed(2) + '°'
+      }
+
+      if (isTemporaryArcRadius(temporaryShape)) {
+        return (temporaryShape.radius * 2).toFixed(2) + 'px'
+      }
+    }
+
+    return null
   },
 })
 
@@ -288,7 +316,13 @@ export const tooltipContentState = selector<string | null>({
  * マウスカーソルが指している座標や図形を管理するAtom、Selector
  */
 
-// カーソル位置の座標を管理するAtom
+// カーソルが指しているDOM上の座標を管理するAtom
+export const cursorClientPositionState = atom<Coordinate | null>({
+  key: 'cursorClientPosition',
+  default: null,
+})
+
+// カーソル位置のSVG上の座標を管理するAtom
 export const pointingCoordState = atom<Coordinate | null>({
   key: 'pointingCoord',
   default: null,

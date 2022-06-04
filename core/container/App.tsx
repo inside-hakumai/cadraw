@@ -5,6 +5,7 @@ import Canvas from '../component/Canvas'
 import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
+  cursorClientPositionState,
   indicatingShapeIdState,
   operationModeState,
   pointingCoordState,
@@ -35,6 +36,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const shapes = useRecoilValue(shapesSelector)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
+  const setCursorClientPosition = useSetRecoilState(cursorClientPositionState)
   const setTemporaryShapeConstraints = useSetRecoilState(temporaryShapeConstraintsState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
@@ -239,7 +241,9 @@ const App: React.FC<Props> = ({ onExport }) => {
   }
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    setPointingCoord(convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY }))
+    const clientPosition = { x: event.clientX, y: event.clientY }
+    setCursorClientPosition(clientPosition)
+    setPointingCoord(convertDomCoordToSvgCoord(clientPosition))
   }
 
   const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate | null => {
