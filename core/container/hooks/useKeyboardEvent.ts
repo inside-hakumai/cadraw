@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useRecoilState, useResetRecoilState } from 'recoil'
-import { operationModeState, temporaryShapeConstraintsState } from '../states'
+import { useRecoilValue } from 'recoil'
+import { operationModeState } from '../states'
 import useHistory from './useHistory'
 
-type eventList = 'remove'
+type eventList = 'remove' | 'escape'
 
 /**
  * キー操作をキャプチャして処理を行うカスタムフックです。
@@ -11,11 +11,11 @@ type eventList = 'remove'
 const useKeyboardEvent = () => {
   const { undo } = useHistory()
 
-  const [operationMode, setOperationMode] = useRecoilState(operationModeState)
-  const resetTemporaryShapeBase = useResetRecoilState(temporaryShapeConstraintsState)
+  const operationMode = useRecoilValue(operationModeState)
 
   const keyLister = useRef<{ [key in eventList]: ((event: KeyboardEvent) => void) | null }>({
     remove: null,
+    escape: null,
   })
 
   // operationModeの更新を検知して値を取得する
@@ -34,18 +34,9 @@ const useKeyboardEvent = () => {
 
       // 図形の描画中の場合は描画中の図形を破棄する
       if (e.key === 'Escape') {
-        switch (operationModeRef.current) {
-          case 'circle:fix-radius':
-            setOperationMode('circle:point-center')
-            resetTemporaryShapeBase()
-            break
-          case 'line:point-end':
-            setOperationMode('line:point-start')
-            resetTemporaryShapeBase()
-            break
-          default:
-            // noop
-            break
+        const listener = keyLister.current['escape']
+        if (listener) {
+          listener(e)
         }
       }
 
@@ -60,7 +51,7 @@ const useKeyboardEvent = () => {
         undo()
       }
     },
-    [resetTemporaryShapeBase, setOperationMode, undo]
+    [undo]
   )
 
   useEffect(() => {

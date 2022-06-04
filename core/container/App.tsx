@@ -65,6 +65,32 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const cancelDrawing = useRecoilCallback(
+    ({ snapshot, set, reset }) =>
+      async () => {
+        const mode = await snapshot.getPromise(operationModeState)
+        switch (mode) {
+          case 'circle:fix-radius':
+            set(operationModeState, 'circle:point-center')
+            reset(temporaryShapeConstraintsState)
+            break
+          case 'line:point-end':
+            set(operationModeState, 'line:point-start')
+            reset(temporaryShapeConstraintsState)
+            break
+          case 'arc:fix-radius':
+          case 'arc:fix-angle':
+            set(operationModeState, 'arc:point-center')
+            reset(temporaryShapeConstraintsState)
+            break
+          default:
+            // noop
+            break
+        }
+      },
+    []
+  )
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -74,7 +100,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     initializeHistory()
     addKeyListener('remove', removeSelectedShape)
-  }, [addKeyListener, initializeHistory, removeSelectedShape])
+    addKeyListener('escape', cancelDrawing)
+  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing])
 
   const addShape = (newShapeSeed: ShapeSeed) => {
     const newShape: Shape = {
