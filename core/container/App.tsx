@@ -1,0 +1,241 @@
+import React, { useCallback, useEffect, useRef } from 'react'
+import ToolWindow from '../component/ToolWindow'
+
+import Canvas from '../component/Canvas'
+import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import {
+  activeCoordState,
+  indicatingShapeIdState,
+  operationModeState,
+  pointingCoordState,
+  selectedShapeIdsState,
+  shapeIdsState,
+  shapesSelector,
+  shapeStateFamily,
+  temporaryShapeConstraintsState,
+  temporaryShapeState,
+} from './states'
+import useKeyboardEvent from './hooks/useKeyboardEvent'
+import useHistory from './hooks/useHistory'
+import useHistoryUpdater from './hooks/useHistoryUpdater'
+
+interface Props {
+  onExport?: (data: string) => void
+}
+
+const App: React.FC<Props> = ({ onExport }) => {
+  const { addKeyListener } = useKeyboardEvent()
+  const { initializeHistory } = useHistoryUpdater()
+  const { undo } = useHistory()
+
+  const [operationMode, setOperationMode] = useRecoilState(operationModeState)
+
+  const temporaryShape = useRecoilValue(temporaryShapeState)
+  const activeCoord = useRecoilValue(activeCoordState)
+  const shapes = useRecoilValue(shapesSelector)
+  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
+
+  const setTemporaryShapeBase = useSetRecoilState(temporaryShapeConstraintsState)
+  const setPointingCoord = useSetRecoilState(pointingCoordState)
+  const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
+  // const setDebugCoord = useSetRecoilState(debugCoordState)
+
+  const didMountRef = useRef(false)
+  const stageRef = useRef<SVGSVGElement>(null)
+
+  const setShape = useRecoilCallback(
+    ({ set }) =>
+      (shape: Shape) => {
+        set(shapeIdsState, oldValue => [...oldValue, shape.id])
+        set(shapeStateFamily(shape.id), shape)
+      },
+    []
+  )
+
+  const removeSelectedShape = useRecoilCallback(
+    ({ snapshot, set }) =>
+      async () => {
+        const selectedShapeIdList = await snapshot.getPromise(selectedShapeIdsState)
+        set(shapeIdsState, oldValue => oldValue.filter(id => !selectedShapeIdList.includes(id)))
+        for (const shapeId of selectedShapeIdList) {
+          set(shapeStateFamily(shapeId), undefined)
+        }
+      },
+    []
+  )
+
+  useEffect(() => {
+    if (didMountRef.current) {
+      return
+    }
+
+    didMountRef.current = true
+
+    initializeHistory()
+    addKeyListener('remove', removeSelectedShape)
+  }, [addKeyListener, initializeHistory, removeSelectedShape])
+
+  const addShape = (newShapeSeed: ShapeSeed) => {
+    const newShape: Shape = {
+      ...newShapeSeed,
+      id: shapes.length,
+    }
+    setShape(newShape)
+  }
+
+  const handleMouseDown = () => {
+    if (activeCoord === null) {
+      return
+    }
+
+    if (operationMode === 'circle:point-center') {
+      setTemporaryShapeBase({
+        type: 'tmp-circle',
+        center: { x: activeCoord.x, y: activeCoord.y },
+      } as TemporaryCircleShapeBase)
+      setOperationMode('circle:fix-radius')
+    }
+
+    if (operationMode === 'circle:fix-radius' && temporaryShape) {
+      const temporaryCircleShape = temporaryShape as TemporaryCircleShape
+
+      const { center, radius } = temporaryCircleShape
+
+      const newCircleSeed: CircleShapeSeed = {
+        type: 'circle',
+        center,
+        radius,
+      }
+
+      addShape(newCircleSeed)
+      setTemporaryShapeBase(null)
+      setOperationMode('circle:point-center')
+    }
+
+    if (operationMode === 'line:point-start') {
+      setTemporaryShapeBase({
+        type: 'tmp-line',
+        start: { x: activeCoord.x, y: activeCoord.y },
+      } as TemporaryLineShapeBase)
+      setOperationMode('line:point-end')
+    }
+
+    if (operationMode === 'line:point-end') {
+      const temporaryLineShape = temporaryShape as TemporaryLineShape
+
+      const newLineSeed: LineShapeSeed = {
+        type: 'line',
+        start: { x: temporaryLineShape.start.x, y: temporaryLineShape.start.y },
+        end: { x: temporaryLineShape.end.x, y: temporaryLineShape.end.y },
+      }
+
+      addShape(newLineSeed)
+      setTemporaryShapeBase(null)
+      setOperationMode('line:point-start')
+    }
+
+    if (operationMode === 'supplementalLine:point-start') {
+      setTemporaryShapeBase({
+        type: 'tmp-supplementalLine',
+        start: { x: activeCoord.x, y: activeCoord.y },
+      } as TemporarySupplementalLineShapeBase)
+      setOperationMode('supplementalLine:point-end')
+    }
+
+    if (operationMode === 'supplementalLine:point-end') {
+      const temporarySupplementalLineShape = temporaryShape as TemporarySupplementalLineShape
+
+      const newLineSeed: SupplementalShapeSeed = {
+        type: 'supplementalLine',
+        start: {
+          x: temporarySupplementalLineShape.start.x,
+          y: temporarySupplementalLineShape.start.y,
+        },
+        end: { x: temporarySupplementalLineShape.end.x, y: temporarySupplementalLineShape.end.y },
+      }
+
+      addShape(newLineSeed)
+      setTemporaryShapeBase(null)
+      setOperationMode('supplementalLine:point-start')
+    }
+
+    if (operationMode === 'select') {
+      if (indicatingShapeId !== null) {
+        setSelectedShapeIds(oldValue => {
+          if (oldValue.includes(indicatingShapeId)) {
+            return oldValue.filter(id => id !== indicatingShapeId)
+          } else {
+            return [...oldValue, indicatingShapeId]
+          }
+        })
+      }
+    }
+  }
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    setPointingCoord(convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY }))
+  }
+
+  const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate | null => {
+    const stage = stageRef.current
+    if (stage === null) {
+      return null
+    }
+
+    const point = stage.createSVGPoint()
+    point.x = domCoord.x
+    point.y = domCoord.y
+
+    const domMatrix = stage.getScreenCTM()
+    if (domMatrix === null) {
+      return null
+    }
+
+    return point.matrixTransform(domMatrix.inverse())
+  }
+
+  const exportAsSvg = () => {
+    if (!stageRef.current) {
+      return
+    }
+
+    const serializer = new XMLSerializer()
+    let source = serializer.serializeToString(stageRef.current)
+    source = '<?xml version="1.0" standalone="no"?>\r\n' + source
+
+    if (onExport) {
+      onExport(source)
+    } else {
+      const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(source)
+      const anchor = document.createElement('a')
+      anchor.download = 'exported.svg'
+      anchor.href = url
+      anchor.click()
+      anchor.remove()
+    }
+  }
+
+  const changeOperationMode = (mode: OperationMode) => {
+    setSelectedShapeIds([])
+    setOperationMode(mode)
+  }
+
+  return (
+    <>
+      <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
+      <ToolWindow
+        onActivateSupplementalLineDraw={useCallback(
+          () => changeOperationMode('supplementalLine:point-start'),
+          []
+        )}
+        onActivateShapeSelect={useCallback(() => changeOperationMode('select'), [])}
+        onActivateLineDraw={useCallback(() => changeOperationMode('line:point-start'), [])}
+        onActivateCircleDraw={useCallback(() => changeOperationMode('circle:point-center'), [])}
+        onUndo={undo}
+        onClickExportButton={exportAsSvg}
+      />
+    </>
+  )
+}
+
+export default App
