@@ -47,6 +47,7 @@ const TemporaryArc: React.FC<Props> = ({ shape, centerRef }) => {
         d={pathNodeAttribute.join(' ')}
         fill='none'
         stroke={'grey'}
+        strokeDasharray={'3, 3'}
         strokeWidth='1'
       />
       {isTemporaryArcRadius(shape) && (

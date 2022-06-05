@@ -25,6 +25,7 @@ const Arc: React.FC<Props> = ({ shapeId }) => {
 
   useEffect(() => {
     if (!isArcShape(shape)) {
+      console.debug(shape)
       throw new Error(`Shape(ID = ${shapeId} is not a arc`)
     }
   }, [shapeId, shape])
@@ -45,14 +46,10 @@ const Arc: React.FC<Props> = ({ shapeId }) => {
   const shouldUseLargeArc = counterClockWiseAngle > 180
 
   const pathNodeAttribute = [
-    `M ${shape.center.x} ${shape.center.y}`,
-    `L ${arcStartEdgeCoord.x} ${arcStartEdgeCoord.y}`,
-
+    `M ${arcStartEdgeCoord.x} ${arcStartEdgeCoord.y}`,
     `A ${shape.radius} ${shape.radius} 0 ` +
       `${shouldUseLargeArc ? 1 : 0} ` + // 1なら円弧の長いほう、0なら短いほう
       `0 ${arcEndEdgeCoord.x} ${arcEndEdgeCoord.y}`,
-
-    `L ${shape.center.x} ${shape.center.y}`,
   ]
 
   return (

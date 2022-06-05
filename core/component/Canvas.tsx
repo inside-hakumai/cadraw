@@ -178,6 +178,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
           style={{
             left: cursorClientPosition.x,
             top: cursorClientPosition.y - 30,
+            cursor: 'default',
           }}>
           {tooltipContent}
         </div>
@@ -187,7 +188,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       {snappingCoord && currentCoordInfoPosition && (
         <div
           css={currentCoordInfoStyle}
-          style={{ left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y }}>
+          style={{
+            left: currentCoordInfoPosition.x,
+            top: currentCoordInfoPosition.y,
+            cursor: 'default',
+          }}>
           {snappingCoord.snapInfoList
             .map(info => {
               if (info.type === 'gridIntersection') {

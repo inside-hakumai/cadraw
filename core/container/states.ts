@@ -7,7 +7,7 @@ import {
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
   findNearestPointOnLine,
-  findNearestPointOnSector,
+  findNearestPointOnArc,
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
 import {
@@ -15,6 +15,7 @@ import {
   isCircleShape,
   isLineShape,
   isSupplementalLineShape,
+  isTemporaryArcCenter,
   isTemporaryArcRadius,
   isTemporaryArcShape,
 } from '../lib/typeguard'
@@ -196,7 +197,7 @@ export const temporaryShapeConstraintsState = atom<TemporaryShape | null>({
   default: null,
 })
 
-// 作成中の図形のプレビュー表示を返すSelector
+// 作成中の図形を返すSelector
 export const temporaryShapeState = selector<TemporaryShape | null>({
   key: 'temporaryShape',
   get: ({ get }) => {
@@ -230,34 +231,60 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
     }
 
     if (operationMode === 'arc:fix-radius') {
-      const temporaryArcCenter = temporaryShapeBase as TemporaryArcCenter
+      if (!isTemporaryArcCenter(temporaryShapeBase)) {
+        console.warn('temporaryShapeBase is not temporaryArcCenter')
+        return null
+      }
 
-      const temporaryRadius = Math.sqrt(
-        Math.pow(temporaryArcCenter.center.x - coord.x, 2) +
-          Math.pow(temporaryArcCenter.center.y - coord.y, 2)
-      )
-
+      const temporaryRadius = calcDistance(temporaryShapeBase.center, coord)
       const temporaryStartAngle = calcCentralAngleFromHorizontalLine(
         coord,
-        temporaryArcCenter.center
+        temporaryShapeBase.center
       )
 
-      return {
-        ...temporaryShapeBase,
-        radius: temporaryRadius,
-        startAngle: temporaryStartAngle === null ? undefined : temporaryStartAngle,
-      } as TemporaryArcRadius
+      if (temporaryStartAngle === null) {
+        return temporaryShapeBase
+      } else {
+        const newValue: TemporaryArcRadius = {
+          ...temporaryShapeBase,
+          radius: temporaryRadius,
+          startAngle: temporaryStartAngle,
+          startCoord: coord,
+        }
+        return newValue
+      }
     }
 
     if (operationMode === 'arc:fix-angle') {
-      const temporaryArcRadius = temporaryShapeBase as TemporaryArcRadius
+      if (!isTemporaryArcRadius(temporaryShapeBase)) {
+        console.warn('temporaryShapeBase is not temporaryArcRadius')
+        return null
+      }
 
-      const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, temporaryArcRadius.center)
+      const { center, startAngle } = temporaryShapeBase
+      const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, center)
 
-      return {
-        ...temporaryShapeBase,
-        endAngle: temporaryEndAngle === null ? undefined : temporaryEndAngle,
-      } as TemporaryArcShape
+      if (temporaryEndAngle === null) {
+        return temporaryShapeBase
+      } else {
+        const endCoord = calcCircumferenceCoordFromDegree(
+          center,
+          temporaryShapeBase.radius,
+          temporaryEndAngle
+        )
+        const counterClockWiseAngle =
+          temporaryEndAngle > startAngle
+            ? temporaryEndAngle - startAngle
+            : 360 - (startAngle - temporaryEndAngle)
+
+        const newValue: TemporaryArcShape = {
+          ...temporaryShapeBase,
+          endCoord: endCoord,
+          endAngle: temporaryEndAngle,
+          angleDeltaFromStart: counterClockWiseAngle,
+        }
+        return newValue
+      }
     }
 
     if (operationMode === 'line:point-end') {
@@ -382,23 +409,7 @@ export const indicatingShapeIdState = selector<number | null>({
           nearestIndex = i
         }
       } else if (isArcShape(shape)) {
-        const startCoord = calcCircumferenceCoordFromDegree(
-          shape.center,
-          shape.radius,
-          shape.startAngle
-        )
-
-        const counterClockWiseAngle =
-          shape.endAngle > shape.startAngle
-            ? shape.endAngle - shape.startAngle
-            : 360 - (shape.startAngle - shape.endAngle)
-
-        console.debug(counterClockWiseAngle)
-        const nearest = findNearestPointOnSector(pointingCoord, {
-          center: shape.center,
-          arcStartCoord: startCoord,
-          angle: counterClockWiseAngle,
-        })
+        const nearest = findNearestPointOnArc(pointingCoord, shape)
         if (nearest !== null && nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
@@ -533,26 +544,16 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'arc') {
-        const arc = shape as ArcShape
+        if (!isArcShape(shape)) {
+          console.warn('shape is not ArcShape')
+          return null
+        }
 
-        const { center, radius, startAngle, endAngle } = arc
-
-        const startCoord = calcCircumferenceCoordFromDegree(center, radius, startAngle)
-
-        const counterClockWiseAngle =
-          arc.endAngle > arc.startAngle
-            ? arc.endAngle - arc.startAngle
-            : 360 - (arc.startAngle - arc.endAngle)
-
-        const nearest = findNearestPointOnSector(pointingCoord, {
-          center: arc.center,
-          arcStartCoord: startCoord,
-          angle: counterClockWiseAngle,
-        })
+        const nearest = findNearestPointOnArc(pointingCoord, shape)
 
         // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
-        if (nearest !== null && nearest.distance < 10) {
-          closeShapes = [...closeShapes, arc]
+        if (nearest !== null && nearest.distance < 10 && !nearest.isArcTerminal) {
+          closeShapes = [...closeShapes, shape]
         }
       }
 
@@ -594,27 +595,19 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'arc') {
-        const arc = shape as ArcShape
+        if (!isArcShape(shape)) {
+          console.warn('shape is not ArcShape')
+          return null
+        }
 
-        const { center, radius, startAngle, endAngle } = arc
+        const nearest = findNearestPointOnArc(pointingCoord, shape)
 
-        const startCoord = calcCircumferenceCoordFromDegree(center, radius, startAngle)
-
-        const counterClockWiseAngle =
-          arc.endAngle > arc.startAngle
-            ? arc.endAngle - arc.startAngle
-            : 360 - (arc.startAngle - arc.endAngle)
-
-        const nearest = findNearestPointOnSector(pointingCoord, {
-          center: arc.center,
-          arcStartCoord: startCoord,
-          angle: counterClockWiseAngle,
-        })
-
-        snapDestinationCoordOnShape = [
-          ...snapDestinationCoordOnShape,
-          [arc.id, nearest!.nearestCoord, 'onArc'],
-        ]
+        if (nearest !== null) {
+          snapDestinationCoordOnShape = [
+            ...snapDestinationCoordOnShape,
+            [shape.id, nearest.nearestCoord, 'onArc'],
+          ]
+        }
       }
 
       if (shape.type === 'line') {

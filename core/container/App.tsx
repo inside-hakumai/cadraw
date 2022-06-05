@@ -19,6 +19,7 @@ import {
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import useHistory from './hooks/useHistory'
 import useHistoryUpdater from './hooks/useHistoryUpdater'
+import { isTemporaryArcCenter, isTemporaryArcShape } from '../lib/typeguard'
 
 interface Props {
   onExport?: (data: string) => void
@@ -143,36 +144,43 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
 
     if (operationMode === 'arc:point-center') {
-      setTemporaryShapeConstraints({
+      const newValue: TemporaryArcCenter = {
         type: 'tmp-arc',
         center: { x: activeCoord.x, y: activeCoord.y },
-      } as TemporaryArcCenter)
+      }
+      setTemporaryShapeConstraints(newValue)
       setOperationMode('arc:fix-radius')
     }
 
     if (operationMode === 'arc:fix-radius') {
       const temporaryArcRadius = temporaryShape as TemporaryArcRadius
-      setTemporaryShapeConstraints(
-        oldValue =>
-          ({
-            ...oldValue,
-            radius: temporaryArcRadius.radius,
-            startAngle: temporaryArcRadius.startAngle,
-          } as TemporaryArcRadius)
-      )
+      setTemporaryShapeConstraints(oldValue => {
+        console.warn('temporaryShape is not TemporaryArcRadius')
+        if (!isTemporaryArcCenter(oldValue)) {
+          return null
+        }
+
+        const newValue: TemporaryArcRadius = {
+          ...oldValue,
+          radius: temporaryArcRadius.radius,
+          startAngle: temporaryArcRadius.startAngle,
+          startCoord: temporaryArcRadius.startCoord,
+        }
+
+        return newValue
+      })
       setOperationMode('arc:fix-angle')
     }
 
     if (operationMode === 'arc:fix-angle') {
-      const temporaryArcShape = temporaryShape as TemporaryArcShape
-      const { center, radius, startAngle, endAngle } = temporaryArcShape
+      if (!isTemporaryArcShape(temporaryShape)) {
+        console.warn('temporaryShape is not TemporaryArcShape')
+        return
+      }
 
       const newArcSeed: ArcShapeSeed = {
+        ...temporaryShape,
         type: 'arc',
-        center,
-        radius,
-        startAngle,
-        endAngle,
       }
 
       addShape(newArcSeed)
@@ -261,7 +269,8 @@ const App: React.FC<Props> = ({ onExport }) => {
       return null
     }
 
-    return point.matrixTransform(domMatrix.inverse())
+    const { x, y } = point.matrixTransform(domMatrix.inverse())
+    return { x, y }
   }
 
   const exportAsSvg = () => {

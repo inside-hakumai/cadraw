@@ -102,58 +102,41 @@ export const findNearestPointOnLine = (
 }
 
 /**
- * 点からの扇上の最近傍点とその距離を返します。
+ * 点からの円弧上の最近傍点とその距離を返します。
  * @param point 点の座標
- * @param arc 扇。中心座標、弧部分のどちらかの端点の座標、その端点からもう一方の端点までがなす中心角の情報を持ちます。
- *            中心角は -360 < angle <= 360 の範囲で指定し、正の値だと反時計回り、負の値だと時計回りに弧を形成します。
+ * @param arc 円弧。中心座標、両端の座標、始点から終点までがなす中心角の情報を持ちます。
+ *            中心角は -360 < angle < 360 の範囲で指定し、正の値だと始点から反時計回り、負の値だと時計回りに弧を形成します。
  * @returns 最近傍点の情報
  */
-export const findNearestPointOnSector = (
+export const findNearestPointOnArc = (
   point: Coordinate,
-  arc: {
-    center: Coordinate
-    arcStartCoord: Coordinate
-    angle: number
-  }
-): { nearestCoord: Coordinate; distance: number } | null => {
-  const { center, arcStartCoord, angle } = arc
-
-  const radius = calcDistance(center, arcStartCoord)
+  arc: ArcShapeSeed
+): { nearestCoord: Coordinate; distance: number; isArcTerminal: boolean } | null => {
+  const { center, radius, startCoord, endCoord, startAngle, endAngle, angleDeltaFromStart } = arc
 
   // 水平方向からの点までの角度
   const pointAngle = calcCentralAngleFromHorizontalLine(point, center)
-  const arcStartCoordAngle = calcCentralAngleFromHorizontalLine(arcStartCoord, center)
 
-  if (pointAngle === null || arcStartCoordAngle === null) {
+  if (pointAngle === null) {
     return null
   }
 
-  const arcEndCoordAngle = arcStartCoordAngle + arc.angle
-  const arcEndCoord = calcCircumferenceCoordFromDegree(center, radius, arcEndCoordAngle)
-
-  let nearestCoordToArc: {
-    nearestCoord: Coordinate
-    distance: number
-  } | null = null
-
   const isPointInArc =
-    // 扇がarcStartCoordから反時計回りに弧を形成している場合
-    (angle > 0 &&
+    // 円弧がarcStartCoordから反時計回りに弧を形成している場合
+    (angleDeltaFromStart > 0 &&
       // arcStartCoordとarcEndCoordの間に存在するか
-      ((arcEndCoordAngle > arcStartCoordAngle &&
-        isBetween(pointAngle, arcStartCoordAngle, arcEndCoordAngle)) ||
+      ((endAngle > startAngle && isBetween(pointAngle, startAngle, endAngle, false, false)) ||
         // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
-        (arcStartCoordAngle > arcEndCoordAngle &&
-          (isBetween(pointAngle, 0, arcEndCoordAngle) ||
-            isBetween(pointAngle, arcStartCoordAngle, 360))))) ||
-    // 扇がarcStartCoordから時計回りに弧を形成している場合
-    (angle < 0 &&
+        (startAngle > endAngle &&
+          (isBetween(pointAngle, 0, endAngle, true, false) ||
+            isBetween(pointAngle, startAngle, 360, false, false))))) ||
+    // 円弧がarcStartCoordから時計回りに弧を形成している場合
+    (angleDeltaFromStart < 0 &&
       // arcStartCoordとarcEndCoordの間に存在するか
-      ((arcStartCoordAngle > arcEndCoordAngle &&
-        isBetween(pointAngle, arcEndCoordAngle, arcStartCoordAngle)) ||
+      ((startAngle > endAngle && isBetween(pointAngle, endAngle, startAngle, false, false)) ||
         // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
-        (arcEndCoordAngle > arcStartCoordAngle && isBetween(pointAngle, 0, arcStartCoordAngle)) ||
-        isBetween(pointAngle, arcEndCoordAngle, 360)))
+        (endAngle > startAngle && isBetween(pointAngle, 0, startAngle, true, false)) ||
+        isBetween(pointAngle, endAngle, 360, false, false)))
 
   if (isPointInArc) {
     const intersections = findIntersectionOfCircleAndLine(
@@ -163,42 +146,27 @@ export const findNearestPointOnSector = (
     const distance0 = calcDistance(point, intersections[0])
     const distance1 = calcDistance(point, intersections[1])
 
-    nearestCoordToArc = {
+    return {
       nearestCoord: distance0 < distance1 ? intersections[0] : intersections[1],
       distance: distance0 < distance1 ? distance0 : distance1,
+      isArcTerminal: false,
     }
   }
 
-  const nearestCoordToStartRadius = findNearestPointOnLine(point, {
-    start: center,
-    end: arcStartCoord,
-  })
-  const nearestCoordToEndRadius = findNearestPointOnLine(point, {
-    start: center,
-    end: arcEndCoord,
-  })
+  const distanceToArcStart = calcDistance(point, startCoord)
+  const distanceToArcEnd = calcDistance(point, endCoord)
 
-  if (nearestCoordToArc === null) {
-    if (nearestCoordToStartRadius < nearestCoordToEndRadius) {
-      return nearestCoordToStartRadius
-    } else {
-      return nearestCoordToEndRadius
-    }
-  } else {
-    if (nearestCoordToArc.distance < nearestCoordToStartRadius.distance) {
-      if (nearestCoordToArc.distance < nearestCoordToEndRadius.distance) {
-        return nearestCoordToArc
-      } else {
-        return nearestCoordToEndRadius
+  return distanceToArcStart < distanceToArcEnd
+    ? {
+        nearestCoord: startCoord,
+        distance: distanceToArcStart,
+        isArcTerminal: true,
       }
-    } else {
-      if (nearestCoordToEndRadius.distance < nearestCoordToStartRadius.distance) {
-        return nearestCoordToEndRadius
-      } else {
-        return nearestCoordToStartRadius
+    : {
+        nearestCoord: endCoord,
+        distance: distanceToArcEnd,
+        isArcTerminal: true,
       }
-    }
-  }
 }
 
 /**
@@ -350,9 +318,40 @@ export const assert = (condition: boolean, message?: string): void => {
   }
 }
 
-export const isBetween = (value: number, min: number, max: number): boolean => {
+/**
+ * 値が指定した値の範囲に含まれているかどうかを返します。
+ * @param value 範囲内に含まれているかどうかを判定する値
+ * @param min 最小値
+ * @param max 最大値
+ * @param includeMin trueの場合、最小値を範囲に含みます。
+ * @param includeMax trueの場合、最大値を範囲に含みます。
+ */
+export const isBetween = (
+  value: number,
+  min: number,
+  max: number,
+  includeMin: boolean,
+  includeMax: boolean
+): boolean => {
   if (min > max) {
     throw new Error(`min(${min}) > max(${max})`)
   }
-  return max >= value && value >= min
+
+  // 範囲に最小値と最大値を含む場合
+  if (includeMin && includeMax) {
+    return max >= value && value >= min
+  }
+
+  // 範囲に最小値を含まず、最大値を含む場合
+  if (!includeMin && includeMax) {
+    return max >= value && value > min
+  }
+
+  // 範囲に最小値を含み、最大値を含まない場合
+  if (includeMin && !includeMax) {
+    return max > value && value >= min
+  }
+
+  // 範囲に最小値と最大値を含まない場合
+  return max > value && value > min
 }

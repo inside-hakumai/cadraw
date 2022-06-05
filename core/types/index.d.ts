@@ -54,8 +54,11 @@ interface ArcShapeSeed extends ShapeSeed {
   type: 'arc'
   center: Coordinate
   radius: number
+  startCoord: Coordinate
+  endCoord: Coordinate
   startAngle: number
   endAngle: number
+  angleDeltaFromStart: number
 }
 
 interface SupplementalShapeSeed extends ShapeSeed {
@@ -113,10 +116,13 @@ interface TemporaryArcCenter extends TemporaryShape {
 }
 interface TemporaryArcRadius extends TemporaryArcCenter {
   radius: number
+  startCoord: Coordinate
   startAngle: number
 }
 interface TemporaryArcShape extends TemporaryArcRadius {
+  endCoord: Coordinate
   endAngle: number
+  angleDeltaFromStart: number
 }
 
 interface TemporarySupplementalLineShapeBase extends TemporaryShape {
