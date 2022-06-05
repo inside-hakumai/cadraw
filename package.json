@@ -15,7 +15,7 @@
     "web:lint": "yarn workspace cadraw-web run lint",
     "figma:dev": "yarn workspace cadraw-figma run dev",
     "figma:build": "yarn workspace cadraw-figma run build",
-    "all:build": "run-s web:build figma:build",
+    "all:build": "run-s --print-name web:build figma:build",
     "all:eslint": "npx eslint --fix . --ext .ts --ext .tsx",
     "test": "jest",
     "prepare": "husky install"
