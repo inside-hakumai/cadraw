@@ -12,7 +12,7 @@ type OperationMode =
   | 'supplementalLine:point-start'
   | 'supplementalLine:point-end'
 type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
-type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine'
+type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine' | 'onArc'
 
 interface Coordinate {
   x: number

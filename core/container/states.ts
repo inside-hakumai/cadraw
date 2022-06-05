@@ -7,9 +7,11 @@ import {
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
   findNearestPointOnLine,
+  findNearestPointOnSector,
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
 import {
+  isArcShape,
   isCircleShape,
   isLineShape,
   isSupplementalLineShape,
@@ -379,6 +381,28 @@ export const indicatingShapeIdState = selector<number | null>({
           minimumDistance = nearest.distance
           nearestIndex = i
         }
+      } else if (isArcShape(shape)) {
+        const startCoord = calcCircumferenceCoordFromDegree(
+          shape.center,
+          shape.radius,
+          shape.startAngle
+        )
+
+        const counterClockWiseAngle =
+          shape.endAngle > shape.startAngle
+            ? shape.endAngle - shape.startAngle
+            : 360 - (shape.startAngle - shape.endAngle)
+
+        console.debug(counterClockWiseAngle)
+        const nearest = findNearestPointOnSector(pointingCoord, {
+          center: shape.center,
+          arcStartCoord: startCoord,
+          angle: counterClockWiseAngle,
+        })
+        if (nearest !== null && nearest.distance < minimumDistance) {
+          minimumDistance = nearest.distance
+          nearestIndex = i
+        }
       } else if (isSupplementalLineShape(shape)) {
         const nearest = findNearestPointOnLine(pointingCoord, shape)
         if (nearest.distance < minimumDistance) {
@@ -508,6 +532,30 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
+      if (shape.type === 'arc') {
+        const arc = shape as ArcShape
+
+        const { center, radius, startAngle, endAngle } = arc
+
+        const startCoord = calcCircumferenceCoordFromDegree(center, radius, startAngle)
+
+        const counterClockWiseAngle =
+          arc.endAngle > arc.startAngle
+            ? arc.endAngle - arc.startAngle
+            : 360 - (arc.startAngle - arc.endAngle)
+
+        const nearest = findNearestPointOnSector(pointingCoord, {
+          center: arc.center,
+          arcStartCoord: startCoord,
+          angle: counterClockWiseAngle,
+        })
+
+        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
+        if (nearest !== null && nearest.distance < 10) {
+          closeShapes = [...closeShapes, arc]
+        }
+      }
+
       if (shape.type === 'supplementalLine') {
         const line = shape as SupplementalLineShape
 
@@ -542,6 +590,30 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         snapDestinationCoordOnShape = [
           ...snapDestinationCoordOnShape,
           [circle.id, distance0 < distance1 ? intersections[0] : intersections[1], 'circumference'],
+        ]
+      }
+
+      if (shape.type === 'arc') {
+        const arc = shape as ArcShape
+
+        const { center, radius, startAngle, endAngle } = arc
+
+        const startCoord = calcCircumferenceCoordFromDegree(center, radius, startAngle)
+
+        const counterClockWiseAngle =
+          arc.endAngle > arc.startAngle
+            ? arc.endAngle - arc.startAngle
+            : 360 - (arc.startAngle - arc.endAngle)
+
+        const nearest = findNearestPointOnSector(pointingCoord, {
+          center: arc.center,
+          arcStartCoord: startCoord,
+          angle: counterClockWiseAngle,
+        })
+
+        snapDestinationCoordOnShape = [
+          ...snapDestinationCoordOnShape,
+          [arc.id, nearest!.nearestCoord, 'onArc'],
         ]
       }
 

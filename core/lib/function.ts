@@ -102,6 +102,106 @@ export const findNearestPointOnLine = (
 }
 
 /**
+ * 点からの扇上の最近傍点とその距離を返します。
+ * @param point 点の座標
+ * @param arc 扇。中心座標、弧部分のどちらかの端点の座標、その端点からもう一方の端点までがなす中心角の情報を持ちます。
+ *            中心角は -360 < angle <= 360 の範囲で指定し、正の値だと反時計回り、負の値だと時計回りに弧を形成します。
+ * @returns 最近傍点の情報
+ */
+export const findNearestPointOnSector = (
+  point: Coordinate,
+  arc: {
+    center: Coordinate
+    arcStartCoord: Coordinate
+    angle: number
+  }
+): { nearestCoord: Coordinate; distance: number } | null => {
+  const { center, arcStartCoord, angle } = arc
+
+  const radius = calcDistance(center, arcStartCoord)
+
+  // 水平方向からの点までの角度
+  const pointAngle = calcCentralAngleFromHorizontalLine(point, center)
+  const arcStartCoordAngle = calcCentralAngleFromHorizontalLine(arcStartCoord, center)
+
+  if (pointAngle === null || arcStartCoordAngle === null) {
+    return null
+  }
+
+  const arcEndCoordAngle = arcStartCoordAngle + arc.angle
+  const arcEndCoord = calcCircumferenceCoordFromDegree(center, radius, arcEndCoordAngle)
+
+  let nearestCoordToArc: {
+    nearestCoord: Coordinate
+    distance: number
+  } | null = null
+
+  const isPointInArc =
+    // 扇がarcStartCoordから反時計回りに弧を形成している場合
+    (angle > 0 &&
+      // arcStartCoordとarcEndCoordの間に存在するか
+      ((arcEndCoordAngle > arcStartCoordAngle &&
+        isBetween(pointAngle, arcStartCoordAngle, arcEndCoordAngle)) ||
+        // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
+        (arcStartCoordAngle > arcEndCoordAngle &&
+          (isBetween(pointAngle, 0, arcEndCoordAngle) ||
+            isBetween(pointAngle, arcStartCoordAngle, 360))))) ||
+    // 扇がarcStartCoordから時計回りに弧を形成している場合
+    (angle < 0 &&
+      // arcStartCoordとarcEndCoordの間に存在するか
+      ((arcStartCoordAngle > arcEndCoordAngle &&
+        isBetween(pointAngle, arcEndCoordAngle, arcStartCoordAngle)) ||
+        // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
+        (arcEndCoordAngle > arcStartCoordAngle && isBetween(pointAngle, 0, arcStartCoordAngle)) ||
+        isBetween(pointAngle, arcEndCoordAngle, 360)))
+
+  if (isPointInArc) {
+    const intersections = findIntersectionOfCircleAndLine(
+      { center, radius },
+      { start: center, end: point }
+    )
+    const distance0 = calcDistance(point, intersections[0])
+    const distance1 = calcDistance(point, intersections[1])
+
+    nearestCoordToArc = {
+      nearestCoord: distance0 < distance1 ? intersections[0] : intersections[1],
+      distance: distance0 < distance1 ? distance0 : distance1,
+    }
+  }
+
+  const nearestCoordToStartRadius = findNearestPointOnLine(point, {
+    start: center,
+    end: arcStartCoord,
+  })
+  const nearestCoordToEndRadius = findNearestPointOnLine(point, {
+    start: center,
+    end: arcEndCoord,
+  })
+
+  if (nearestCoordToArc === null) {
+    if (nearestCoordToStartRadius < nearestCoordToEndRadius) {
+      return nearestCoordToStartRadius
+    } else {
+      return nearestCoordToEndRadius
+    }
+  } else {
+    if (nearestCoordToArc.distance < nearestCoordToStartRadius.distance) {
+      if (nearestCoordToArc.distance < nearestCoordToEndRadius.distance) {
+        return nearestCoordToArc
+      } else {
+        return nearestCoordToEndRadius
+      }
+    } else {
+      if (nearestCoordToEndRadius.distance < nearestCoordToStartRadius.distance) {
+        return nearestCoordToEndRadius
+      } else {
+        return nearestCoordToStartRadius
+      }
+    }
+  }
+}
+
+/**
  * 円と線の交点座標を返します。
  * @param circle 円。中心座標を半径の情報を持ちます。
  * @param line 直線。直線上の2点の座標の情報を持ちます。
@@ -178,7 +278,7 @@ export const calcCircumferenceCoordFromDegree = (
 
 /**
  * 円周上の一点を指定し、y=0、x>0である円周上の一点との間の中心角を返します。
- * @param circle 円周上の一点の座標
+ * @param coord 円周上の一点の座標
  * @param center 円の中心座標
  * @returns 中心角。 0 <= angle < 360 の範囲で返します。circleとcenterの座標が一致する場合はnullを返します。
  */
@@ -248,4 +348,11 @@ export const assert = (condition: boolean, message?: string): void => {
   if (!condition) {
     throw new Error(message || 'Assertion failed')
   }
+}
+
+export const isBetween = (value: number, min: number, max: number): boolean => {
+  if (min > max) {
+    throw new Error(`min(${min}) > max(${max})`)
+  }
+  return max >= value && value >= min
 }
