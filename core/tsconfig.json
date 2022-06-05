@@ -3,7 +3,7 @@
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "typeRoots": ["../node_modules/@types"],
-    "types": ["@emotion/react/types/css-prop", "node"],
+    "types": ["@emotion/react/types/css-prop", "node", "jest"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
