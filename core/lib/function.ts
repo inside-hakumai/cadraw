@@ -102,6 +102,74 @@ export const findNearestPointOnLine = (
 }
 
 /**
+ * 点からの円弧上の最近傍点とその距離を返します。
+ * @param point 点の座標
+ * @param arc 円弧。中心座標、両端の座標、始点から終点までがなす中心角の情報を持ちます。
+ *            中心角は -360 < angle < 360 の範囲で指定し、正の値だと始点から反時計回り、負の値だと時計回りに弧を形成します。
+ * @returns 最近傍点の情報
+ */
+export const findNearestPointOnArc = (
+  point: Coordinate,
+  arc: ArcShapeSeed
+): { nearestCoord: Coordinate; distance: number; isArcTerminal: boolean } | null => {
+  const { center, radius, startCoord, endCoord, startAngle, endAngle, angleDeltaFromStart } = arc
+
+  // 水平方向からの点までの角度
+  const pointAngle = calcCentralAngleFromHorizontalLine(point, center)
+
+  if (pointAngle === null) {
+    return null
+  }
+
+  const isPointInArc =
+    // 円弧がarcStartCoordから反時計回りに弧を形成している場合
+    (angleDeltaFromStart > 0 &&
+      // arcStartCoordとarcEndCoordの間に存在するか
+      ((endAngle > startAngle && isBetween(pointAngle, startAngle, endAngle, false, false)) ||
+        // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
+        (startAngle > endAngle &&
+          (isBetween(pointAngle, 0, endAngle, true, false) ||
+            isBetween(pointAngle, startAngle, 360, false, false))))) ||
+    // 円弧がarcStartCoordから時計回りに弧を形成している場合
+    (angleDeltaFromStart < 0 &&
+      // arcStartCoordとarcEndCoordの間に存在するか
+      ((startAngle > endAngle && isBetween(pointAngle, endAngle, startAngle, false, false)) ||
+        // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
+        (endAngle > startAngle && isBetween(pointAngle, 0, startAngle, true, false)) ||
+        isBetween(pointAngle, endAngle, 360, false, false)))
+
+  if (isPointInArc) {
+    const intersections = findIntersectionOfCircleAndLine(
+      { center, radius },
+      { start: center, end: point }
+    )
+    const distance0 = calcDistance(point, intersections[0])
+    const distance1 = calcDistance(point, intersections[1])
+
+    return {
+      nearestCoord: distance0 < distance1 ? intersections[0] : intersections[1],
+      distance: distance0 < distance1 ? distance0 : distance1,
+      isArcTerminal: false,
+    }
+  }
+
+  const distanceToArcStart = calcDistance(point, startCoord)
+  const distanceToArcEnd = calcDistance(point, endCoord)
+
+  return distanceToArcStart < distanceToArcEnd
+    ? {
+        nearestCoord: startCoord,
+        distance: distanceToArcStart,
+        isArcTerminal: true,
+      }
+    : {
+        nearestCoord: endCoord,
+        distance: distanceToArcEnd,
+        isArcTerminal: true,
+      }
+}
+
+/**
  * 円と線の交点座標を返します。
  * @param circle 円。中心座標を半径の情報を持ちます。
  * @param line 直線。直線上の2点の座標の情報を持ちます。
@@ -159,6 +227,45 @@ export const findIntersectionOfCircleAndLine = (
 }
 
 /**
+ * y=0、x>0である円周上の一点との間の中心角をもとに、円上の一点の座標を返します。
+ * @param center 円の中心点の座標
+ * @param radius 円の半径
+ * @param degree 座標を求める円周上の一点の中心角
+ * @returns 座標
+ */
+export const calcCircumferenceCoordFromDegree = (
+  center: Coordinate,
+  radius: number,
+  degree: number
+): Coordinate => {
+  const radian = (degree * Math.PI) / 180
+  const x = center.x + radius * Math.cos(radian)
+  const y = center.y - radius * Math.sin(radian) // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
+  return { x, y }
+}
+
+/**
+ * 円周上の一点を指定し、y=0、x>0である円周上の一点との間の中心角を返します。
+ * @param coord 円周上の一点の座標
+ * @param center 円の中心座標
+ * @returns 中心角。 0 <= angle < 360 の範囲で返します。circleとcenterの座標が一致する場合はnullを返します。
+ */
+export const calcCentralAngleFromHorizontalLine = (coord: Coordinate, center: Coordinate) => {
+  const x = coord.x - center.x
+  const y = -1 * (coord.y - center.y) // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
+
+  const radius = calcDistance(center, coord)
+
+  const degree = (Math.acos(x / radius) * 180) / Math.PI
+
+  if (isNaN(degree)) {
+    return null
+  }
+
+  return y >= 0 ? degree : 360 - degree
+}
+
+/**
  * グリッド線の交点の座標のリストを返します。
  * @returns グリッド線の交点の座標のリスト
  */
@@ -209,4 +316,42 @@ export const assert = (condition: boolean, message?: string): void => {
   if (!condition) {
     throw new Error(message || 'Assertion failed')
   }
+}
+
+/**
+ * 値が指定した値の範囲に含まれているかどうかを返します。
+ * @param value 範囲内に含まれているかどうかを判定する値
+ * @param min 最小値
+ * @param max 最大値
+ * @param includeMin trueの場合、最小値を範囲に含みます。
+ * @param includeMax trueの場合、最大値を範囲に含みます。
+ */
+export const isBetween = (
+  value: number,
+  min: number,
+  max: number,
+  includeMin: boolean,
+  includeMax: boolean
+): boolean => {
+  if (min > max) {
+    throw new Error(`min(${min}) > max(${max})`)
+  }
+
+  // 範囲に最小値と最大値を含む場合
+  if (includeMin && includeMax) {
+    return max >= value && value >= min
+  }
+
+  // 範囲に最小値を含まず、最大値を含む場合
+  if (!includeMin && includeMax) {
+    return max >= value && value > min
+  }
+
+  // 範囲に最小値を含み、最大値を含まない場合
+  if (includeMin && !includeMax) {
+    return max > value && value >= min
+  }
+
+  // 範囲に最小値と最大値を含まない場合
+  return max > value && value > min
 }

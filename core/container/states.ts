@@ -1,13 +1,24 @@
 import { atom, atomFamily, selector, selectorFamily, Snapshot, waitForAll } from 'recoil'
 import {
   assert,
+  calcCentralAngleFromHorizontalLine,
+  calcCircumferenceCoordFromDegree,
   calcDistance,
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
   findNearestPointOnLine,
+  findNearestPointOnArc,
   getSnapDestinationCoordDefaultValue,
 } from '../lib/function'
-import { isCircleShape, isLineShape, isSupplementalLineShape } from '../lib/typeguard'
+import {
+  isArcShape,
+  isCircleShape,
+  isLineShape,
+  isSupplementalLineShape,
+  isTemporaryArcCenter,
+  isTemporaryArcRadius,
+  isTemporaryArcShape,
+} from '../lib/typeguard'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -22,6 +33,8 @@ export const currentOperatingShapeSelector = selector<ShapeType | null>({
       return 'line'
     } else if (operationMode.startsWith('circle:')) {
       return 'circle'
+    } else if (operationMode.startsWith('arc:')) {
+      return 'arc'
     } else if (operationMode.startsWith('supplementalLine:')) {
       return 'supplementalLine'
     } else {
@@ -97,13 +110,7 @@ export const shapesSelector = selector<Shape[]>({
 })
 
 // 図形の拘束点を返すSelector
-export const shapeConstraintPointsSelector = selector<
-  {
-    coord: Coordinate
-    targetShapeId: number
-    constraintType: ConstraintType
-  }[]
->({
+export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
   key: 'shapeConstraintPoints',
   get: ({ get }) => {
     const shapes = get(shapesSelector)
@@ -116,14 +123,15 @@ export const shapeConstraintPointsSelector = selector<
               coord: lineShape.start,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
             {
               coord: lineShape.end,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
           ]
         }
+
         if (shape.type === 'circle') {
           const circleShape = shape as CircleShape
           return [
@@ -131,9 +139,32 @@ export const shapeConstraintPointsSelector = selector<
               coord: circleShape.center,
               targetShapeId: shape.id,
               constraintType: 'circleCenter' as const,
-            },
+            } as ShapeConstraintPoint,
           ]
         }
+
+        if (shape.type === 'arc') {
+          const { id, center, radius, startAngle, endAngle } = shape as ArcShape
+
+          return [
+            {
+              coord: center,
+              targetShapeId: id,
+              constraintType: 'arcCenter' as const,
+            } as ShapeConstraintPoint,
+            {
+              coord: calcCircumferenceCoordFromDegree(center, radius, startAngle),
+              targetShapeId: id,
+              constraintType: 'arcEdge' as const,
+            } as ShapeConstraintPoint,
+            {
+              coord: calcCircumferenceCoordFromDegree(center, radius, endAngle),
+              targetShapeId: shape.id,
+              constraintType: 'arcEdge' as const,
+            } as ShapeConstraintPoint,
+          ]
+        }
+
         if (shape.type === 'supplementalLine') {
           const lineShape = shape as SupplementalLineShape
           return [
@@ -141,16 +172,16 @@ export const shapeConstraintPointsSelector = selector<
               coord: lineShape.start,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
             {
               coord: lineShape.end,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
-            },
+            } as ShapeConstraintPoint,
           ]
         }
 
-        return []
+        return [] as ShapeConstraintPoint[]
       })
       .flat()
   },
@@ -166,7 +197,7 @@ export const temporaryShapeConstraintsState = atom<TemporaryShape | null>({
   default: null,
 })
 
-// 作成中の図形のプレビュー表示を返すSelector
+// 作成中の図形を返すSelector
 export const temporaryShapeState = selector<TemporaryShape | null>({
   key: 'temporaryShape',
   get: ({ get }) => {
@@ -197,6 +228,63 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
         diameterStart: temporaryCircleDiameterStart,
         diameterEnd: temporaryCircleDiameterEnd,
       } as TemporaryCircleShape
+    }
+
+    if (operationMode === 'arc:fix-radius') {
+      if (!isTemporaryArcCenter(temporaryShapeBase)) {
+        console.warn('temporaryShapeBase is not temporaryArcCenter')
+        return null
+      }
+
+      const temporaryRadius = calcDistance(temporaryShapeBase.center, coord)
+      const temporaryStartAngle = calcCentralAngleFromHorizontalLine(
+        coord,
+        temporaryShapeBase.center
+      )
+
+      if (temporaryStartAngle === null) {
+        return temporaryShapeBase
+      } else {
+        const newValue: TemporaryArcRadius = {
+          ...temporaryShapeBase,
+          radius: temporaryRadius,
+          startAngle: temporaryStartAngle,
+          startCoord: coord,
+        }
+        return newValue
+      }
+    }
+
+    if (operationMode === 'arc:fix-angle') {
+      if (!isTemporaryArcRadius(temporaryShapeBase)) {
+        console.warn('temporaryShapeBase is not temporaryArcRadius')
+        return null
+      }
+
+      const { center, startAngle } = temporaryShapeBase
+      const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, center)
+
+      if (temporaryEndAngle === null) {
+        return temporaryShapeBase
+      } else {
+        const endCoord = calcCircumferenceCoordFromDegree(
+          center,
+          temporaryShapeBase.radius,
+          temporaryEndAngle
+        )
+        const counterClockWiseAngle =
+          temporaryEndAngle > startAngle
+            ? temporaryEndAngle - startAngle
+            : 360 - (startAngle - temporaryEndAngle)
+
+        const newValue: TemporaryArcShape = {
+          ...temporaryShapeBase,
+          endCoord: endCoord,
+          endAngle: temporaryEndAngle,
+          angleDeltaFromStart: counterClockWiseAngle,
+        }
+        return newValue
+      }
     }
 
     if (operationMode === 'line:point-end') {
@@ -235,7 +323,9 @@ export const tooltipContentState = selector<string | null>({
     if (temporaryShape.type === 'tmp-circle') {
       const temporaryCircleShape = temporaryShape as TemporaryCircleShape
       return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
-    } else if (temporaryShape.type === 'tmp-line') {
+    }
+
+    if (temporaryShape.type === 'tmp-line') {
       const temporaryLineShape = temporaryShape as TemporaryLineShape
 
       return (
@@ -244,9 +334,29 @@ export const tooltipContentState = selector<string | null>({
             Math.pow(temporaryLineShape.start.y - coord.y, 2)
         ).toFixed(2) + 'px'
       )
-    } else {
-      return null
     }
+
+    if (temporaryShape.type === 'tmp-arc') {
+      if (isTemporaryArcShape(temporaryShape)) {
+        const { startAngle, endAngle } = temporaryShape
+
+        let counterClockWiseAngle
+        if (startAngle === endAngle) {
+          counterClockWiseAngle = 0
+        } else if (startAngle < endAngle) {
+          counterClockWiseAngle = endAngle - startAngle
+        } else {
+          counterClockWiseAngle = 360 - (temporaryShape.startAngle - temporaryShape.endAngle)
+        }
+        return counterClockWiseAngle.toFixed(2) + '°'
+      }
+
+      if (isTemporaryArcRadius(temporaryShape)) {
+        return (temporaryShape.radius * 2).toFixed(2) + 'px'
+      }
+    }
+
+    return null
   },
 })
 
@@ -254,7 +364,13 @@ export const tooltipContentState = selector<string | null>({
  * マウスカーソルが指している座標や図形を管理するAtom、Selector
  */
 
-// カーソル位置の座標を管理するAtom
+// カーソルが指しているDOM上の座標を管理するAtom
+export const cursorClientPositionState = atom<Coordinate | null>({
+  key: 'cursorClientPosition',
+  default: null,
+})
+
+// カーソル位置のSVG上の座標を管理するAtom
 export const pointingCoordState = atom<Coordinate | null>({
   key: 'pointingCoord',
   default: null,
@@ -289,6 +405,12 @@ export const indicatingShapeIdState = selector<number | null>({
       } else if (isLineShape(shape)) {
         const nearest = findNearestPointOnLine(pointingCoord, shape)
         if (nearest.distance < minimumDistance) {
+          minimumDistance = nearest.distance
+          nearestIndex = i
+        }
+      } else if (isArcShape(shape)) {
+        const nearest = findNearestPointOnArc(pointingCoord, shape)
+        if (nearest !== null && nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
         }
@@ -421,6 +543,20 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
+      if (shape.type === 'arc') {
+        if (!isArcShape(shape)) {
+          console.warn('shape is not ArcShape')
+          return null
+        }
+
+        const nearest = findNearestPointOnArc(pointingCoord, shape)
+
+        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
+        if (nearest !== null && nearest.distance < 10 && !nearest.isArcTerminal) {
+          closeShapes = [...closeShapes, shape]
+        }
+      }
+
       if (shape.type === 'supplementalLine') {
         const line = shape as SupplementalLineShape
 
@@ -456,6 +592,22 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
           ...snapDestinationCoordOnShape,
           [circle.id, distance0 < distance1 ? intersections[0] : intersections[1], 'circumference'],
         ]
+      }
+
+      if (shape.type === 'arc') {
+        if (!isArcShape(shape)) {
+          console.warn('shape is not ArcShape')
+          return null
+        }
+
+        const nearest = findNearestPointOnArc(pointingCoord, shape)
+
+        if (nearest !== null) {
+          snapDestinationCoordOnShape = [
+            ...snapDestinationCoordOnShape,
+            [shape.id, nearest.nearestCoord, 'onArc'],
+          ]
+        }
       }
 
       if (shape.type === 'line') {

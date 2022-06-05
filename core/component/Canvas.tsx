@@ -1,6 +1,7 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import {
+  isTemporaryArcRadius,
   isTemporaryCircleShape,
   isTemporaryLineShape,
   isTemporarySupplementalLineShape,
@@ -13,6 +14,7 @@ import {
   temporaryShapeState,
   tooltipContentState,
   indicatingShapeIdState,
+  cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
 import SupplementalLine from './shape/SupplementalLine'
@@ -21,6 +23,8 @@ import TemporaryLine from './shape/TemporaryLine'
 import Circle from './shape/Circle'
 import Line from './shape/Line'
 import SnapCircle from './shape/SnapCircle'
+import TemporaryArc from './shape/TemporaryArc'
+import Arc from './shape/Arc'
 
 const style = css`
   width: 100%;
@@ -65,11 +69,13 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
   const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
   const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
+  const arcShapeIds = useRecoilValue(filteredShapeIdsSelector('arc'))
   const supplementalLineShapeIds = useRecoilValue(filteredShapeIdsSelector('supplementalLine'))
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const supplementalLines = useRecoilValue(supplementalLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const tooltipContent = useRecoilValue(tooltipContentState)
+  const cursorClientPosition = useRecoilValue(cursorClientPositionState)
 
   // デバッグ用
   // const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
@@ -77,19 +83,6 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const temporaryCircleCenterRef = React.useRef<SVGCircleElement>(null)
   const temporaryLineStartRef = React.useRef<SVGCircleElement>(null)
   const snappingDotRef = React.useRef<SVGCircleElement>(null)
-
-  let tooltipPosition: { x: number; y: number } | null = null
-  if (temporaryCircleCenterRef.current) {
-    tooltipPosition = {
-      x: temporaryCircleCenterRef.current.getBoundingClientRect().x,
-      y: temporaryCircleCenterRef.current.getBoundingClientRect().y - 15,
-    }
-  } else if (temporaryLineStartRef.current) {
-    tooltipPosition = {
-      x: temporaryLineStartRef.current.getBoundingClientRect().x,
-      y: temporaryLineStartRef.current.getBoundingClientRect().y - 15,
-    }
-  }
 
   let currentCoordInfoPosition: { x: number; y: number } | null = null
   if (snappingDotRef.current) {
@@ -104,6 +97,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       {/* 背景のグリッド線 */}
       <Grid css={svgStyle} />
 
+      {/* エクスポート時に生成物に載せない図形をレンダリングするSVG */}
       <svg
         id={'supplementalRenderer'}
         viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
@@ -113,6 +107,22 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {supplementalLineShapeIds.map(shapeId => (
           <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} isSupplementalLine={true} />
         ))}
+
+        {/* 近くの座標にスナップする際にスナップ先を示す点 */}
+        {snappingCoord && (
+          <SnapCircle
+            key={'snappingCircleDot'}
+            coordinate={snappingCoord}
+            refObject={snappingDotRef}
+          />
+        )}
+
+        {/* デバッグ用の点 */}
+        {/*{process.env.NODE_ENV === 'development' &&*/}
+        {/*  debugCoord &&*/}
+        {/*  debugCoord.map((coord, index) => (*/}
+        {/*    <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />*/}
+        {/*  ))}*/}
       </svg>
 
       <svg
@@ -130,6 +140,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {/* 作成中（確定前）の図形（円） */}
         {isTemporaryCircleShape(temporaryShape) && (
           <TemporaryCircle shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
+        )}
+
+        {/* 作成中（確定前）の図形（円弧） */}
+        {isTemporaryArcRadius(temporaryShape) && (
+          <TemporaryArc shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
         )}
 
         {/* 作成中（確定前）の図形（線） */}
@@ -151,27 +166,20 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {lineShapeIds.map(shapeId => (
           <Line key={`line-${shapeId}`} shapeId={shapeId} />
         ))}
-
-        {/* 近くの座標にスナップする際にスナップ先の示す点 */}
-        {snappingCoord && (
-          <SnapCircle
-            key={'snappingCircleDot'}
-            coordinate={snappingCoord}
-            refObject={snappingDotRef}
-          />
-        )}
-
-        {/* デバッグ用の点 */}
-        {/*{process.env.NODE_ENV === 'development' &&*/}
-        {/*  debugCoord &&*/}
-        {/*  debugCoord.map((coord, index) => (*/}
-        {/*    <circle key={`debugCircle-${index}`} cx={coord.x} cy={coord.y} r={3} fill={'red'} />*/}
-        {/*  ))}*/}
+        {arcShapeIds.map(shapeId => (
+          <Arc key={`arc-${shapeId}`} shapeId={shapeId} />
+        ))}
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}
-      {tooltipContent && tooltipPosition && (
-        <div css={tooltipStyle} style={{ left: tooltipPosition.x, top: tooltipPosition.y }}>
+      {tooltipContent && cursorClientPosition && (
+        <div
+          css={tooltipStyle}
+          style={{
+            left: cursorClientPosition.x,
+            top: cursorClientPosition.y - 30,
+            cursor: 'default',
+          }}>
           {tooltipContent}
         </div>
       )}
@@ -180,7 +188,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       {snappingCoord && currentCoordInfoPosition && (
         <div
           css={currentCoordInfoStyle}
-          style={{ left: currentCoordInfoPosition.x, top: currentCoordInfoPosition.y }}>
+          style={{
+            left: currentCoordInfoPosition.x,
+            top: currentCoordInfoPosition.y,
+            cursor: 'default',
+          }}>
           {snappingCoord.snapInfoList
             .map(info => {
               if (info.type === 'gridIntersection') {
@@ -189,10 +201,16 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
                 return '円の中心'
               } else if (info.type === 'circumference') {
                 return '円周上'
+              } else if (info.type === 'arcCenter') {
+                return '円弧の中心'
+              } else if (info.type === 'arcEdge') {
+                return '円弧の端'
               } else if (info.type === 'lineEdge') {
                 return '線の端'
               } else if (info.type === 'onLine') {
                 return '線上'
+              } else if (info.type === 'onArc') {
+                return '円弧上'
               } else {
                 throw new Error(`Unknown infoType: ${info.type}`)
               }

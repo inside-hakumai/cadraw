@@ -3,5 +3,6 @@
   "compilerOptions": {
     "types": ["@emotion/react/types/css-prop", "plugin-typings", "node"]
   },
-  "include": ["ui/**/*.ts", "ui/**/*.tsx", "../../core/**/*.ts", "../../core/**/*.tsx"]
+  "include": ["ui/**/*.ts", "ui/**/*.tsx", "../../core/**/*.ts", "../../core/**/*.tsx"],
+  "exclude": ["node_modules", "../../core/**/__tests__/*.test.ts"]
 }

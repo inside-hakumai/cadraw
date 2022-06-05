@@ -11,7 +11,8 @@ import {
   snappingCoordState,
 } from '../container/states'
 
-const style = css`
+const rootStyle = css`
+  display: flex;
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -19,6 +20,18 @@ const style = css`
   span,
   button {
     margin-right: 10px;
+  }
+`
+
+const toolGroupStyle = css`
+  display: flex;
+  margin: 0 10px;
+  padding: 5px 10px;
+  border: 1px solid #787878;
+  border-radius: 5px;
+
+  button {
+    margin: 0 5px;
   }
 `
 
@@ -39,6 +52,7 @@ interface Props {
   onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
+  onActivateArcDraw: () => void
   onActivateCircleDraw: () => void
   onUndo: () => void
   onClickExportButton: () => void
@@ -49,6 +63,7 @@ const ToolWindow: React.FC<Props> = ({
   onActivateShapeSelect,
   onActivateLineDraw,
   onActivateCircleDraw,
+  onActivateArcDraw,
   onUndo,
   onClickExportButton,
 }) => {
@@ -62,25 +77,32 @@ const ToolWindow: React.FC<Props> = ({
 
   return (
     <>
-      <div css={style}>
-        <button
-          onClick={onActivateSupplementalLineDraw}
-          disabled={currentOperatingShape === 'supplementalLine'}>
-          補助線
-        </button>
-        <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
-          選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
-        </button>
-        <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
-          線
-        </button>
-        <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
-          丸
-        </button>
-        <button onClick={onUndo} disabled={!canUndo}>
-          元に戻す({currentSnapshotVersion ?? 'null'})
-        </button>
-        <button onClick={onClickExportButton}>Export</button>
+      <div css={rootStyle}>
+        <div css={toolGroupStyle}>
+          <button
+            onClick={onActivateSupplementalLineDraw}
+            disabled={currentOperatingShape === 'supplementalLine'}>
+            補助線
+          </button>
+          <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
+            線
+          </button>
+          <button onClick={onActivateArcDraw} disabled={currentOperatingShape === 'arc'}>
+            円弧
+          </button>
+          <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
+            円
+          </button>
+        </div>
+        <div css={toolGroupStyle}>
+          <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
+            選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
+          </button>
+          <button onClick={onUndo} disabled={!canUndo}>
+            元に戻す({currentSnapshotVersion ?? 'null'})
+          </button>
+          <button onClick={onClickExportButton}>エクスポート</button>
+        </div>
       </div>
       {pointingCoord && (
         <div css={coordViewerStyle}>

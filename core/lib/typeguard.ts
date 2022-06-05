@@ -4,6 +4,10 @@ export const isObject = (value: any): boolean => {
   return typeof value === 'object' && value !== null
 }
 
+export const isCoordinate = (value: any): value is Coordinate => {
+  return isObject(value) && typeof value?.x === 'number' && typeof value?.y === 'number'
+}
+
 export const isLineShape = (shape: any): shape is LineShape => {
   const expectedType: ShapeType = 'line'
   return (
@@ -25,6 +29,20 @@ export const isCircleShape = (shape: any): shape is CircleShape => {
     typeof shape?.center?.x === 'number' &&
     typeof shape?.center?.y === 'number' &&
     typeof shape?.radius === 'number'
+  )
+}
+
+export const isArcShape = (shape: any): shape is ArcShape => {
+  const expectedType: ShapeType = 'arc'
+  return (
+    shape?.type === expectedType &&
+    isCoordinate(shape?.center) &&
+    typeof shape?.radius === 'number' &&
+    isCoordinate(shape?.startCoord) &&
+    isCoordinate(shape?.endCoord) &&
+    typeof shape?.startAngle === 'number' &&
+    typeof shape?.endAngle === 'number' &&
+    typeof shape?.angleDeltaFromStart === 'number'
   )
 }
 
@@ -68,6 +86,41 @@ export const isTemporaryCircleShape = (shape: any): shape is TemporaryCircleShap
     isObject(shape?.diameterEnd) &&
     typeof shape?.diameterEnd?.x === 'number' &&
     typeof shape?.diameterEnd?.y === 'number'
+  )
+}
+
+export const isTemporaryArcCenter = (shape: any): shape is TemporaryArcCenter => {
+  const expectedType: TemporaryShapeType = 'tmp-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.center) &&
+    typeof shape?.center.x === 'number' &&
+    typeof shape?.center.y === 'number'
+  )
+}
+
+export const isTemporaryArcRadius = (shape: any): shape is TemporaryArcRadius => {
+  const expectedType: TemporaryShapeType = 'tmp-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.center) &&
+    typeof shape?.center.x === 'number' &&
+    typeof shape?.center.y === 'number' &&
+    typeof shape?.radius === 'number' &&
+    typeof shape?.startAngle === 'number'
+  )
+}
+
+export const isTemporaryArcShape = (shape: any): shape is TemporaryArcShape => {
+  const expectedType: TemporaryShapeType = 'tmp-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.center) &&
+    typeof shape?.center.x === 'number' &&
+    typeof shape?.center.y === 'number' &&
+    typeof shape?.radius === 'number' &&
+    typeof shape?.startAngle === 'number' &&
+    typeof shape?.endAngle === 'number'
   )
 }
 

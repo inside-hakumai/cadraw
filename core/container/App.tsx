@@ -5,6 +5,7 @@ import Canvas from '../component/Canvas'
 import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
+  cursorClientPositionState,
   indicatingShapeIdState,
   operationModeState,
   pointingCoordState,
@@ -18,6 +19,7 @@ import {
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import useHistory from './hooks/useHistory'
 import useHistoryUpdater from './hooks/useHistoryUpdater'
+import { isTemporaryArcCenter, isTemporaryArcShape } from '../lib/typeguard'
 
 interface Props {
   onExport?: (data: string) => void
@@ -35,7 +37,8 @@ const App: React.FC<Props> = ({ onExport }) => {
   const shapes = useRecoilValue(shapesSelector)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
-  const setTemporaryShapeBase = useSetRecoilState(temporaryShapeConstraintsState)
+  const setCursorClientPosition = useSetRecoilState(cursorClientPositionState)
+  const setTemporaryShapeConstraints = useSetRecoilState(temporaryShapeConstraintsState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
@@ -65,6 +68,69 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const cancelDrawing = useRecoilCallback(
+    ({ snapshot, set, reset }) =>
+      async () => {
+        const mode = await snapshot.getPromise(operationModeState)
+        switch (mode) {
+          case 'circle:fix-radius':
+            set(operationModeState, 'circle:point-center')
+            reset(temporaryShapeConstraintsState)
+            break
+          case 'line:point-end':
+            set(operationModeState, 'line:point-start')
+            reset(temporaryShapeConstraintsState)
+            break
+          case 'arc:fix-radius':
+          case 'arc:fix-angle':
+            set(operationModeState, 'arc:point-center')
+            reset(temporaryShapeConstraintsState)
+            break
+          default:
+            // noop
+            break
+        }
+      },
+    []
+  )
+
+  const switchShapeWithIndex = useRecoilCallback(
+    ({ snapshot, set, reset }) =>
+      async (shapeIndex: number) => {
+        const mode = await snapshot.getPromise(operationModeState)
+        switch (shapeIndex) {
+          case 1:
+            if (!mode.startsWith('supplementalLine')) {
+              set(operationModeState, 'supplementalLine:point-start')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          case 2:
+            if (!mode.startsWith('line')) {
+              set(operationModeState, 'line:point-start')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          case 3:
+            if (!mode.startsWith('arc')) {
+              set(operationModeState, 'arc:point-center')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          case 4:
+            if (!mode.startsWith('circle')) {
+              set(operationModeState, 'circle:point-center')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          default:
+            // noop
+            break
+        }
+      },
+    []
+  )
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -74,7 +140,9 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     initializeHistory()
     addKeyListener('remove', removeSelectedShape)
-  }, [addKeyListener, initializeHistory, removeSelectedShape])
+    addKeyListener('escape', cancelDrawing)
+    addKeyListener('shapeSwitch', switchShapeWithIndex)
+  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing, switchShapeWithIndex])
 
   const addShape = (newShapeSeed: ShapeSeed) => {
     const newShape: Shape = {
@@ -90,7 +158,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
 
     if (operationMode === 'circle:point-center') {
-      setTemporaryShapeBase({
+      setTemporaryShapeConstraints({
         type: 'tmp-circle',
         center: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryCircleShapeBase)
@@ -109,12 +177,57 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       addShape(newCircleSeed)
-      setTemporaryShapeBase(null)
+      setTemporaryShapeConstraints(null)
       setOperationMode('circle:point-center')
     }
 
+    if (operationMode === 'arc:point-center') {
+      const newValue: TemporaryArcCenter = {
+        type: 'tmp-arc',
+        center: { x: activeCoord.x, y: activeCoord.y },
+      }
+      setTemporaryShapeConstraints(newValue)
+      setOperationMode('arc:fix-radius')
+    }
+
+    if (operationMode === 'arc:fix-radius') {
+      const temporaryArcRadius = temporaryShape as TemporaryArcRadius
+      setTemporaryShapeConstraints(oldValue => {
+        console.warn('temporaryShape is not TemporaryArcRadius')
+        if (!isTemporaryArcCenter(oldValue)) {
+          return null
+        }
+
+        const newValue: TemporaryArcRadius = {
+          ...oldValue,
+          radius: temporaryArcRadius.radius,
+          startAngle: temporaryArcRadius.startAngle,
+          startCoord: temporaryArcRadius.startCoord,
+        }
+
+        return newValue
+      })
+      setOperationMode('arc:fix-angle')
+    }
+
+    if (operationMode === 'arc:fix-angle') {
+      if (!isTemporaryArcShape(temporaryShape)) {
+        console.warn('temporaryShape is not TemporaryArcShape')
+        return
+      }
+
+      const newArcSeed: ArcShapeSeed = {
+        ...temporaryShape,
+        type: 'arc',
+      }
+
+      addShape(newArcSeed)
+      setTemporaryShapeConstraints(null)
+      setOperationMode('arc:point-center')
+    }
+
     if (operationMode === 'line:point-start') {
-      setTemporaryShapeBase({
+      setTemporaryShapeConstraints({
         type: 'tmp-line',
         start: { x: activeCoord.x, y: activeCoord.y },
       } as TemporaryLineShapeBase)
@@ -131,12 +244,12 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       addShape(newLineSeed)
-      setTemporaryShapeBase(null)
+      setTemporaryShapeConstraints(null)
       setOperationMode('line:point-start')
     }
 
     if (operationMode === 'supplementalLine:point-start') {
-      setTemporaryShapeBase({
+      setTemporaryShapeConstraints({
         type: 'tmp-supplementalLine',
         start: { x: activeCoord.x, y: activeCoord.y },
       } as TemporarySupplementalLineShapeBase)
@@ -156,7 +269,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       addShape(newLineSeed)
-      setTemporaryShapeBase(null)
+      setTemporaryShapeConstraints(null)
       setOperationMode('supplementalLine:point-start')
     }
 
@@ -174,7 +287,9 @@ const App: React.FC<Props> = ({ onExport }) => {
   }
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    setPointingCoord(convertDomCoordToSvgCoord({ x: event.clientX, y: event.clientY }))
+    const clientPosition = { x: event.clientX, y: event.clientY }
+    setCursorClientPosition(clientPosition)
+    setPointingCoord(convertDomCoordToSvgCoord(clientPosition))
   }
 
   const convertDomCoordToSvgCoord = (domCoord: Coordinate): Coordinate | null => {
@@ -192,7 +307,8 @@ const App: React.FC<Props> = ({ onExport }) => {
       return null
     }
 
-    return point.matrixTransform(domMatrix.inverse())
+    const { x, y } = point.matrixTransform(domMatrix.inverse())
+    return { x, y }
   }
 
   const exportAsSvg = () => {
@@ -216,10 +332,13 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
   }
 
-  const changeOperationMode = (mode: OperationMode) => {
-    setSelectedShapeIds([])
-    setOperationMode(mode)
-  }
+  const changeOperationMode = useCallback(
+    (mode: OperationMode) => {
+      setSelectedShapeIds([])
+      setOperationMode(mode)
+    },
+    [setSelectedShapeIds, setOperationMode]
+  )
 
   return (
     <>
@@ -227,11 +346,24 @@ const App: React.FC<Props> = ({ onExport }) => {
       <ToolWindow
         onActivateSupplementalLineDraw={useCallback(
           () => changeOperationMode('supplementalLine:point-start'),
-          []
+          [changeOperationMode]
         )}
-        onActivateShapeSelect={useCallback(() => changeOperationMode('select'), [])}
-        onActivateLineDraw={useCallback(() => changeOperationMode('line:point-start'), [])}
-        onActivateCircleDraw={useCallback(() => changeOperationMode('circle:point-center'), [])}
+        onActivateShapeSelect={useCallback(
+          () => changeOperationMode('select'),
+          [changeOperationMode]
+        )}
+        onActivateLineDraw={useCallback(
+          () => changeOperationMode('line:point-start'),
+          [changeOperationMode]
+        )}
+        onActivateArcDraw={useCallback(
+          () => changeOperationMode('arc:point-center'),
+          [changeOperationMode]
+        )}
+        onActivateCircleDraw={useCallback(
+          () => changeOperationMode('circle:point-center'),
+          [changeOperationMode]
+        )}
         onUndo={undo}
         onClickExportButton={exportAsSvg}
       />

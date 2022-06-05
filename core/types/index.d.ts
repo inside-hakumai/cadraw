@@ -1,19 +1,28 @@
-type ShapeType = 'line' | 'circle' | 'supplementalLine'
-type TemporaryShapeType = 'tmp-line' | 'tmp-circle' | 'tmp-supplementalLine'
+type ShapeType = 'line' | 'circle' | 'arc' | 'supplementalLine'
+type TemporaryShapeType = 'tmp-line' | 'tmp-circle' | 'tmp-arc' | 'tmp-supplementalLine'
 type OperationMode =
   | 'line:point-start'
   | 'line:point-end'
   | 'circle:point-center'
   | 'circle:fix-radius'
+  | 'arc:point-center'
+  | 'arc:fix-radius'
+  | 'arc:fix-angle'
   | 'select'
   | 'supplementalLine:point-start'
   | 'supplementalLine:point-end'
-type SnapType = 'gridIntersection' | 'circleCenter' | 'circumference' | 'lineEdge' | 'onLine'
-type ConstraintType = 'circleCenter' | 'lineEdge'
+type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
+type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine' | 'onArc'
 
 interface Coordinate {
   x: number
   y: number
+}
+
+interface ShapeConstraintPoint {
+  coord: Coordinate
+  targetShapeId: number
+  constraintType: ConstraintType
 }
 
 interface SnappingCoordCandidate extends Coordinate {
@@ -41,6 +50,17 @@ interface CircleShapeSeed extends ShapeSeed {
   radius: number
 }
 
+interface ArcShapeSeed extends ShapeSeed {
+  type: 'arc'
+  center: Coordinate
+  radius: number
+  startCoord: Coordinate
+  endCoord: Coordinate
+  startAngle: number
+  endAngle: number
+  angleDeltaFromStart: number
+}
+
 interface SupplementalShapeSeed extends ShapeSeed {
   type: 'supplementalLine'
   start: Coordinate
@@ -58,6 +78,10 @@ interface LineShape extends Shape, LineShapeSeed {
 
 interface CircleShape extends Shape, CircleShapeSeed {
   type: 'circle'
+}
+
+interface ArcShape extends Shape, ArcShapeSeed {
+  type: 'arc'
 }
 
 interface SupplementalLineShape extends Shape, SupplementalShapeSeed {
@@ -84,6 +108,21 @@ interface TemporaryCircleShape extends TemporaryCircleShapeBase, TemporaryShape 
   radius: number
   diameterStart: Coordinate
   diameterEnd: Coordinate
+}
+
+interface TemporaryArcCenter extends TemporaryShape {
+  type: 'tmp-arc'
+  center: Coordinate
+}
+interface TemporaryArcRadius extends TemporaryArcCenter {
+  radius: number
+  startCoord: Coordinate
+  startAngle: number
+}
+interface TemporaryArcShape extends TemporaryArcRadius {
+  endCoord: Coordinate
+  endAngle: number
+  angleDeltaFromStart: number
 }
 
 interface TemporarySupplementalLineShapeBase extends TemporaryShape {
