@@ -3,7 +3,13 @@ import { useRecoilValue } from 'recoil'
 import { operationModeState } from '../states'
 import useHistory from './useHistory'
 
-type eventList = 'remove' | 'escape'
+type eventList = 'remove' | 'escape' | 'shapeSwitch'
+interface CallbackTypeList {
+  remove: (() => void | Promise<void>) | null
+  escape: (() => void | Promise<void>) | null
+  shapeSwitch: ((shapeIndex: number) => void | Promise<void>) | null
+}
+type EventCallbackType<T extends eventList> = CallbackTypeList[T]
 
 /**
  * キー操作をキャプチャして処理を行うカスタムフックです。
@@ -13,9 +19,10 @@ const useKeyboardEvent = () => {
 
   const operationMode = useRecoilValue(operationModeState)
 
-  const keyLister = useRef<{ [key in eventList]: ((event: KeyboardEvent) => void) | null }>({
+  const keyLister = useRef<CallbackTypeList>({
     remove: null,
     escape: null,
+    shapeSwitch: null,
   })
 
   // operationModeの更新を検知して値を取得する
@@ -24,31 +31,45 @@ const useKeyboardEvent = () => {
     operationModeRef.current = operationMode
   }, [operationMode])
 
-  const addKeyListener = useCallback((event: eventList, callback: () => void) => {
-    keyLister.current[event] = callback
-  }, [])
+  const addKeyListener = useCallback(
+    <T extends eventList>(event: T, callback: EventCallbackType<T>) => {
+      keyLister.current[event] = callback
+    },
+    []
+  )
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       console.debug(`Key pressed: ${e.key} Meta: ${e.metaKey} `)
 
-      // 図形の描画中の場合は描画中の図形を破棄する
-      if (e.key === 'Escape') {
-        const listener = keyLister.current['escape']
-        if (listener) {
-          listener(e)
+      switch (e.key) {
+        case 'Escape': {
+          const listener = keyLister.current['escape']
+          if (listener) listener()
+          break
         }
-      }
-
-      if (e.key === 'Backspace' || e.key === 'Delete') {
-        const listener = keyLister.current['remove']
-        if (listener) {
-          listener(e)
+        case 'Backspace':
+        case 'Delete': {
+          const listener = keyLister.current['remove']
+          if (listener) listener()
+          break
         }
-      }
-
-      if (e.metaKey && e.key === 'z') {
-        undo()
+        case '1':
+        case '2':
+        case '3':
+        case '4': {
+          const listener = keyLister.current['shapeSwitch']
+          if (listener) listener(parseInt(e.key))
+          break
+        }
+        case 'z': {
+          if (e.metaKey) {
+            undo()
+          }
+          break
+        }
+        default:
+        // noop
       }
     },
     [undo]

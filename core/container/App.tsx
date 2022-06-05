@@ -94,6 +94,43 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const switchShapeWithIndex = useRecoilCallback(
+    ({ snapshot, set, reset }) =>
+      async (shapeIndex: number) => {
+        const mode = await snapshot.getPromise(operationModeState)
+        switch (shapeIndex) {
+          case 1:
+            if (!mode.startsWith('supplementalLine')) {
+              set(operationModeState, 'supplementalLine:point-start')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          case 2:
+            if (!mode.startsWith('line')) {
+              set(operationModeState, 'line:point-start')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          case 3:
+            if (!mode.startsWith('arc')) {
+              set(operationModeState, 'arc:point-center')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          case 4:
+            if (!mode.startsWith('circle')) {
+              set(operationModeState, 'circle:point-center')
+              reset(temporaryShapeConstraintsState)
+            }
+            break
+          default:
+            // noop
+            break
+        }
+      },
+    []
+  )
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -104,7 +141,8 @@ const App: React.FC<Props> = ({ onExport }) => {
     initializeHistory()
     addKeyListener('remove', removeSelectedShape)
     addKeyListener('escape', cancelDrawing)
-  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing])
+    addKeyListener('shapeSwitch', switchShapeWithIndex)
+  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing, switchShapeWithIndex])
 
   const addShape = (newShapeSeed: ShapeSeed) => {
     const newShape: Shape = {
