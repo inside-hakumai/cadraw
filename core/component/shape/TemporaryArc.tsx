@@ -12,11 +12,7 @@ const TemporaryArc: React.FC<Props> = ({ shape, centerRef }) => {
     y: shape.center.y - shape.radius * Math.sin((shape.startAngle / 180) * Math.PI), // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
   }
 
-  let pathNodeAttribute = [
-    `M ${shape.center.x} ${shape.center.y}`,
-    `L ${arcStartEdgeCoord.x} ${arcStartEdgeCoord.y}`,
-  ]
-
+  let pathNodeAttribute: string[] | null = null
   let arcEndEdgeCoord = null
   if (isTemporaryArcShape(shape)) {
     arcEndEdgeCoord = {
@@ -32,35 +28,38 @@ const TemporaryArc: React.FC<Props> = ({ shape, centerRef }) => {
     const useLargeArc = counterClockWiseAngle > 180
 
     pathNodeAttribute = [
-      ...pathNodeAttribute,
+      `M ${arcStartEdgeCoord.x} ${arcStartEdgeCoord.y}`,
       `A ${shape.radius} ${shape.radius} 0 ` +
         `${useLargeArc ? 1 : 0} ` + // 1なら円弧の長いほう、0なら短いほう
         `0 ${arcEndEdgeCoord.x} ${arcEndEdgeCoord.y}`,
-      `L ${shape.center.x} ${shape.center.y}`,
     ]
   }
 
   return (
     <>
-      <path
-        key={'temporaryArc'}
-        d={pathNodeAttribute.join(' ')}
-        fill='none'
-        stroke={'grey'}
-        strokeDasharray={'3, 3'}
-        strokeWidth='1'
-      />
       {isTemporaryArcRadius(shape) && (
-        <circle
-          key={'temporaryArcCircle'}
-          cx={shape.center.x}
-          cy={shape.center.y}
-          r={shape.radius}
-          fill={'none'}
-          stroke={'grey'}
-          strokeDasharray={'3, 3'}
-          strokeWidth={1}
-        />
+        <>
+          <circle
+            key={'temporaryArcCircle'}
+            cx={shape.center.x}
+            cy={shape.center.y}
+            r={shape.radius}
+            fill={'none'}
+            stroke={'grey'}
+            strokeDasharray={'3, 3'}
+            strokeWidth={1}
+          />
+          <line
+            key={'temporaryArcStartEdgeRadius'}
+            x1={shape.center.x}
+            y1={shape.center.y}
+            x2={arcStartEdgeCoord.x}
+            y2={arcStartEdgeCoord.y}
+            stroke={'grey'}
+            strokeDasharray={'3 3'}
+            strokeWidth={1}
+          />
+        </>
       )}
       {arcEndEdgeCoord && (
         <line
@@ -72,6 +71,15 @@ const TemporaryArc: React.FC<Props> = ({ shape, centerRef }) => {
           stroke={'grey'}
           strokeDasharray={'3 3'}
           strokeWidth={1}
+        />
+      )}
+      {pathNodeAttribute && (
+        <path
+          key={'temporaryArc'}
+          d={pathNodeAttribute.join(' ')}
+          fill='none'
+          stroke={'grey'}
+          strokeWidth='2'
         />
       )}
       <circle
