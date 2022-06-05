@@ -18,7 +18,10 @@
     "all:build": "run-s --print-name web:build figma:build",
     "all:eslint": "npx eslint --fix . --ext .ts --ext .tsx",
     "test": "jest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "versionup:major": "npm version major --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",
+    "versionup:minor": "npm version minor --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",
+    "versionup:patch": "npm version patch --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.16.7",
