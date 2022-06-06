@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useRecoilValue } from 'recoil'
-import { operationModeState } from '../states'
+import { temporaryShapeConstraintsState } from '../states'
 import useHistory from './useHistory'
 
-type eventList = 'remove' | 'escape' | 'shapeSwitch'
+type eventList = 'switchToSelect' | 'cancelDrawing' | 'remove' | 'shapeSwitch'
 interface CallbackTypeList {
+  switchToSelect: (() => void | Promise<void>) | null
+  cancelDrawing: (() => void | Promise<void>) | null
   remove: (() => void | Promise<void>) | null
-  escape: (() => void | Promise<void>) | null
-  shapeSwitch: ((shapeIndex: number) => void | Promise<void>) | null
+  shapeSwitch: ((shapeKey: string) => void | Promise<void>) | null
 }
 type EventCallbackType<T extends eventList> = CallbackTypeList[T]
 
@@ -17,19 +18,20 @@ type EventCallbackType<T extends eventList> = CallbackTypeList[T]
 const useKeyboardEvent = () => {
   const { undo } = useHistory()
 
-  const operationMode = useRecoilValue(operationModeState)
+  const temporaryShapeConstraints = useRecoilValue(temporaryShapeConstraintsState)
 
   const keyLister = useRef<CallbackTypeList>({
+    switchToSelect: null,
+    cancelDrawing: null,
     remove: null,
-    escape: null,
     shapeSwitch: null,
   })
 
-  // operationModeの更新を検知して値を取得する
-  const operationModeRef = useRef(operationMode)
+  // temporaryShapeConstraintsの更新を検知して値を取得する
+  const temporaryShapeConstraintsRef = useRef(temporaryShapeConstraints)
   useEffect(() => {
-    operationModeRef.current = operationMode
-  }, [operationMode])
+    temporaryShapeConstraintsRef.current = temporaryShapeConstraints
+  }, [temporaryShapeConstraints])
 
   const addKeyListener = useCallback(
     <T extends eventList>(event: T, callback: EventCallbackType<T>) => {
@@ -44,8 +46,13 @@ const useKeyboardEvent = () => {
 
       switch (e.key) {
         case 'Escape': {
-          const listener = keyLister.current['escape']
-          if (listener) listener()
+          if (temporaryShapeConstraintsRef.current === null) {
+            const listener = keyLister.current['switchToSelect']
+            if (listener) listener()
+          } else {
+            const listener = keyLister.current['cancelDrawing']
+            if (listener) listener()
+          }
           break
         }
         case 'Backspace':

@@ -55,6 +55,15 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const switchToSelect = useRecoilCallback(
+    ({ set, reset }) =>
+      async () => {
+        set(operationModeState, 'select')
+        reset(temporaryShapeConstraintsState)
+      },
+    []
+  )
+
   const removeSelectedShape = useRecoilCallback(
     ({ snapshot, set }) =>
       async () => {
@@ -84,6 +93,10 @@ const App: React.FC<Props> = ({ onExport }) => {
           case 'arc:fix-radius':
           case 'arc:fix-angle':
             set(operationModeState, 'arc:point-center')
+            reset(temporaryShapeConstraintsState)
+            break
+          case 'supplementalLine:point-end':
+            set(operationModeState, 'supplementalLine:point-start')
             reset(temporaryShapeConstraintsState)
             break
           default:
@@ -139,10 +152,11 @@ const App: React.FC<Props> = ({ onExport }) => {
     didMountRef.current = true
 
     initializeHistory()
+    addKeyListener('switchToSelect', switchToSelect)
+    addKeyListener('cancelDrawing', cancelDrawing)
     addKeyListener('remove', removeSelectedShape)
-    addKeyListener('escape', cancelDrawing)
-    addKeyListener('shapeSwitch', switchShapeWithIndex)
-  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing, switchShapeWithIndex])
+    addKeyListener('shapeSwitch', switchShapeWithKey)
+  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing, switchShapeWithKey])
 
   const addShape = (newShapeSeed: ShapeSeed) => {
     const newShape: Shape = {
