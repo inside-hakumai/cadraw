@@ -14,6 +14,8 @@ import {
 
 const rootStyle = css`
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -26,7 +28,7 @@ const rootStyle = css`
 
 const toolGroupStyle = css`
   display: flex;
-  margin: 0 10px;
+  margin: 20px 10px 0 10px;
   padding: 5px 10px;
   border: 1px solid #787878;
   border-radius: 5px;
@@ -53,16 +55,27 @@ const buttonWrapperStyle = css`
   position: relative;
 `
 
-const shortcutHintStyle = (keyLabel: string) => css`
+const buttonStyle = css`
+  min-width: 60px;
+`
+
+const shortcutHintWrapperStyle = css`
+  display: flex;
+  justify-content: space-around;
   position: absolute;
-  width: 30px;
   height: 30px;
-  font-size: ${keyLabel.length > 1 ? 10 : 14}px;
   line-height: 30px;
   margin: auto;
   top: -45px;
   left: 0;
   right: 0;
+`
+
+const shortcutHintStyle = (keyLabel: string) => css`
+  width: 30px;
+  height: 30px;
+  font-size: ${keyLabel.length > 1 ? 10 : 14}px;
+  line-height: 30px;
   text-align: center;
   border-radius: 5px;
   background: #5d5d5d;
@@ -107,48 +120,98 @@ const ToolWindow: React.FC<Props> = ({
         <div css={toolGroupStyle}>
           <div css={buttonWrapperStyle}>
             <button
+              css={buttonStyle}
               onClick={onActivateSupplementalLineDraw}
               disabled={currentOperatingShape === 'supplementalLine'}>
               補助線
             </button>
-            {isShowingShortcutHint && <div css={shortcutHintStyle('S')}>S</div>}
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('S')}>S</div>
+              </div>
+            )}
           </div>
           <div css={buttonWrapperStyle}>
-            <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
+            <button
+              css={buttonStyle}
+              onClick={onActivateLineDraw}
+              disabled={currentOperatingShape === 'line'}>
               線
             </button>
-            {isShowingShortcutHint && <div css={shortcutHintStyle('L')}>L</div>}
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('L')}>L</div>
+              </div>
+            )}
           </div>
           <div css={buttonWrapperStyle}>
-            <button onClick={onActivateArcDraw} disabled={currentOperatingShape === 'arc'}>
+            <button
+              css={buttonStyle}
+              onClick={onActivateArcDraw}
+              disabled={currentOperatingShape === 'arc'}>
               円弧
             </button>
-            {isShowingShortcutHint && <div css={shortcutHintStyle('E')}>E</div>}
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('E')}>E</div>
+              </div>
+            )}
           </div>
           <div css={buttonWrapperStyle}>
-            <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
+            <button
+              css={buttonStyle}
+              onClick={onActivateCircleDraw}
+              disabled={currentOperatingShape === 'circle'}>
               円
             </button>
-            {isShowingShortcutHint && <div css={shortcutHintStyle('C')}>C</div>}
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('C')}>C</div>
+              </div>
+            )}
           </div>
         </div>
         <div css={toolGroupStyle}>
           <div css={buttonWrapperStyle}>
-            <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
+            <button
+              css={buttonStyle}
+              onClick={onActivateShapeSelect}
+              disabled={operationMode === 'select'}>
               選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
             </button>
-            {isShowingShortcutHint && <div css={shortcutHintStyle('ESC')}>ESC</div>}
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('ESC')}>ESC</div>
+              </div>
+            )}
           </div>
-          <button onClick={onUndo} disabled={!canUndo}>
-            元に戻す({currentSnapshotVersion ?? 'null'})
-          </button>
           <div css={buttonWrapperStyle}>
-            <button onMouseDown={showShortcutKeyHint} onMouseUp={hideShortcutKeyHint}>
+            <button css={buttonStyle} onClick={onUndo} disabled={!canUndo}>
+              元に戻す({currentSnapshotVersion ?? 'null'})
+            </button>
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('CMD + Z')}>CMD</div>+
+                <div css={shortcutHintStyle('Z')}>Z</div>
+              </div>
+            )}
+          </div>
+          <div css={buttonWrapperStyle}>
+            <button
+              css={buttonStyle}
+              onMouseDown={showShortcutKeyHint}
+              onMouseUp={hideShortcutKeyHint}>
               ショートカットキーを表示
             </button>
-            {isShowingShortcutHint && <div css={shortcutHintStyle('H')}>H</div>}
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('H')}>H</div>
+              </div>
+            )}
           </div>
-          <button onClick={onClickExportButton}>エクスポート</button>
+          <button css={buttonStyle} onClick={onClickExportButton}>
+            エクスポート
+          </button>
         </div>
       </div>
       {pointingCoord && (
