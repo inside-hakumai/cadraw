@@ -7,6 +7,7 @@ import {
   activeCoordState,
   cursorClientPositionState,
   indicatingShapeIdState,
+  isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
   selectedShapeIdsState,
@@ -55,6 +56,15 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const switchToSelect = useRecoilCallback(
+    ({ set, reset }) =>
+      async () => {
+        set(operationModeState, 'select')
+        reset(temporaryShapeConstraintsState)
+      },
+    []
+  )
+
   const removeSelectedShape = useRecoilCallback(
     ({ snapshot, set }) =>
       async () => {
@@ -86,6 +96,10 @@ const App: React.FC<Props> = ({ onExport }) => {
             set(operationModeState, 'arc:point-center')
             reset(temporaryShapeConstraintsState)
             break
+          case 'supplementalLine:point-end':
+            set(operationModeState, 'supplementalLine:point-start')
+            reset(temporaryShapeConstraintsState)
+            break
           default:
             // noop
             break
@@ -94,30 +108,30 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
-  const switchShapeWithIndex = useRecoilCallback(
+  const switchShapeWithKey = useRecoilCallback(
     ({ snapshot, set, reset }) =>
-      async (shapeIndex: number) => {
+      async (shapeKey: string) => {
         const mode = await snapshot.getPromise(operationModeState)
-        switch (shapeIndex) {
-          case 1:
+        switch (shapeKey) {
+          case 's':
             if (!mode.startsWith('supplementalLine')) {
               set(operationModeState, 'supplementalLine:point-start')
               reset(temporaryShapeConstraintsState)
             }
             break
-          case 2:
+          case 'l':
             if (!mode.startsWith('line')) {
               set(operationModeState, 'line:point-start')
               reset(temporaryShapeConstraintsState)
             }
             break
-          case 3:
+          case 'e':
             if (!mode.startsWith('arc')) {
               set(operationModeState, 'arc:point-center')
               reset(temporaryShapeConstraintsState)
             }
             break
-          case 4:
+          case 'c':
             if (!mode.startsWith('circle')) {
               set(operationModeState, 'circle:point-center')
               reset(temporaryShapeConstraintsState)
@@ -131,6 +145,22 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const showShortcutKeyHint = useRecoilCallback(
+    ({ set }) =>
+      async () => {
+        set(isShowingShortcutKeyHintState, true)
+      },
+    []
+  )
+
+  const hideShortcutKeyHint = useRecoilCallback(
+    ({ set }) =>
+      async () => {
+        set(isShowingShortcutKeyHintState, false)
+      },
+    []
+  )
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -139,10 +169,21 @@ const App: React.FC<Props> = ({ onExport }) => {
     didMountRef.current = true
 
     initializeHistory()
+    addKeyListener('switchToSelect', switchToSelect)
+    addKeyListener('cancelDrawing', cancelDrawing)
     addKeyListener('remove', removeSelectedShape)
-    addKeyListener('escape', cancelDrawing)
-    addKeyListener('shapeSwitch', switchShapeWithIndex)
-  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing, switchShapeWithIndex])
+    addKeyListener('shapeSwitch', switchShapeWithKey)
+    addKeyListener('showHint', showShortcutKeyHint)
+    addKeyListener('hideHint', hideShortcutKeyHint)
+  }, [
+    addKeyListener,
+    initializeHistory,
+    removeSelectedShape,
+    cancelDrawing,
+    switchShapeWithKey,
+    showShortcutKeyHint,
+    hideShortcutKeyHint,
+  ])
 
   const addShape = (newShapeSeed: ShapeSeed) => {
     const newShape: Shape = {
@@ -366,6 +407,8 @@ const App: React.FC<Props> = ({ onExport }) => {
         )}
         onUndo={undo}
         onClickExportButton={exportAsSvg}
+        showShortcutKeyHint={showShortcutKeyHint}
+        hideShortcutKeyHint={hideShortcutKeyHint}
       />
     </>
   )
