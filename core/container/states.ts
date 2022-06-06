@@ -309,57 +309,6 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
   },
 })
 
-// 図形作成中に表示されるツールチップの中身テキストを返すSelector
-export const tooltipContentState = selector<string | null>({
-  key: 'tooltipContent',
-  get: ({ get }) => {
-    const temporaryShape = get(temporaryShapeState)
-    const coord = get(activeCoordState)
-
-    if (temporaryShape === null || coord === null) {
-      return null
-    }
-
-    if (temporaryShape.type === 'tmp-circle') {
-      const temporaryCircleShape = temporaryShape as TemporaryCircleShape
-      return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
-    }
-
-    if (temporaryShape.type === 'tmp-line') {
-      const temporaryLineShape = temporaryShape as TemporaryLineShape
-
-      return (
-        Math.sqrt(
-          Math.pow(temporaryLineShape.start.x - coord.x, 2) +
-            Math.pow(temporaryLineShape.start.y - coord.y, 2)
-        ).toFixed(2) + 'px'
-      )
-    }
-
-    if (temporaryShape.type === 'tmp-arc') {
-      if (isTemporaryArcShape(temporaryShape)) {
-        const { startAngle, endAngle } = temporaryShape
-
-        let counterClockWiseAngle
-        if (startAngle === endAngle) {
-          counterClockWiseAngle = 0
-        } else if (startAngle < endAngle) {
-          counterClockWiseAngle = endAngle - startAngle
-        } else {
-          counterClockWiseAngle = 360 - (temporaryShape.startAngle - temporaryShape.endAngle)
-        }
-        return counterClockWiseAngle.toFixed(2) + '°'
-      }
-
-      if (isTemporaryArcRadius(temporaryShape)) {
-        return (temporaryShape.radius * 2).toFixed(2) + 'px'
-      }
-    }
-
-    return null
-  },
-})
-
 /*
  * マウスカーソルが指している座標や図形を管理するAtom、Selector
  */
@@ -742,6 +691,67 @@ export const canUndoSelector = selector<boolean>({
     // （ = 初期状態と1つ目の図形を追加した状態の2つスナップショットが存在している状態）
     return snapshots.length >= 2
   },
+})
+
+/*
+ * その他
+ */
+
+// 図形作成中に表示されるツールチップの中身テキストを返すSelector
+export const tooltipContentState = selector<string | null>({
+  key: 'tooltipContent',
+  get: ({ get }) => {
+    const temporaryShape = get(temporaryShapeState)
+    const coord = get(activeCoordState)
+
+    if (temporaryShape === null || coord === null) {
+      return null
+    }
+
+    if (temporaryShape.type === 'tmp-circle') {
+      const temporaryCircleShape = temporaryShape as TemporaryCircleShape
+      return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
+    }
+
+    if (temporaryShape.type === 'tmp-line') {
+      const temporaryLineShape = temporaryShape as TemporaryLineShape
+
+      return (
+        Math.sqrt(
+          Math.pow(temporaryLineShape.start.x - coord.x, 2) +
+            Math.pow(temporaryLineShape.start.y - coord.y, 2)
+        ).toFixed(2) + 'px'
+      )
+    }
+
+    if (temporaryShape.type === 'tmp-arc') {
+      if (isTemporaryArcShape(temporaryShape)) {
+        const { startAngle, endAngle } = temporaryShape
+
+        let counterClockWiseAngle
+        if (startAngle === endAngle) {
+          counterClockWiseAngle = 0
+        } else if (startAngle < endAngle) {
+          counterClockWiseAngle = endAngle - startAngle
+        } else {
+          counterClockWiseAngle = 360 - (temporaryShape.startAngle - temporaryShape.endAngle)
+        }
+        return counterClockWiseAngle.toFixed(2) + '°'
+      }
+
+      if (isTemporaryArcRadius(temporaryShape)) {
+        return (temporaryShape.radius * 2).toFixed(2) + 'px'
+      }
+    }
+
+    return null
+  },
+})
+
+// ショートカットカットキーのヒントを表示させるかどうかを管理するAtom
+export const isShowingShortcutKeyHintState = atom<boolean>({
+  key: 'isShowingShortcutKeyHint',
+  default: false,
 })
 
 // デバッグ用に点を描画する時に使う

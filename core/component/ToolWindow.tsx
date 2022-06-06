@@ -5,6 +5,7 @@ import {
   canUndoSelector,
   currentOperatingShapeSelector,
   currentSnapshotVersionState,
+  isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
   selectedShapeIdsState,
@@ -48,6 +49,26 @@ const coordViewerStyle = css`
   }
 `
 
+const buttonWrapperStyle = css`
+  position: relative;
+`
+
+const shortcutHintStyle = (keyLabel: string) => css`
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  font-size: ${keyLabel.length > 1 ? 10 : 14}px;
+  line-height: 30px;
+  margin: auto;
+  top: -45px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  border-radius: 5px;
+  background: #5d5d5d;
+  color: #ffffff;
+`
+
 interface Props {
   onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
@@ -56,6 +77,8 @@ interface Props {
   onActivateCircleDraw: () => void
   onUndo: () => void
   onClickExportButton: () => void
+  showShortcutKeyHint: () => void
+  hideShortcutKeyHint: () => void
 }
 
 const ToolWindow: React.FC<Props> = ({
@@ -66,7 +89,10 @@ const ToolWindow: React.FC<Props> = ({
   onActivateArcDraw,
   onUndo,
   onClickExportButton,
+  showShortcutKeyHint,
+  hideShortcutKeyHint,
 }) => {
+  const isShowingShortcutHint = useRecoilValue(isShowingShortcutKeyHintState)
   const operationMode = useRecoilValue(operationModeState)
   const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
   const pointingCoord = useRecoilValue(pointingCoordState)
@@ -79,28 +105,49 @@ const ToolWindow: React.FC<Props> = ({
     <>
       <div css={rootStyle}>
         <div css={toolGroupStyle}>
-          <button
-            onClick={onActivateSupplementalLineDraw}
-            disabled={currentOperatingShape === 'supplementalLine'}>
-            補助線
-          </button>
-          <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
-            線
-          </button>
-          <button onClick={onActivateArcDraw} disabled={currentOperatingShape === 'arc'}>
-            円弧
-          </button>
-          <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
-            円
-          </button>
+          <div css={buttonWrapperStyle}>
+            <button
+              onClick={onActivateSupplementalLineDraw}
+              disabled={currentOperatingShape === 'supplementalLine'}>
+              補助線
+            </button>
+            {isShowingShortcutHint && <div css={shortcutHintStyle('S')}>S</div>}
+          </div>
+          <div css={buttonWrapperStyle}>
+            <button onClick={onActivateLineDraw} disabled={currentOperatingShape === 'line'}>
+              線
+            </button>
+            {isShowingShortcutHint && <div css={shortcutHintStyle('L')}>L</div>}
+          </div>
+          <div css={buttonWrapperStyle}>
+            <button onClick={onActivateArcDraw} disabled={currentOperatingShape === 'arc'}>
+              円弧
+            </button>
+            {isShowingShortcutHint && <div css={shortcutHintStyle('E')}>E</div>}
+          </div>
+          <div css={buttonWrapperStyle}>
+            <button onClick={onActivateCircleDraw} disabled={currentOperatingShape === 'circle'}>
+              円
+            </button>
+            {isShowingShortcutHint && <div css={shortcutHintStyle('C')}>C</div>}
+          </div>
         </div>
         <div css={toolGroupStyle}>
-          <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
-            選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
-          </button>
+          <div css={buttonWrapperStyle}>
+            <button onClick={onActivateShapeSelect} disabled={operationMode === 'select'}>
+              選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
+            </button>
+            {isShowingShortcutHint && <div css={shortcutHintStyle('ESC')}>ESC</div>}
+          </div>
           <button onClick={onUndo} disabled={!canUndo}>
             元に戻す({currentSnapshotVersion ?? 'null'})
           </button>
+          <div css={buttonWrapperStyle}>
+            <button onMouseDown={showShortcutKeyHint} onMouseUp={hideShortcutKeyHint}>
+              ショートカットキーを表示
+            </button>
+            {isShowingShortcutHint && <div css={shortcutHintStyle('H')}>H</div>}
+          </div>
           <button onClick={onClickExportButton}>エクスポート</button>
         </div>
       </div>

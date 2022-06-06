@@ -7,6 +7,7 @@ import {
   activeCoordState,
   cursorClientPositionState,
   indicatingShapeIdState,
+  isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
   selectedShapeIdsState,
@@ -144,6 +145,22 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const showShortcutKeyHint = useRecoilCallback(
+    ({ set }) =>
+      async () => {
+        set(isShowingShortcutKeyHintState, true)
+      },
+    []
+  )
+
+  const hideShortcutKeyHint = useRecoilCallback(
+    ({ set }) =>
+      async () => {
+        set(isShowingShortcutKeyHintState, false)
+      },
+    []
+  )
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -156,7 +173,17 @@ const App: React.FC<Props> = ({ onExport }) => {
     addKeyListener('cancelDrawing', cancelDrawing)
     addKeyListener('remove', removeSelectedShape)
     addKeyListener('shapeSwitch', switchShapeWithKey)
-  }, [addKeyListener, initializeHistory, removeSelectedShape, cancelDrawing, switchShapeWithKey])
+    addKeyListener('showHint', showShortcutKeyHint)
+    addKeyListener('hideHint', hideShortcutKeyHint)
+  }, [
+    addKeyListener,
+    initializeHistory,
+    removeSelectedShape,
+    cancelDrawing,
+    switchShapeWithKey,
+    showShortcutKeyHint,
+    hideShortcutKeyHint,
+  ])
 
   const addShape = (newShapeSeed: ShapeSeed) => {
     const newShape: Shape = {
@@ -380,6 +407,8 @@ const App: React.FC<Props> = ({ onExport }) => {
         )}
         onUndo={undo}
         onClickExportButton={exportAsSvg}
+        showShortcutKeyHint={showShortcutKeyHint}
+        hideShortcutKeyHint={hideShortcutKeyHint}
       />
     </>
   )

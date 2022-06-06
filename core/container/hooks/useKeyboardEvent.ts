@@ -3,12 +3,20 @@ import { useRecoilValue } from 'recoil'
 import { temporaryShapeConstraintsState } from '../states'
 import useHistory from './useHistory'
 
-type eventList = 'switchToSelect' | 'cancelDrawing' | 'remove' | 'shapeSwitch'
+type eventList =
+  | 'switchToSelect'
+  | 'cancelDrawing'
+  | 'remove'
+  | 'shapeSwitch'
+  | 'showHint'
+  | 'hideHint'
 interface CallbackTypeList {
   switchToSelect: (() => void | Promise<void>) | null
   cancelDrawing: (() => void | Promise<void>) | null
   remove: (() => void | Promise<void>) | null
   shapeSwitch: ((shapeKey: string) => void | Promise<void>) | null
+  showHint: (() => void | Promise<void>) | null
+  hideHint: (() => void | Promise<void>) | null
 }
 type EventCallbackType<T extends eventList> = CallbackTypeList[T]
 
@@ -25,6 +33,8 @@ const useKeyboardEvent = () => {
     cancelDrawing: null,
     remove: null,
     shapeSwitch: null,
+    showHint: null,
+    hideHint: null,
   })
 
   // temporaryShapeConstraintsの更新を検知して値を取得する
@@ -69,6 +79,11 @@ const useKeyboardEvent = () => {
           if (listener) listener(e.key)
           break
         }
+        case 'h': {
+          const listener = keyLister.current['showHint']
+          if (listener) listener()
+          break
+        }
         case 'z': {
           if (e.metaKey) {
             undo()
@@ -82,10 +97,28 @@ const useKeyboardEvent = () => {
     [undo]
   )
 
+  const onKeyRelease = useCallback((e: KeyboardEvent) => {
+    console.debug(`Key released: ${e.key} Meta: ${e.metaKey} `)
+
+    switch (e.key) {
+      case 'h': {
+        const listener = keyLister.current['hideHint']
+        if (listener) listener()
+        break
+      }
+      default:
+      // noop
+    }
+  }, [])
+
   useEffect(() => {
     document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onKeyDown])
+    document.addEventListener('keyup', onKeyRelease)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('keyup', onKeyRelease)
+    }
+  }, [onKeyDown, onKeyRelease])
 
   return { addKeyListener }
 }
