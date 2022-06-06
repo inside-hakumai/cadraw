@@ -61,12 +61,12 @@ const useKeyboardEvent = () => {
           if (listener) listener()
           break
         }
-        case '1':
-        case '2':
-        case '3':
-        case '4': {
+        case 's':
+        case 'l':
+        case 'e':
+        case 'c': {
           const listener = keyLister.current['shapeSwitch']
-          if (listener) listener(parseInt(e.key))
+          if (listener) listener(e.key)
           break
         }
         case 'z': {

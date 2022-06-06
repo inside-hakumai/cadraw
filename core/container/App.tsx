@@ -107,30 +107,30 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
-  const switchShapeWithIndex = useRecoilCallback(
+  const switchShapeWithKey = useRecoilCallback(
     ({ snapshot, set, reset }) =>
-      async (shapeIndex: number) => {
+      async (shapeKey: string) => {
         const mode = await snapshot.getPromise(operationModeState)
-        switch (shapeIndex) {
-          case 1:
+        switch (shapeKey) {
+          case 's':
             if (!mode.startsWith('supplementalLine')) {
               set(operationModeState, 'supplementalLine:point-start')
               reset(temporaryShapeConstraintsState)
             }
             break
-          case 2:
+          case 'l':
             if (!mode.startsWith('line')) {
               set(operationModeState, 'line:point-start')
               reset(temporaryShapeConstraintsState)
             }
             break
-          case 3:
+          case 'e':
             if (!mode.startsWith('arc')) {
               set(operationModeState, 'arc:point-center')
               reset(temporaryShapeConstraintsState)
             }
             break
-          case 4:
+          case 'c':
             if (!mode.startsWith('circle')) {
               set(operationModeState, 'circle:point-center')
               reset(temporaryShapeConstraintsState)
