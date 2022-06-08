@@ -3,7 +3,6 @@ import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
 import {
   canUndoSelector,
-  currentOperatingShapeSelector,
   currentSnapshotVersionState,
   isShowingShortcutKeyHintState,
   operationModeState,
@@ -107,7 +106,6 @@ const ToolWindow: React.FC<Props> = ({
 }) => {
   const isShowingShortcutHint = useRecoilValue(isShowingShortcutKeyHintState)
   const operationMode = useRecoilValue(operationModeState)
-  const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
   const pointingCoord = useRecoilValue(pointingCoordState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const canUndo = useRecoilValue(canUndoSelector)
@@ -122,7 +120,7 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateSupplementalLineDraw}
-              disabled={currentOperatingShape === 'supplementalLine'}>
+              disabled={operationMode === 'supplementalLine'}>
               補助線
             </button>
             {isShowingShortcutHint && (
@@ -135,7 +133,7 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateLineDraw}
-              disabled={currentOperatingShape === 'line'}>
+              disabled={operationMode === 'line'}>
               線
             </button>
             {isShowingShortcutHint && (
@@ -148,7 +146,7 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateArcDraw}
-              disabled={currentOperatingShape === 'arc'}>
+              disabled={operationMode === 'arc'}>
               円弧
             </button>
             {isShowingShortcutHint && (
@@ -161,7 +159,7 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateCircleDraw}
-              disabled={currentOperatingShape === 'circle'}>
+              disabled={operationMode === 'circle'}>
               円
             </button>
             {isShowingShortcutHint && (

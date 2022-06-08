@@ -12,7 +12,7 @@ const DebugObserver: React.FC = () => {
     if (nodes.length > 0) {
       const entries = nodes.map(node => {
         const { key } = node
-        return [key, node]
+        return [key, snapshot.getLoadable(node).contents]
       })
       console.debug('The following atoms were modified: ', Object.fromEntries(entries))
     }

@@ -1,16 +1,50 @@
 type ShapeType = 'line' | 'circle' | 'arc' | 'supplementalLine'
 type TemporaryShapeType = 'tmp-line' | 'tmp-circle' | 'tmp-arc' | 'tmp-supplementalLine'
-type OperationMode =
-  | 'line:point-start'
-  | 'line:point-end'
-  | 'circle:point-center'
-  | 'circle:fix-radius'
-  | 'arc:point-center'
-  | 'arc:fix-radius'
-  | 'arc:fix-angle'
-  | 'select'
-  | 'supplementalLine:point-start'
-  | 'supplementalLine:point-end'
+
+interface DrawCommandMap {
+  line: 'start-end'
+  circle: 'center-diameter'
+  arc: 'center-two-points'
+  supplementalLine: 'start-end'
+}
+
+interface DrawStepMap {
+  line: {
+    'start-end': 'startPoint' | 'endPoint'
+  }
+  circle: {
+    'center-diameter': 'center' | 'diameter'
+  }
+  arc: {
+    'center-two-points': 'center' | 'startPoint' | 'endPoint'
+  }
+  supplementalLine: {
+    'start-end': 'startPoint' | 'endPoint'
+  }
+}
+
+// SにShapeType、を指定し、その図形のコマンドのUnionを返す
+type ShapeDrawCommand<S extends ShapeType> = S extends keyof DrawCommandMap
+  ? DrawCommandMap[S]
+  : never
+
+// SにShapeType、CにそのShapeTypeのDrawCommandを指定し、その図形・コマンドのDrawStepを返す
+type DrawCommandSteps<S extends ShapeType, C extends DrawCommandMap[S]> = S extends ShapeType
+  ? C extends DrawCommandMap[S]
+    ? DrawStepMap[S][C]
+    : never
+  : never
+
+// すべてのDrawCommandのUnion
+type DrawCommand = DrawCommandMap[keyof DrawCommandMap]
+
+// TにShapeTypeを指定し、そのShapeのすべてのDrawCommandにおけるDrawStepを返す
+type AllStepsOfShape<T> = T extends ShapeType ? DrawStepMap[T][keyof DrawStepMap[T]] : never
+
+// すべてのShapeType、すべてのDrawCommandのDrawStepのUnion
+type DrawStep = AllStepsOfShape<ShapeType>
+
+type OperationMode = ShapeType | 'select'
 type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
 type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine' | 'onArc'
 

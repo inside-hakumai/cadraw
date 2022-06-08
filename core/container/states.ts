@@ -22,26 +22,36 @@ import {
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
-  default: 'circle:point-center',
+  default: 'select',
 })
 
-export const currentOperatingShapeSelector = selector<ShapeType | null>({
-  key: 'currentOperatingShape',
-  get: ({ get }) => {
-    const operationMode = get(operationModeState)
-    if (operationMode.startsWith('line:')) {
-      return 'line'
-    } else if (operationMode.startsWith('circle:')) {
-      return 'circle'
-    } else if (operationMode.startsWith('arc:')) {
-      return 'arc'
-    } else if (operationMode.startsWith('supplementalLine:')) {
-      return 'supplementalLine'
-    } else {
-      return null
-    }
-  },
+export const drawCommandState = atom<DrawCommand | null>({
+  key: 'drawCommand',
+  default: null,
 })
+
+export const drawStepState = atom<DrawStep | null>({
+  key: 'drawStep',
+  default: null,
+})
+
+// export const currentOperatingShapeSelector = selector<ShapeType | null>({
+//   key: 'currentOperatingShape',
+//   get: ({ get }) => {
+//     const operationMode = get(operationModeState)
+//     if (operationMode.startsWith('line:')) {
+//       return 'line'
+//     } else if (operationMode.startsWith('circle:')) {
+//       return 'circle'
+//     } else if (operationMode.startsWith('arc:')) {
+//       return 'arc'
+//     } else if (operationMode.startsWith('supplementalLine:')) {
+//       return 'supplementalLine'
+//     } else {
+//       return null
+//     }
+//   },
+// })
 
 /*
  * 作成した図形を管理するAtom、Selector
@@ -202,107 +212,135 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
   key: 'temporaryShape',
   get: ({ get }) => {
     const operationMode = get(operationModeState)
+    const drawCommand = get(drawCommandState)
+    const drawStep = get(drawStepState)
     const temporaryShapeBase = get(temporaryShapeConstraintsState)
     const coord = get(activeCoordState)
 
-    if (temporaryShapeBase === null || coord === null) {
+    if (
+      drawCommand === null ||
+      drawStep === null ||
+      temporaryShapeBase === null ||
+      coord === null
+    ) {
       return null
     }
 
-    if (operationMode === 'circle:fix-radius') {
-      const temporaryCircleShapeBase = temporaryShapeBase as TemporaryCircleShapeBase
-
-      const temporaryCircleRadius = Math.sqrt(
-        Math.pow(temporaryCircleShapeBase.center.x - coord.x, 2) +
-          Math.pow(temporaryCircleShapeBase.center.y - coord.y, 2)
-      )
-      const temporaryCircleDiameterStart = coord
-      const temporaryCircleDiameterEnd = {
-        x: coord.x + (temporaryCircleShapeBase.center.x - coord.x) * 2,
-        y: coord.y + (temporaryCircleShapeBase.center.y - coord.y) * 2,
-      }
-
-      return {
-        ...temporaryShapeBase,
-        radius: temporaryCircleRadius,
-        diameterStart: temporaryCircleDiameterStart,
-        diameterEnd: temporaryCircleDiameterEnd,
-      } as TemporaryCircleShape
+    if (operationMode === 'select') {
+      return null
     }
 
-    if (operationMode === 'arc:fix-radius') {
-      if (!isTemporaryArcCenter(temporaryShapeBase)) {
-        console.warn('temporaryShapeBase is not temporaryArcCenter')
-        return null
-      }
+    if (operationMode === 'circle' && drawCommand === 'center-diameter') {
+      const circleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
-      const temporaryRadius = calcDistance(temporaryShapeBase.center, coord)
-      const temporaryStartAngle = calcCentralAngleFromHorizontalLine(
-        coord,
-        temporaryShapeBase.center
-      )
+      if (circleDrawStep === 'diameter') {
+        const temporaryCircleShapeBase = temporaryShapeBase as TemporaryCircleShapeBase
 
-      if (temporaryStartAngle === null) {
-        return temporaryShapeBase
-      } else {
-        const newValue: TemporaryArcRadius = {
-          ...temporaryShapeBase,
-          radius: temporaryRadius,
-          startAngle: temporaryStartAngle,
-          startCoord: coord,
-        }
-        return newValue
-      }
-    }
-
-    if (operationMode === 'arc:fix-angle') {
-      if (!isTemporaryArcRadius(temporaryShapeBase)) {
-        console.warn('temporaryShapeBase is not temporaryArcRadius')
-        return null
-      }
-
-      const { center, startAngle } = temporaryShapeBase
-      const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, center)
-
-      if (temporaryEndAngle === null) {
-        return temporaryShapeBase
-      } else {
-        const endCoord = calcCircumferenceCoordFromDegree(
-          center,
-          temporaryShapeBase.radius,
-          temporaryEndAngle
+        const temporaryCircleRadius = Math.sqrt(
+          Math.pow(temporaryCircleShapeBase.center.x - coord.x, 2) +
+            Math.pow(temporaryCircleShapeBase.center.y - coord.y, 2)
         )
-        const counterClockWiseAngle =
-          temporaryEndAngle > startAngle
-            ? temporaryEndAngle - startAngle
-            : 360 - (startAngle - temporaryEndAngle)
-
-        const newValue: TemporaryArcShape = {
-          ...temporaryShapeBase,
-          endCoord: endCoord,
-          endAngle: temporaryEndAngle,
-          angleDeltaFromStart: counterClockWiseAngle,
+        const temporaryCircleDiameterStart = coord
+        const temporaryCircleDiameterEnd = {
+          x: coord.x + (temporaryCircleShapeBase.center.x - coord.x) * 2,
+          y: coord.y + (temporaryCircleShapeBase.center.y - coord.y) * 2,
         }
-        return newValue
+
+        return {
+          ...temporaryShapeBase,
+          radius: temporaryCircleRadius,
+          diameterStart: temporaryCircleDiameterStart,
+          diameterEnd: temporaryCircleDiameterEnd,
+        } as TemporaryCircleShape
       }
     }
 
-    if (operationMode === 'line:point-end') {
-      const temporaryLineShapeBase = temporaryShapeBase as TemporaryLineShapeBase
+    if (operationMode === 'arc' && drawCommand === 'center-two-points') {
+      const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
-      return {
-        ...temporaryLineShapeBase,
-        end: coord,
-      } as TemporaryLineShape
+      if (arcDrawStep === 'startPoint') {
+        if (!isTemporaryArcCenter(temporaryShapeBase)) {
+          console.warn('temporaryShapeBase is not temporaryArcCenter')
+          return null
+        }
+
+        const temporaryRadius = calcDistance(temporaryShapeBase.center, coord)
+        const temporaryStartAngle = calcCentralAngleFromHorizontalLine(
+          coord,
+          temporaryShapeBase.center
+        )
+
+        if (temporaryStartAngle === null) {
+          return temporaryShapeBase
+        } else {
+          const newValue: TemporaryArcRadius = {
+            ...temporaryShapeBase,
+            radius: temporaryRadius,
+            startAngle: temporaryStartAngle,
+            startCoord: coord,
+          }
+          return newValue
+        }
+      }
+
+      if (arcDrawStep === 'endPoint') {
+        if (!isTemporaryArcRadius(temporaryShapeBase)) {
+          console.warn('temporaryShapeBase is not temporaryArcRadius')
+          return null
+        }
+
+        const { center, startAngle } = temporaryShapeBase
+        const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, center)
+
+        if (temporaryEndAngle === null) {
+          return temporaryShapeBase
+        } else {
+          const endCoord = calcCircumferenceCoordFromDegree(
+            center,
+            temporaryShapeBase.radius,
+            temporaryEndAngle
+          )
+          const counterClockWiseAngle =
+            temporaryEndAngle > startAngle
+              ? temporaryEndAngle - startAngle
+              : 360 - (startAngle - temporaryEndAngle)
+
+          const newValue: TemporaryArcShape = {
+            ...temporaryShapeBase,
+            endCoord: endCoord,
+            endAngle: temporaryEndAngle,
+            angleDeltaFromStart: counterClockWiseAngle,
+          }
+          return newValue
+        }
+      }
     }
 
-    if (operationMode === 'supplementalLine:point-end') {
-      const temporaryLineShapeBase = temporaryShapeBase as TemporarySupplementalLineShapeBase
+    if (operationMode === 'line' && drawCommand === 'start-end') {
+      const lineDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
-      return {
-        ...temporaryLineShapeBase,
-        end: coord,
-      } as TemporarySupplementalLineShape
+      if (lineDrawStep === 'endPoint') {
+        const temporaryLineShapeBase = temporaryShapeBase as TemporaryLineShapeBase
+
+        return {
+          ...temporaryLineShapeBase,
+          end: coord,
+        } as TemporaryLineShape
+      }
+    }
+
+    if (operationMode === 'supplementalLine' && drawCommand === 'start-end') {
+      const supplementalLineDrawStep =
+        drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+
+      if (supplementalLineDrawStep === 'endPoint') {
+        const temporaryLineShapeBase = temporaryShapeBase as TemporarySupplementalLineShapeBase
+
+        return {
+          ...temporaryLineShapeBase,
+          end: coord,
+        } as TemporarySupplementalLineShape
+      }
     }
 
     return null
