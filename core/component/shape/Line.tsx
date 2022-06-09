@@ -3,7 +3,7 @@ import { useRecoilValue } from 'recoil'
 import {
   indicatingShapeIdState,
   isShapeSelectedSelectorFamily,
-  shapeStateFamily,
+  shapeSelectorFamily,
 } from '../../container/states'
 import { isLineShape, isSupplementalLineShape } from '../../lib/typeguard'
 
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
-  const shape = useRecoilValue(shapeStateFamily(shapeId)) as LineShape
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as LineShape
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))

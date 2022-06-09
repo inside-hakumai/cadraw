@@ -1,4 +1,4 @@
-import { atom, atomFamily, selector, selectorFamily, Snapshot, waitForAll } from 'recoil'
+import { atom, selector, selectorFamily, Snapshot } from 'recoil'
 import {
   assert,
   calcCentralAngleFromHorizontalLine,
@@ -57,16 +57,25 @@ export const drawStepState = atom<DrawStep | null>({
  * 作成した図形を管理するAtom、Selector
  */
 
-// IDをキーにして図形を管理するAtomFamily
-export const shapeStateFamily = atomFamily<Shape | undefined, number>({
-  key: 'shape',
-  default: undefined,
+// 図形を管理するAtom
+export const shapesState = atom<Shape[]>({
+  key: 'shapes',
+  default: [],
 })
 
-// 図形のIDの一覧を管理するAtom
-export const shapeIdsState = atom<number[]>({
-  key: 'shapeIds',
-  default: [],
+// 図形を取得するSelectorFamily
+export const shapeSelectorFamily = selectorFamily<Shape, number>({
+  key: 'singleShape',
+  get:
+    (shapeId: number) =>
+    ({ get }) => {
+      const shapes = get(shapesState)
+      const found = shapes.find(shape => shape.id === shapeId)
+      if (found === undefined) {
+        throw new Error(`Shape with id ${shapeId} not found`)
+      }
+      return found
+    },
 })
 
 // 特定の形状の図形に限定してIDのリストを返すSelectorFamily
@@ -75,10 +84,9 @@ export const filteredShapeIdsSelector = selectorFamily<number[], ShapeType>({
   get:
     (shapeType: ShapeType) =>
     ({ get }) => {
-      const allShapes = get(shapesSelector)
-      const allShapeIds = get(shapeIdsState)
+      const allShapes = get(shapesState)
 
-      return allShapeIds.filter(id => allShapes.find(shape => shape.id === id)?.type === shapeType)
+      return allShapes.filter(shape => shape.type === shapeType).map(shape => shape.id)
     },
 })
 
@@ -88,7 +96,7 @@ export const filteredShapesSelector = selectorFamily<Shape[], ShapeType>({
   get:
     (shapeType: ShapeType) =>
     ({ get }) => {
-      const allShapes = get(shapesSelector)
+      const allShapes = get(shapesState)
       return allShapes.filter(shape => shape.type === shapeType)
     },
 })
@@ -110,20 +118,11 @@ export const isShapeSelectedSelectorFamily = selectorFamily<boolean, number>({
     },
 })
 
-// すべての図形を返すSelector
-export const shapesSelector = selector<Shape[]>({
-  key: 'allShapes',
-  get: ({ get }) => {
-    const shapeIds = get(shapeIdsState)
-    return get(waitForAll(shapeIds.map(id => shapeStateFamily(id)))) as Shape[]
-  },
-})
-
 // 図形の拘束点を返すSelector
 export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
   key: 'shapeConstraintPoints',
   get: ({ get }) => {
-    const shapes = get(shapesSelector)
+    const shapes = get(shapesState)
     return shapes
       .map(shape => {
         if (shape.type === 'line') {
@@ -377,7 +376,7 @@ export const indicatingShapeIdState = selector<number | null>({
       return null
     }
 
-    const shapes = get(shapesSelector)
+    const shapes = get(shapesState)
 
     let nearestIndex = -1
     let minimumDistance = Number.MAX_VALUE
@@ -474,7 +473,7 @@ export const snapToShapeConstraintPointSelector = selector<{
 export const supplementalLinesState = selector<LineShapeSeed[]>({
   key: 'supplementalLinesSelector',
   get: ({ get }) => {
-    const shapes = get(shapesSelector)
+    const shapes = get(shapesState)
 
     const snappingCoordInfo = get(snappingCoordInfoState)
     if (snappingCoordInfo === null) {
@@ -506,7 +505,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       return null
     }
 
-    const shapes = get(shapesSelector)
+    const shapes = get(shapesState)
 
     // 現在指している座標と図形の最近傍点との距離が近い図形を探す
     let closeShapes: Shape[] = []

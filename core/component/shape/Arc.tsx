@@ -4,7 +4,7 @@ import { useRecoilValue } from 'recoil'
 import {
   indicatingShapeIdState,
   isShapeSelectedSelectorFamily,
-  shapeStateFamily,
+  shapeSelectorFamily,
 } from '../../container/states'
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const Arc: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeStateFamily(shapeId)) as ArcShape
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as ArcShape
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isFocused = indicatingShapeId === shape.id
@@ -25,7 +25,6 @@ const Arc: React.FC<Props> = ({ shapeId }) => {
 
   useEffect(() => {
     if (!isArcShape(shape)) {
-      console.debug(shape)
       throw new Error(`Shape(ID = ${shapeId} is not a arc`)
     }
   }, [shapeId, shape])

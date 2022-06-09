@@ -13,9 +13,7 @@ import {
   operationModeState,
   pointingCoordState,
   selectedShapeIdsState,
-  shapeIdsState,
-  shapesSelector,
-  shapeStateFamily,
+  shapesState,
   temporaryShapeConstraintsState,
   temporaryShapeState,
 } from './states'
@@ -41,7 +39,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const activeCoord = useRecoilValue(activeCoordState)
-  const shapes = useRecoilValue(shapesSelector)
+  const shapes = useRecoilValue(shapesState)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const setCursorClientPosition = useSetRecoilState(cursorClientPositionState)
@@ -56,8 +54,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const setShape = useRecoilCallback(
     ({ set }) =>
       async (shape: Shape) => {
-        set(shapeIdsState, oldValue => [...oldValue, shape.id])
-        set(shapeStateFamily(shape.id), shape)
+        set(shapesState, oldValue => [...oldValue, shape])
       },
     []
   )
@@ -75,10 +72,9 @@ const App: React.FC<Props> = ({ onExport }) => {
     ({ snapshot, set }) =>
       async () => {
         const selectedShapeIdList = await snapshot.getPromise(selectedShapeIdsState)
-        set(shapeIdsState, oldValue => oldValue.filter(id => !selectedShapeIdList.includes(id)))
-        for (const shapeId of selectedShapeIdList) {
-          set(shapeStateFamily(shapeId), undefined)
-        }
+        set(shapesState, oldValue =>
+          oldValue.filter(shape => !selectedShapeIdList.includes(shape.id))
+        )
         set(selectedShapeIdsState, [])
       },
     []
