@@ -1,4 +1,4 @@
-import { atom, selector, selectorFamily, Snapshot } from 'recoil'
+import { atom, selector, selectorFamily } from 'recoil'
 import {
   assert,
   calcCentralAngleFromHorizontalLine,
@@ -706,27 +706,27 @@ export const snappingCoordInfoState = selector<SnapInfo[]>({
  */
 
 // スナップショットのリストを管理するAtom
-export const snapshotsState = atom<Snapshot[]>({
+export const snapshotsState = atom<Shape[][]>({
   key: 'snapshots',
-  default: [],
+  default: [[]],
   dangerouslyAllowMutability: true,
 })
 
 // 現在描画されている状態を示しているスナップショットのバージョン
-export const currentSnapshotVersionState = atom<number | null>({
+export const currentSnapshotVersionState = atom<number>({
   key: 'currentSnapshotVersion',
-  default: null,
+  default: 0,
 })
 
 // Undoの可否をboolean値で返すSelector
 export const canUndoSelector = selector<boolean>({
   key: 'canUndoSelector',
   get: ({ get }) => {
-    const snapshots = get(snapshotsState)
+    const currentSnapshotVersion = get(currentSnapshotVersionState)
 
-    // 図形が最低1つ存在する状態でのみUndoを実行できる
+    // スナップショットが1つ以上追加されている状態でのみUndoを実行できる
     // （ = 初期状態と1つ目の図形を追加した状態の2つスナップショットが存在している状態）
-    return snapshots.length >= 2
+    return currentSnapshotVersion >= 1
   },
 })
 

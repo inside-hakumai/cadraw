@@ -5,6 +5,8 @@ import Canvas from '../component/Canvas'
 import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import {
   activeCoordState,
+  canUndoSelector,
+  currentSnapshotVersionState,
   cursorClientPositionState,
   drawCommandState,
   drawStepState,
@@ -14,12 +16,11 @@ import {
   pointingCoordState,
   selectedShapeIdsState,
   shapesState,
+  snapshotsState,
   temporaryShapeConstraintsState,
   temporaryShapeState,
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
-import useHistory from './hooks/useHistory'
-import useHistoryUpdater from './hooks/useHistoryUpdater'
 import { isTemporaryArcCenter, isTemporaryArcShape } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
 
@@ -29,35 +30,41 @@ interface Props {
 
 const App: React.FC<Props> = ({ onExport }) => {
   const { addKeyListener } = useKeyboardEvent()
-  const { initializeHistory } = useHistoryUpdater()
-  const { undo } = useHistory()
   const { goToNextStep, goToFirstStep } = useDrawStep()
 
-  const [operationMode, setOperationMode] = useRecoilState(operationModeState)
-  const [drawCommand, setDrawCommand] = useRecoilState(drawCommandState)
-  const [drawStep, setDrawStep] = useRecoilState(drawStepState)
+  const [shapes, setShapes] = useRecoilState(shapesState)
+  const [snapshotVersion, setSnapshotVersion] = useRecoilState(currentSnapshotVersionState)
 
+  const operationMode = useRecoilValue(operationModeState)
+  const drawCommand = useRecoilValue(drawCommandState)
+  const drawStep = useRecoilValue(drawStepState)
   const temporaryShape = useRecoilValue(temporaryShapeState)
   const activeCoord = useRecoilValue(activeCoordState)
-  const shapes = useRecoilValue(shapesState)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const setCursorClientPosition = useSetRecoilState(cursorClientPositionState)
   const setTemporaryShapeConstraints = useSetRecoilState(temporaryShapeConstraintsState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
+  const setSnapshotsState = useSetRecoilState(snapshotsState)
   // const setDebugCoord = useSetRecoilState(debugCoordState)
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
 
-  const setShape = useRecoilCallback(
-    ({ set }) =>
-      async (shape: Shape) => {
-        set(shapesState, oldValue => [...oldValue, shape])
-      },
-    []
-  )
+  const setShape = async (shape: Shape) => {
+    setShapes(oldValue => [...oldValue, shape])
+    setSnapshotsState(oldState => {
+      if (oldState.length === snapshotVersion + 1) {
+        return [...oldState, [...shapes, shape]]
+      } else {
+        const newState = [...oldState]
+        newState[snapshotVersion + 1] = [...shapes, shape]
+        return newState
+      }
+    })
+    setSnapshotVersion(oldState => oldState + 1)
+  }
 
   const switchToSelect = useRecoilCallback(
     ({ set, reset }) =>
@@ -173,6 +180,26 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const undo = useRecoilCallback(({ snapshot, set }) => async () => {
+    const canUndo = await snapshot.getPromise(canUndoSelector)
+    const currentSnapshotVersion = await snapshot.getPromise(currentSnapshotVersionState)
+
+    if (!canUndo) {
+      console.warn('Few snapshots. Cannot undo.')
+    } else if (currentSnapshotVersion === null) {
+      console.warn('currentSnapshotVersion is null. Cannot undo.')
+    } else if (currentSnapshotVersion === 0) {
+      console.warn('currentSnapshotVersion is 0. Cannot undo.')
+    } else {
+      const rollbackTargetSnapshot = (await snapshot.getPromise(snapshotsState))[
+        currentSnapshotVersion - 1
+      ]
+
+      set(shapesState, Array.from(rollbackTargetSnapshot))
+      set(currentSnapshotVersionState, currentSnapshotVersion - 1)
+    }
+  })
+
   useEffect(() => {
     if (didMountRef.current) {
       return
@@ -180,22 +207,22 @@ const App: React.FC<Props> = ({ onExport }) => {
 
     didMountRef.current = true
 
-    initializeHistory()
     addKeyListener('switchToSelect', switchToSelect)
     addKeyListener('cancelDrawing', cancelDrawing)
     addKeyListener('remove', removeSelectedShape)
     addKeyListener('shapeSwitch', switchShapeWithKey)
     addKeyListener('showHint', showShortcutKeyHint)
     addKeyListener('hideHint', hideShortcutKeyHint)
+    addKeyListener('undo', undo)
   }, [
     addKeyListener,
-    initializeHistory,
     removeSelectedShape,
     cancelDrawing,
     switchShapeWithKey,
     showShortcutKeyHint,
     hideShortcutKeyHint,
     switchToSelect,
+    undo,
   ])
 
   const addShape = async (newShapeSeed: ShapeSeed) => {
