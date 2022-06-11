@@ -10,6 +10,7 @@ import {
   selectedShapeIdsState,
   snappingCoordState,
 } from '../container/states'
+import { useTranslation } from 'react-i18next'
 
 const rootStyle = css`
   display: flex;
@@ -111,6 +112,7 @@ const ToolWindow: React.FC<Props> = ({
   const canUndo = useRecoilValue(canUndoSelector)
   const currentSnapshotVersion = useRecoilValue(currentSnapshotVersionState)
   const selectedShapeIds = useRecoilValue(selectedShapeIdsState)
+  const { t } = useTranslation()
 
   return (
     <>
@@ -121,11 +123,11 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onClick={onActivateSupplementalLineDraw}
               disabled={operationMode === 'supplementalLine'}>
-              補助線
+              {t('shape.supplementalLine')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('S')}>S</div>
+                <div css={shortcutHintStyle('S')}></div>
               </div>
             )}
           </div>
@@ -134,7 +136,7 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onClick={onActivateLineDraw}
               disabled={operationMode === 'line'}>
-              線
+              {t('shape.line')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -147,7 +149,7 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onClick={onActivateArcDraw}
               disabled={operationMode === 'arc'}>
-              円弧
+              {t('shape.arc')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -160,7 +162,7 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onClick={onActivateCircleDraw}
               disabled={operationMode === 'circle'}>
-              円
+              {t('shape.circle')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -175,7 +177,8 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onClick={onActivateShapeSelect}
               disabled={operationMode === 'select'}>
-              選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
+              {t('operation.select')}
+              {selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -185,7 +188,8 @@ const ToolWindow: React.FC<Props> = ({
           </div>
           <div css={buttonWrapperStyle}>
             <button css={buttonStyle} onClick={onUndo} disabled={!canUndo}>
-              元に戻す({currentSnapshotVersion ?? 'null'})
+              {t('operation.undo')}
+              {currentSnapshotVersion && `(${currentSnapshotVersion})`}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -199,7 +203,7 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onMouseDown={showShortcutKeyHint}
               onMouseUp={hideShortcutKeyHint}>
-              ショートカットキーを表示
+              {t('operation.showShortcut')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -208,7 +212,7 @@ const ToolWindow: React.FC<Props> = ({
             )}
           </div>
           <button css={buttonStyle} onClick={onClickExportButton}>
-            エクスポート
+            {t('operation.export')}
           </button>
         </div>
       </div>

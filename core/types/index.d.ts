@@ -195,3 +195,18 @@ interface SnapInfoLineEdge extends ShapeRelatedSnapInfo {
   type: 'lineEdge'
   targetShapeId: number
 }
+
+interface TranslationSchema {
+  shape: {
+    line: string
+    circle: string
+    arc: string
+    supplementalLine: string
+  }
+  operation: {
+    select: string
+    undo: string
+    showShortcut: string
+    export: string
+  }
+}
