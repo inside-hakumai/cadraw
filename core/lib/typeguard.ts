@@ -1,5 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { drawCommandList, shapeList } from './constants'
+
+export const isShapeType = (value: any): value is ShapeType => {
+  return typeof value === 'string' && shapeList.some(shape => shape === value)
+}
+
+export const isValidLineCommand = (command: any): command is ShapeDrawCommand<'line'> => {
+  return [...drawCommandList['line']].includes(command)
+}
+
+export const isValidCircleCommand = (command: any): command is ShapeDrawCommand<'circle'> => {
+  return [...drawCommandList['circle']].includes(command)
+}
+
+export const isValidArcCommand = (command: any): command is ShapeDrawCommand<'arc'> => {
+  return [...drawCommandList['arc']].includes(command)
+}
+
+export const isValidSupplementalLineCommand = (
+  command: any
+): command is ShapeDrawCommand<'supplementalLine'> => {
+  return [...drawCommandList['supplementalLine']].includes(command)
+}
+
 export const isObject = (value: any): boolean => {
   return typeof value === 'object' && value !== null
 }

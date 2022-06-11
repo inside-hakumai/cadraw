@@ -1,6 +1,4 @@
-import { ResourceLanguage } from 'i18next'
-
-const ja: ResourceLanguage & TranslationSchema = {
+const ja: TranslationSchema = {
   shape: {
     line: '直線',
     circle: '円',
@@ -13,6 +11,21 @@ const ja: ResourceLanguage & TranslationSchema = {
     showShortcut: 'ショートカットを表示',
     export: 'エクスポート',
   },
-}
+  command: {
+    line: {
+      'start-end': '両端指定',
+    },
+    circle: {
+      'center-diameter': '中心・直径指定',
+    },
+    arc: {
+      'center-two-points': '中心・両端指定',
+      'three-points': '3点指定',
+    },
+    supplementalLine: {
+      'start-end': '両端指定',
+    },
+  },
+} as const
 
 export default ja

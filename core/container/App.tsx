@@ -6,6 +6,7 @@ import { useRecoilCallback, useRecoilState, useRecoilValue, useSetRecoilState } 
 import {
   activeCoordState,
   canUndoSelector,
+  currentOperatingShapeSelector,
   currentSnapshotVersionState,
   cursorClientPositionState,
   drawCommandState,
@@ -21,7 +22,14 @@ import {
   temporaryShapeState,
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
-import { isTemporaryArcCenter, isTemporaryArcShape } from '../lib/typeguard'
+import {
+  isTemporaryArcCenter,
+  isTemporaryArcShape,
+  isValidArcCommand,
+  isValidCircleCommand,
+  isValidLineCommand,
+  isValidSupplementalLineCommand,
+} from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
 
 interface Props {
@@ -71,6 +79,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       async () => {
         set(operationModeState, 'select')
         reset(temporaryShapeConstraintsState)
+        reset(drawCommandState)
       },
     []
   )
@@ -471,10 +480,33 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const changeCommand = useRecoilCallback(
+    ({ snapshot, set }) =>
+      async (newCommand: string) => {
+        const currentOperatingShape = await snapshot.getPromise(currentOperatingShapeSelector)
+
+        if (
+          (currentOperatingShape === 'line' && isValidLineCommand(newCommand)) ||
+          (currentOperatingShape === 'circle' && isValidCircleCommand(newCommand)) ||
+          (currentOperatingShape === 'arc' && isValidArcCommand(newCommand)) ||
+          (currentOperatingShape === 'supplementalLine' &&
+            isValidSupplementalLineCommand(newCommand))
+        ) {
+          set(drawCommandState, newCommand)
+        } else {
+          throw new Error(
+            `Invalid shape and command combination: ${currentOperatingShape} & ${newCommand}`
+          )
+        }
+      },
+    []
+  )
+
   return (
     <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
+        changeCommand={changeCommand}
         onActivateSupplementalLineDraw={useCallback(
           () => changeOperationMode('supplementalLine'),
           [changeOperationMode]

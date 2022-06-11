@@ -14,11 +14,13 @@ import {
   isArcShape,
   isCircleShape,
   isLineShape,
+  isShapeType,
   isSupplementalLineShape,
   isTemporaryArcCenter,
   isTemporaryArcRadius,
   isTemporaryArcShape,
 } from '../lib/typeguard'
+import { drawCommandList } from '../lib/constants'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
@@ -35,23 +37,26 @@ export const drawStepState = atom<DrawStep | null>({
   default: null,
 })
 
-// export const currentOperatingShapeSelector = selector<ShapeType | null>({
-//   key: 'currentOperatingShape',
-//   get: ({ get }) => {
-//     const operationMode = get(operationModeState)
-//     if (operationMode.startsWith('line:')) {
-//       return 'line'
-//     } else if (operationMode.startsWith('circle:')) {
-//       return 'circle'
-//     } else if (operationMode.startsWith('arc:')) {
-//       return 'arc'
-//     } else if (operationMode.startsWith('supplementalLine:')) {
-//       return 'supplementalLine'
-//     } else {
-//       return null
-//     }
-//   },
-// })
+export const currentAvailableCommandSelector = selector<DrawCommand[] | null>({
+  key: 'currentAvailableCommand',
+  get: ({ get }) => {
+    const operationMode = get(operationModeState)
+
+    if (isShapeType(operationMode)) {
+      return [...drawCommandList[operationMode]]
+    } else {
+      return null
+    }
+  },
+})
+
+export const currentOperatingShapeSelector = selector<ShapeType | null>({
+  key: 'currentOperatingShape',
+  get: ({ get }) => {
+    const operationMode = get(operationModeState)
+    return isShapeType(operationMode) ? operationMode : null
+  },
+})
 
 /*
  * 作成した図形を管理するAtom、Selector

@@ -1,9 +1,12 @@
-import React from 'react'
+import React, { MouseEvent, useCallback } from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
 import {
   canUndoSelector,
+  currentAvailableCommandSelector,
+  currentOperatingShapeSelector,
   currentSnapshotVersionState,
+  drawCommandState,
   isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
@@ -11,6 +14,13 @@ import {
   snappingCoordState,
 } from '../container/states'
 import { useTranslation } from 'react-i18next'
+
+import {
+  isValidArcCommand,
+  isValidCircleCommand,
+  isValidLineCommand,
+  isValidSupplementalLineCommand,
+} from '../lib/typeguard'
 
 const rootStyle = css`
   display: flex;
@@ -83,6 +93,7 @@ const shortcutHintStyle = (keyLabel: string) => css`
 `
 
 interface Props {
+  changeCommand: (newCommand: string) => void
   onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
@@ -95,6 +106,7 @@ interface Props {
 }
 
 const ToolWindow: React.FC<Props> = ({
+  changeCommand,
   onActivateSupplementalLineDraw,
   onActivateShapeSelect,
   onActivateLineDraw,
@@ -107,6 +119,9 @@ const ToolWindow: React.FC<Props> = ({
 }) => {
   const isShowingShortcutHint = useRecoilValue(isShowingShortcutKeyHintState)
   const operationMode = useRecoilValue(operationModeState)
+  const drawCommand = useRecoilValue(drawCommandState)
+  const currentAvailableCommands = useRecoilValue(currentAvailableCommandSelector)
+  const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
   const pointingCoord = useRecoilValue(pointingCoordState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const canUndo = useRecoilValue(canUndoSelector)
@@ -114,9 +129,87 @@ const ToolWindow: React.FC<Props> = ({
   const selectedShapeIds = useRecoilValue(selectedShapeIdsState)
   const { t } = useTranslation()
 
+  const onClickCommandChangeButton = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      const target = event.target as HTMLButtonElement
+      const newCommand = target.getAttribute('data-command')
+      if (newCommand === null) {
+        throw new Error('newCommand is null')
+      }
+      changeCommand(newCommand)
+    },
+    [changeCommand]
+  )
+
   return (
     <>
       <div css={rootStyle}>
+        {currentOperatingShape && currentAvailableCommands && (
+          <div css={toolGroupStyle}>
+            {currentAvailableCommands.map(command => {
+              // TODO: if文の条件文以外の中身が同じものが4つ並んでいる冗長な書き方をしているので改善する
+              if (currentOperatingShape === 'line' && isValidLineCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={i18nKey}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+              if (currentOperatingShape === 'circle' && isValidCircleCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={command}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+              if (currentOperatingShape === 'arc' && isValidArcCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={command}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+              if (
+                currentOperatingShape === 'supplementalLine' &&
+                isValidSupplementalLineCommand(command)
+              ) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={command}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+            })}
+          </div>
+        )}
         <div css={toolGroupStyle}>
           <div css={buttonWrapperStyle}>
             <button
