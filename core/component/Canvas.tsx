@@ -2,6 +2,8 @@ import React from 'react'
 import { css } from '@emotion/react'
 import {
   isTemporaryArcRadius,
+  isTemporaryArcStartPointAndEndPoint,
+  isTemporaryArcThreePoint,
   isTemporaryCircleShape,
   isTemporaryLineShape,
   isTemporarySupplementalLineShape,
@@ -25,6 +27,7 @@ import Line from './shape/Line'
 import SnapCircle from './shape/SnapCircle'
 import TemporaryArc from './shape/TemporaryArc'
 import Arc from './shape/Arc'
+import TemporaryArcWithThreePoints from './shape/TemporaryArcWithThreePoints'
 
 const style = css`
   width: 100%;
@@ -134,7 +137,11 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {/* エクスポート時には含まれない補助線 */}
         {supplementalLines &&
           supplementalLines.map((line, index) => (
-            <SupplementalLine key={`supplementalLine-${index}`} start={line.start} end={line.end} />
+            <SupplementalLine
+              key={`supplementalLine-${index}`}
+              start={line.startPoint}
+              end={line.endPoint}
+            />
           ))}
 
         {/* 作成中（確定前）の図形（円） */}
@@ -146,10 +153,23 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {isTemporaryArcRadius(temporaryShape) && (
           <TemporaryArc shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
         )}
+        {isTemporaryArcThreePoint(temporaryShape) && (
+          <TemporaryArcWithThreePoints
+            shape={temporaryShape}
+            centerRef={temporaryCircleCenterRef}
+          />
+        )}
 
         {/* 作成中（確定前）の図形（線） */}
         {isTemporaryLineShape(temporaryShape) && (
           <TemporaryLine shape={temporaryShape} startCircleRef={temporaryLineStartRef} />
+        )}
+        {isTemporaryArcStartPointAndEndPoint(temporaryShape) && (
+          <TemporaryLine
+            shape={temporaryShape}
+            startCircleRef={temporaryLineStartRef}
+            isSupplementalLine={true}
+          />
         )}
         {isTemporarySupplementalLineShape(temporaryShape) && (
           <TemporaryLine

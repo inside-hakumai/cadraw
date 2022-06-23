@@ -2,6 +2,7 @@ import App from './container/App'
 import { RecoilRoot } from 'recoil'
 import DebugObserver from './lib/DebugObserver'
 import React from 'react'
+import './i18n/config'
 
 interface Props {
   onExport?: (data: string) => void

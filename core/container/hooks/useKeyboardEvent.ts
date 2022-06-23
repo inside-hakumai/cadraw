@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useRecoilValue } from 'recoil'
 import { temporaryShapeConstraintsState } from '../states'
-import useHistory from './useHistory'
 
 type eventList =
   | 'switchToSelect'
@@ -10,6 +9,7 @@ type eventList =
   | 'shapeSwitch'
   | 'showHint'
   | 'hideHint'
+  | 'undo'
 interface CallbackTypeList {
   switchToSelect: (() => void | Promise<void>) | null
   cancelDrawing: (() => void | Promise<void>) | null
@@ -17,6 +17,7 @@ interface CallbackTypeList {
   shapeSwitch: ((shapeKey: string) => void | Promise<void>) | null
   showHint: (() => void | Promise<void>) | null
   hideHint: (() => void | Promise<void>) | null
+  undo: (() => void | Promise<void>) | null
 }
 type EventCallbackType<T extends eventList> = CallbackTypeList[T]
 
@@ -24,8 +25,6 @@ type EventCallbackType<T extends eventList> = CallbackTypeList[T]
  * キー操作をキャプチャして処理を行うカスタムフックです。
  */
 const useKeyboardEvent = () => {
-  const { undo } = useHistory()
-
   const temporaryShapeConstraints = useRecoilValue(temporaryShapeConstraintsState)
 
   const keyLister = useRef<CallbackTypeList>({
@@ -35,6 +34,7 @@ const useKeyboardEvent = () => {
     shapeSwitch: null,
     showHint: null,
     hideHint: null,
+    undo: null,
   })
 
   // temporaryShapeConstraintsの更新を検知して値を取得する
@@ -50,52 +50,50 @@ const useKeyboardEvent = () => {
     []
   )
 
-  const onKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      console.debug(`Key pressed: ${e.key} Meta: ${e.metaKey} `)
+  const onKeyDown = useCallback((e: KeyboardEvent) => {
+    console.debug(`Key pressed: ${e.key} Meta: ${e.metaKey} `)
 
-      switch (e.key) {
-        case 'Escape': {
-          if (temporaryShapeConstraintsRef.current === null) {
-            const listener = keyLister.current['switchToSelect']
-            if (listener) listener()
-          } else {
-            const listener = keyLister.current['cancelDrawing']
-            if (listener) listener()
-          }
-          break
-        }
-        case 'Backspace':
-        case 'Delete': {
-          const listener = keyLister.current['remove']
+    switch (e.key) {
+      case 'Escape': {
+        if (temporaryShapeConstraintsRef.current === null) {
+          const listener = keyLister.current['switchToSelect']
           if (listener) listener()
-          break
-        }
-        case 's':
-        case 'l':
-        case 'e':
-        case 'c': {
-          const listener = keyLister.current['shapeSwitch']
-          if (listener) listener(e.key)
-          break
-        }
-        case 'h': {
-          const listener = keyLister.current['showHint']
+        } else {
+          const listener = keyLister.current['cancelDrawing']
           if (listener) listener()
-          break
         }
-        case 'z': {
-          if (e.metaKey) {
-            undo()
-          }
-          break
-        }
-        default:
-        // noop
+        break
       }
-    },
-    [undo]
-  )
+      case 'Backspace':
+      case 'Delete': {
+        const listener = keyLister.current['remove']
+        if (listener) listener()
+        break
+      }
+      case 's':
+      case 'l':
+      case 'e':
+      case 'c': {
+        const listener = keyLister.current['shapeSwitch']
+        if (listener) listener(e.key)
+        break
+      }
+      case 'h': {
+        const listener = keyLister.current['showHint']
+        if (listener) listener()
+        break
+      }
+      case 'z': {
+        if (e.metaKey) {
+          const listener = keyLister.current['undo']
+          if (listener) listener()
+        }
+        break
+      }
+      default:
+      // noop
+    }
+  }, [])
 
   const onKeyRelease = useCallback((e: KeyboardEvent) => {
     console.debug(`Key released: ${e.key} Meta: ${e.metaKey} `)

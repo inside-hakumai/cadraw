@@ -3,7 +3,7 @@ import { useRecoilValue } from 'recoil'
 import {
   indicatingShapeIdState,
   isShapeSelectedSelectorFamily,
-  shapeStateFamily,
+  shapeSelectorFamily,
 } from '../../container/states'
 import { isLineShape, isSupplementalLineShape } from '../../lib/typeguard'
 
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
-  const shape = useRecoilValue(shapeStateFamily(shapeId)) as LineShape
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as LineShape
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
@@ -34,14 +34,14 @@ const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
     }
   }, [shapeId, shape])
 
-  const { start, end } = shape
+  const { startPoint, endPoint } = shape
 
   return (
     <line
-      x1={start.x}
-      y1={start.y}
-      x2={end.x}
-      y2={end.y}
+      x1={startPoint.x}
+      y1={startPoint.y}
+      x2={endPoint.x}
+      y2={endPoint.y}
       strokeWidth={1}
       stroke={strokeColor}
       strokeDasharray={isSupplementalLine ? '3 3' : ''}

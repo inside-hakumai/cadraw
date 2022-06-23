@@ -3,7 +3,7 @@ import { useRecoilValue } from 'recoil'
 import {
   indicatingShapeIdState,
   isShapeSelectedSelectorFamily,
-  shapeStateFamily,
+  shapeSelectorFamily,
 } from '../../container/states'
 import { isCircleShape } from '../../lib/typeguard'
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const Circle: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeStateFamily(shapeId)) as CircleShape
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as CircleShape
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isFocused = indicatingShapeId === shape.id

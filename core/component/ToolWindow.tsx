@@ -1,16 +1,26 @@
-import React from 'react'
+import React, { MouseEvent, useCallback } from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
 import {
   canUndoSelector,
+  currentAvailableCommandSelector,
   currentOperatingShapeSelector,
   currentSnapshotVersionState,
+  drawCommandState,
   isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
   selectedShapeIdsState,
   snappingCoordState,
 } from '../container/states'
+import { useTranslation } from 'react-i18next'
+
+import {
+  isValidArcCommand,
+  isValidCircleCommand,
+  isValidLineCommand,
+  isValidSupplementalLineCommand,
+} from '../lib/typeguard'
 
 const rootStyle = css`
   display: flex;
@@ -83,6 +93,7 @@ const shortcutHintStyle = (keyLabel: string) => css`
 `
 
 interface Props {
+  changeCommand: (newCommand: string) => void
   onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
@@ -95,6 +106,7 @@ interface Props {
 }
 
 const ToolWindow: React.FC<Props> = ({
+  changeCommand,
   onActivateSupplementalLineDraw,
   onActivateShapeSelect,
   onActivateLineDraw,
@@ -107,27 +119,108 @@ const ToolWindow: React.FC<Props> = ({
 }) => {
   const isShowingShortcutHint = useRecoilValue(isShowingShortcutKeyHintState)
   const operationMode = useRecoilValue(operationModeState)
+  const drawCommand = useRecoilValue(drawCommandState)
+  const currentAvailableCommands = useRecoilValue(currentAvailableCommandSelector)
   const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
   const pointingCoord = useRecoilValue(pointingCoordState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const canUndo = useRecoilValue(canUndoSelector)
   const currentSnapshotVersion = useRecoilValue(currentSnapshotVersionState)
   const selectedShapeIds = useRecoilValue(selectedShapeIdsState)
+  const { t } = useTranslation()
+
+  const onClickCommandChangeButton = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      const target = event.target as HTMLButtonElement
+      const newCommand = target.getAttribute('data-command')
+      if (newCommand === null) {
+        throw new Error('newCommand is null')
+      }
+      changeCommand(newCommand)
+    },
+    [changeCommand]
+  )
 
   return (
     <>
       <div css={rootStyle}>
+        {currentOperatingShape && currentAvailableCommands && (
+          <div css={toolGroupStyle}>
+            {currentAvailableCommands.map(command => {
+              // TODO: if文の条件文以外の中身が同じものが4つ並んでいる冗長な書き方をしているので改善する
+              if (currentOperatingShape === 'line' && isValidLineCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={i18nKey}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+              if (currentOperatingShape === 'circle' && isValidCircleCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={command}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+              if (currentOperatingShape === 'arc' && isValidArcCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={command}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+              if (
+                currentOperatingShape === 'supplementalLine' &&
+                isValidSupplementalLineCommand(command)
+              ) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={command}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
+            })}
+          </div>
+        )}
         <div css={toolGroupStyle}>
           <div css={buttonWrapperStyle}>
             <button
               css={buttonStyle}
               onClick={onActivateSupplementalLineDraw}
-              disabled={currentOperatingShape === 'supplementalLine'}>
-              補助線
+              disabled={operationMode === 'supplementalLine'}>
+              {t('shape.supplementalLine')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('S')}>S</div>
+                <div css={shortcutHintStyle('S')}></div>
               </div>
             )}
           </div>
@@ -135,8 +228,8 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateLineDraw}
-              disabled={currentOperatingShape === 'line'}>
-              線
+              disabled={operationMode === 'line'}>
+              {t('shape.line')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -148,8 +241,8 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateArcDraw}
-              disabled={currentOperatingShape === 'arc'}>
-              円弧
+              disabled={operationMode === 'arc'}>
+              {t('shape.arc')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -161,8 +254,8 @@ const ToolWindow: React.FC<Props> = ({
             <button
               css={buttonStyle}
               onClick={onActivateCircleDraw}
-              disabled={currentOperatingShape === 'circle'}>
-              円
+              disabled={operationMode === 'circle'}>
+              {t('shape.circle')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -177,7 +270,8 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onClick={onActivateShapeSelect}
               disabled={operationMode === 'select'}>
-              選択{selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
+              {t('operation.select')}
+              {selectedShapeIds.length > 0 && `(${selectedShapeIds.length})`}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -187,7 +281,8 @@ const ToolWindow: React.FC<Props> = ({
           </div>
           <div css={buttonWrapperStyle}>
             <button css={buttonStyle} onClick={onUndo} disabled={!canUndo}>
-              元に戻す({currentSnapshotVersion ?? 'null'})
+              {t('operation.undo')}
+              {currentSnapshotVersion && `(${currentSnapshotVersion})`}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -201,7 +296,7 @@ const ToolWindow: React.FC<Props> = ({
               css={buttonStyle}
               onMouseDown={showShortcutKeyHint}
               onMouseUp={hideShortcutKeyHint}>
-              ショートカットキーを表示
+              {t('operation.showShortcut')}
             </button>
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
@@ -210,7 +305,7 @@ const ToolWindow: React.FC<Props> = ({
             )}
           </div>
           <button css={buttonStyle} onClick={onClickExportButton}>
-            エクスポート
+            {t('operation.export')}
           </button>
         </div>
       </div>

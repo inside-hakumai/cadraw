@@ -35,30 +35,30 @@ export const calcDistanceFromCircumference = (point: Coordinate, circle: CircleS
  */
 export const findNearestPointOnLine = (
   point: Coordinate,
-  line: { start: Coordinate; end: Coordinate }
+  line: { startPoint: Coordinate; endPoint: Coordinate }
 ): {
   nearestCoord: Coordinate
   distance: number
   isLineTerminal: boolean
 } => {
-  const lineLength = calcDistance(line.start, line.end)
+  const lineLength = calcDistance(line.startPoint, line.endPoint)
 
   // 線分の始点から終点に向かう単位ベクトルn
   const n = {
-    x: (line.end.x - line.start.x) / lineLength,
-    y: (line.end.y - line.start.y) / lineLength,
+    x: (line.endPoint.x - line.startPoint.x) / lineLength,
+    y: (line.endPoint.y - line.startPoint.y) / lineLength,
   }
 
   // 始点からpointに向かうベクトルb
   const b: Coordinate = {
-    x: point.x - line.start.x,
-    y: point.y - line.start.y,
+    x: point.x - line.startPoint.x,
+    y: point.y - line.startPoint.y,
   }
 
   // 終点からpointに向かうベクトルc
   const c: Coordinate = {
-    x: point.x - line.end.x,
-    y: point.y - line.end.y,
+    x: point.x - line.endPoint.x,
+    y: point.y - line.endPoint.y,
   }
 
   // ベクトルnとベクトルbの内積
@@ -66,8 +66,8 @@ export const findNearestPointOnLine = (
 
   // 線分を含む直線上のpointの最近傍点
   const nearestCoord = {
-    x: line.start.x + n.x * nbDot,
-    y: line.start.y + n.y * nbDot,
+    x: line.startPoint.x + n.x * nbDot,
+    y: line.startPoint.y + n.y * nbDot,
   }
 
   // ベクトルn（始点から終点に向かうベクトル）とベクトルb（始点からpointに向かうベクトル）のなす角のcos
@@ -78,8 +78,8 @@ export const findNearestPointOnLine = (
   // cosNBが負の場合、最近傍点が線分の始点から外側に出てしまっているので、最近傍点は始点となる
   if (cosNB <= 0) {
     return {
-      nearestCoord: line.start,
-      distance: calcDistance(point, line.start),
+      nearestCoord: line.startPoint,
+      distance: calcDistance(point, line.startPoint),
       isLineTerminal: true,
     }
   }
@@ -87,8 +87,8 @@ export const findNearestPointOnLine = (
   // cosInverseNCが負の場合、最近傍点が線分の終点から外側に出てしまっているので、最近傍点は終点となる
   if (cosNC <= 0) {
     return {
-      nearestCoord: line.end,
-      distance: calcDistance(point, line.end),
+      nearestCoord: line.endPoint,
+      distance: calcDistance(point, line.endPoint),
       isLineTerminal: true,
     }
   }
@@ -266,6 +266,66 @@ export const calcCentralAngleFromHorizontalLine = (coord: Coordinate, center: Co
 }
 
 /**
+ * 2点から等しい距離となる直線を返します。
+ * @param point1 点1の座標
+ * @param point2 点2の座標
+ * @returns 2点から等しい距離にある直線
+ */
+export const findLineEquidistantFromTwoPoints = (
+  point1: Coordinate,
+  point2: Coordinate
+): {
+  point: Coordinate
+  unitVector: Vector
+} => {
+  const pointBetweenTwoPoints: Coordinate = {
+    x: (point1.x + point2.x) / 2,
+    y: (point1.y + point2.y) / 2,
+  }
+
+  const distance = calcDistance(point1, point2)
+
+  const unitVector: Vector = {
+    vx: (point2.y - point1.y) / distance,
+    vy: -(point2.x - point1.x) / distance,
+  }
+
+  return {
+    point: pointBetweenTwoPoints,
+    unitVector,
+  }
+}
+
+/**
+ * 3点から等しい距離にある点の座標を返します。
+ * @param point1 点1の座標
+ * @param point2 点2の座標
+ * @param point3 点3の座標
+ * @returns 3点から等しい距離にある点の座標
+ */
+export const findPointEquidistantFromThreePoints = (
+  point1: Coordinate,
+  point2: Coordinate,
+  point3: Coordinate
+): Coordinate => {
+  const lineEquidistantFromPoint1And2 = findLineEquidistantFromTwoPoints(point1, point2)
+  const lineEquidistantFromPoint2And3 = findLineEquidistantFromTwoPoints(point2, point3)
+
+  const { x: x1, y: y1 } = lineEquidistantFromPoint1And2.point
+  const { vx: nx1, vy: ny1 } = lineEquidistantFromPoint1And2.unitVector
+  const { x: x2, y: y2 } = lineEquidistantFromPoint2And3.point
+  const { vx: nx2, vy: ny2 } = lineEquidistantFromPoint2And3.unitVector
+
+  const a = (nx2 * (y1 - y2) - ny2 * (x1 - x2)) / (nx1 * ny2 - nx2 * ny1)
+  // const b = (x1 + a * nx1 - x2) / nx2
+
+  return {
+    x: x1 + a * nx1,
+    y: y1 + a * ny1,
+  }
+}
+
+/**
  * グリッド線の交点の座標のリストを返します。
  * @returns グリッド線の交点の座標のリスト
  */
@@ -354,4 +414,36 @@ export const isBetween = (
 
   // 範囲に最小値と最大値を含まない場合
   return max > value && value > min
+}
+
+/**
+ * xy座標系において、点が三角形の内部に位置するかどうかを返します。
+ * @param point 判定する点
+ * @param triangleVertexes 三角形を構成する3つの頂点の座標
+ * @returns 点が三角形の内部に位置するかどうか
+ */
+export const isPointInTriangle = (point: Coordinate, triangleVertexes: Coordinate[]): boolean => {
+  if (triangleVertexes.length !== 3) {
+    throw new Error('A triangle must have just 3 vertexes')
+  }
+
+  const [a, b, c] = triangleVertexes
+
+  const vAP = { x: point.x - a.x, y: point.y - a.y }
+  const vAC = { x: c.x - a.x, y: c.y - a.y }
+  const vBP = { x: point.x - b.x, y: point.y - b.y }
+  const vBA = { x: a.x - b.x, y: a.y - b.y }
+  const vCP = { x: point.x - c.x, y: point.y - c.y }
+  const vCB = { x: b.x - c.x, y: b.y - c.y }
+
+  // 3頂点と点が関係する3つの外積を計算する
+  const crossProductA = vAP.x * vAC.y - vAP.y * vAC.x
+  const crossProductB = vBP.x * vBA.y - vBP.y * vBA.x
+  const crossProductC = vCP.x * vCB.y - vCP.y * vCB.x
+
+  // 点が三角形の内部に位置する場合、3つの外積の正負が揃う
+  return (
+    (crossProductA >= 0 && crossProductB >= 0 && crossProductC >= 0) ||
+    (crossProductA <= 0 && crossProductB <= 0 && crossProductC <= 0)
+  )
 }
