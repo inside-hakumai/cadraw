@@ -34,14 +34,14 @@ const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
     }
   }, [shapeId, shape])
 
-  const { start, end } = shape
+  const { startPoint, endPoint } = shape
 
   return (
     <line
-      x1={start.x}
-      y1={start.y}
-      x2={end.x}
-      y2={end.y}
+      x1={startPoint.x}
+      y1={startPoint.y}
+      x2={endPoint.x}
+      y2={endPoint.y}
       strokeWidth={1}
       stroke={strokeColor}
       strokeDasharray={isSupplementalLine ? '3 3' : ''}

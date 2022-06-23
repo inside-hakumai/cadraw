@@ -10,7 +10,12 @@ declare global {
     supplementalLine: typeof drawCommandList['supplementalLine'][number]
   }
 
-  type TemporaryShapeType = 'tmp-line' | 'tmp-circle' | 'tmp-arc' | 'tmp-supplementalLine'
+  type TemporaryShapeType =
+    | 'tmp-line'
+    | 'tmp-circle'
+    | 'tmp-arc'
+    | 'tmp-three-points-arc'
+    | 'tmp-supplementalLine'
 
   interface DrawStepMap {
     line: {
@@ -21,6 +26,7 @@ declare global {
     }
     arc: {
       'center-two-points': 'center' | 'startPoint' | 'endPoint'
+      'three-points': 'startPoint' | 'endPoint' | 'onLinePoint'
     }
     supplementalLine: {
       'start-end': 'startPoint' | 'endPoint'
@@ -60,6 +66,11 @@ declare global {
     y: number
   }
 
+  interface Vector {
+    vx: number
+    vy: number
+  }
+
   interface ShapeConstraintPoint {
     coord: Coordinate
     targetShapeId: number
@@ -81,8 +92,8 @@ declare global {
 
   interface LineShapeSeed extends ShapeSeed {
     type: 'line'
-    start: Coordinate
-    end: Coordinate
+    startPoint: Coordinate
+    endPoint: Coordinate
   }
 
   interface CircleShapeSeed extends ShapeSeed {
@@ -102,10 +113,21 @@ declare global {
     angleDeltaFromStart: number
   }
 
+  interface ArcWithThreePointsShapeSeed extends ShapeSeed {
+    type: 'arc'
+    startPoint: Coordinate
+    endPoint: Coordinate
+    onLinePoint: Coordinate
+    center: Coordinate
+    startPointAngle: number
+    endPointAngle: number
+    radius: number
+  }
+
   interface SupplementalShapeSeed extends ShapeSeed {
     type: 'supplementalLine'
-    start: Coordinate
-    end: Coordinate
+    startPoint: Coordinate
+    endPoint: Coordinate
   }
 
   interface Shape {
@@ -125,6 +147,10 @@ declare global {
     type: 'arc'
   }
 
+  interface ArcWithThreePointsShape extends Shape, ArcWithThreePointsShapeSeed {
+    type: 'arc'
+  }
+
   interface SupplementalLineShape extends Shape, SupplementalShapeSeed {
     type: 'supplementalLine'
   }
@@ -135,11 +161,11 @@ declare global {
 
   interface TemporaryLineShapeBase extends TemporaryShape {
     type: 'tmp-line'
-    start: Coordinate
+    startPoint: Coordinate
   }
 
   interface TemporaryLineShape extends TemporaryLineShapeBase, TemporaryShape {
-    end: Coordinate
+    endPoint: Coordinate
   }
 
   interface TemporaryCircleShapeBase extends TemporaryShape {
@@ -170,15 +196,35 @@ declare global {
     angleDeltaFromStart: number
   }
 
+  interface TemporaryArcStartPoint extends TemporaryShape {
+    type: 'tmp-three-points-arc'
+    startPoint: Coordinate
+  }
+
+  interface TemporaryArcStartPointAndEndPoint extends TemporaryArcStartPoint {
+    type: 'tmp-three-points-arc'
+    endPoint: Coordinate
+    distance: number
+  }
+
+  interface TemporaryArcThreePoint extends TemporaryArcStartPointAndEndPoint {
+    type: 'tmp-three-points-arc'
+    onLinePoint: Coordinate
+    center: Coordinate
+    startPointAngle: number
+    endPointAngle: number
+    radius: number
+  }
+
   interface TemporarySupplementalLineShapeBase extends TemporaryShape {
     type: 'tmp-supplementalLine'
-    start: Coordinate
+    startPoint: Coordinate
   }
 
   interface TemporarySupplementalLineShape
     extends TemporarySupplementalLineShapeBase,
       TemporaryShape {
-    end: Coordinate
+    endPoint: Coordinate
   }
 
   interface SnapInfo {

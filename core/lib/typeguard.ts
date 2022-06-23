@@ -36,12 +36,12 @@ export const isLineShape = (shape: any): shape is LineShape => {
   const expectedType: ShapeType = 'line'
   return (
     shape?.type === expectedType &&
-    isObject(shape?.start) &&
-    typeof shape?.start?.x === 'number' &&
-    typeof shape?.start?.y === 'number' &&
-    isObject(shape?.end) &&
-    typeof shape?.end?.x === 'number' &&
-    typeof shape?.end?.y === 'number'
+    isObject(shape?.startPoint) &&
+    typeof shape?.startPoint?.x === 'number' &&
+    typeof shape?.startPoint?.y === 'number' &&
+    isObject(shape?.endPoint) &&
+    typeof shape?.endPoint?.x === 'number' &&
+    typeof shape?.endPoint?.y === 'number'
   )
 }
 
@@ -70,16 +70,29 @@ export const isArcShape = (shape: any): shape is ArcShape => {
   )
 }
 
+export const isArcWithThreePointsShape = (shape: any): shape is ArcWithThreePointsShape => {
+  const expectedType: ShapeType = 'arc'
+  return (
+    shape?.type === expectedType &&
+    isCoordinate(shape?.startPoint) &&
+    isCoordinate(shape?.endPoint) &&
+    isCoordinate(shape?.center) &&
+    typeof shape?.startPointAngle === 'number' &&
+    typeof shape?.endPointAngle === 'number' &&
+    typeof shape?.radius === 'number'
+  )
+}
+
 export const isSupplementalLineShape = (shape: any): shape is SupplementalLineShape => {
   const expectedType: ShapeType = 'supplementalLine'
   return (
     shape?.type === expectedType &&
-    isObject(shape?.start) &&
-    typeof shape?.start?.x === 'number' &&
-    typeof shape?.start?.y === 'number' &&
-    isObject(shape?.end) &&
-    typeof shape?.end?.x === 'number' &&
-    typeof shape?.end?.y === 'number'
+    isObject(shape?.startPoint) &&
+    typeof shape?.startPoint?.x === 'number' &&
+    typeof shape?.startPoint?.y === 'number' &&
+    isObject(shape?.endPoint) &&
+    typeof shape?.endPoint?.x === 'number' &&
+    typeof shape?.endPoint?.y === 'number'
   )
 }
 
@@ -87,12 +100,12 @@ export const isTemporaryLineShape = (shape: any): shape is TemporaryLineShape =>
   const expectedType: TemporaryShapeType = 'tmp-line'
   return (
     shape?.type === expectedType &&
-    isObject(shape?.start) &&
-    typeof shape?.start?.x === 'number' &&
-    typeof shape?.start?.y === 'number' &&
-    isObject(shape?.end) &&
-    typeof shape?.end?.x === 'number' &&
-    typeof shape?.end?.y === 'number'
+    isObject(shape?.startPoint) &&
+    typeof shape.startPoint?.x === 'number' &&
+    typeof shape.startPoint?.y === 'number' &&
+    isObject(shape?.endPoint) &&
+    typeof shape.endPoint?.x === 'number' &&
+    typeof shape.endPoint?.y === 'number'
   )
 }
 
@@ -148,15 +161,53 @@ export const isTemporaryArcShape = (shape: any): shape is TemporaryArcShape => {
   )
 }
 
+export const isTemporaryArcStartPoint = (shape: any): shape is TemporaryArcStartPoint => {
+  const expectedType: TemporaryShapeType = 'tmp-three-points-arc'
+  return (
+    shape?.type === expectedType && isObject(shape?.startPoint) && isCoordinate(shape.startPoint)
+  )
+}
+
+export const isTemporaryArcStartPointAndEndPoint = (
+  shape: any
+): shape is TemporaryArcStartPointAndEndPoint => {
+  const expectedType: TemporaryShapeType = 'tmp-three-points-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.startPoint) &&
+    isCoordinate(shape.startPoint) &&
+    isObject(shape?.endPoint) &&
+    isCoordinate(shape.endPoint)
+  )
+}
+
+export const isTemporaryArcThreePoint = (shape: any): shape is TemporaryArcThreePoint => {
+  const expectedType: TemporaryShapeType = 'tmp-three-points-arc'
+  return (
+    shape?.type === expectedType &&
+    isObject(shape?.startPoint) &&
+    isCoordinate(shape.startPoint) &&
+    isObject(shape?.endPoint) &&
+    isCoordinate(shape.endPoint) &&
+    isObject(shape?.onLinePoint) &&
+    isCoordinate(shape.onLinePoint) &&
+    isObject(shape?.center) &&
+    isCoordinate(shape.center) &&
+    typeof shape?.startPointAngle === 'number' &&
+    typeof shape?.endPointAngle === 'number' &&
+    typeof shape?.radius === 'number'
+  )
+}
+
 export const isTemporarySupplementalLineShape = (shape: any): shape is TemporaryLineShape => {
   const expectedType: TemporaryShapeType = 'tmp-supplementalLine'
   return (
     shape?.type === expectedType &&
-    isObject(shape?.start) &&
-    typeof shape?.start?.x === 'number' &&
-    typeof shape?.start?.y === 'number' &&
-    isObject(shape?.end) &&
-    typeof shape?.end?.x === 'number' &&
-    typeof shape?.end?.y === 'number'
+    isObject(shape?.startPoint) &&
+    typeof shape?.startPoint?.x === 'number' &&
+    typeof shape?.startPoint?.y === 'number' &&
+    isObject(shape?.endPoint) &&
+    typeof shape?.endPoint?.x === 'number' &&
+    typeof shape?.endPoint?.y === 'number'
   )
 }

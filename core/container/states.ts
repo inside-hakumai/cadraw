@@ -9,6 +9,7 @@ import {
   findNearestPointOnLine,
   findNearestPointOnArc,
   getSnapDestinationCoordDefaultValue,
+  findPointEquidistantFromThreePoints,
 } from '../lib/function'
 import {
   isArcShape,
@@ -19,6 +20,8 @@ import {
   isTemporaryArcCenter,
   isTemporaryArcRadius,
   isTemporaryArcShape,
+  isTemporaryArcStartPoint,
+  isTemporaryArcStartPointAndEndPoint,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
@@ -134,12 +137,12 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
           const lineShape = shape as LineShape
           return [
             {
-              coord: lineShape.start,
+              coord: lineShape.startPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
             {
-              coord: lineShape.end,
+              coord: lineShape.endPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
@@ -183,12 +186,12 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
           const lineShape = shape as SupplementalLineShape
           return [
             {
-              coord: lineShape.start,
+              coord: lineShape.startPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
             {
-              coord: lineShape.end,
+              coord: lineShape.endPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
@@ -320,6 +323,55 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
       }
     }
 
+    if (operationMode === 'arc' && drawCommand === 'three-points') {
+      const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+
+      if (arcDrawStep === 'endPoint') {
+        if (!isTemporaryArcStartPoint(temporaryShapeBase)) {
+          console.warn('temporaryShapeBase is not temporaryArcStartPoint')
+          return null
+        }
+
+        const temporaryDistance = calcDistance(temporaryShapeBase.startPoint, coord)
+
+        const newValue: TemporaryArcStartPointAndEndPoint = {
+          ...temporaryShapeBase,
+          endPoint: coord,
+          distance: temporaryDistance,
+        }
+        return newValue
+      }
+
+      if (arcDrawStep === 'onLinePoint') {
+        if (!isTemporaryArcStartPointAndEndPoint(temporaryShapeBase)) {
+          console.warn('temporaryShapeBase is not temporaryArcStartPointAndEndPoint')
+          return null
+        }
+
+        const { startPoint, endPoint } = temporaryShapeBase
+
+        const center = findPointEquidistantFromThreePoints(startPoint, endPoint, coord)
+        const radius = calcDistance(center, coord)
+
+        const startPointAngle = calcCentralAngleFromHorizontalLine(startPoint, center)
+        const endPointAngle = calcCentralAngleFromHorizontalLine(endPoint, center)
+
+        if (startPointAngle === null || endPointAngle === null) {
+          return temporaryShapeBase
+        } else {
+          const newValue: TemporaryArcThreePoint = {
+            ...temporaryShapeBase,
+            onLinePoint: coord,
+            startPointAngle,
+            endPointAngle,
+            center,
+            radius,
+          }
+          return newValue
+        }
+      }
+    }
+
     if (operationMode === 'line' && drawCommand === 'start-end') {
       const lineDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
@@ -328,7 +380,7 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
 
         return {
           ...temporaryLineShapeBase,
-          end: coord,
+          endPoint: coord,
         } as TemporaryLineShape
       }
     }
@@ -342,7 +394,7 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
 
         return {
           ...temporaryLineShapeBase,
-          end: coord,
+          endPoint: coord,
         } as TemporarySupplementalLineShape
       }
     }
@@ -494,8 +546,8 @@ export const supplementalLinesState = selector<LineShapeSeed[]>({
         ) as CircleShape
         return {
           type: 'line' as const,
-          start: { x: circle.center.x - circle.radius, y: circle.center.y },
-          end: { x: circle.center.x + circle.radius, y: circle.center.y },
+          startPoint: { x: circle.center.x - circle.radius, y: circle.center.y },
+          endPoint: { x: circle.center.x + circle.radius, y: circle.center.y },
         }
       })
   },
@@ -760,8 +812,8 @@ export const tooltipContentState = selector<string | null>({
 
       return (
         Math.sqrt(
-          Math.pow(temporaryLineShape.start.x - coord.x, 2) +
-            Math.pow(temporaryLineShape.start.y - coord.y, 2)
+          Math.pow(temporaryLineShape.startPoint.x - coord.x, 2) +
+            Math.pow(temporaryLineShape.startPoint.y - coord.y, 2)
         ).toFixed(2) + 'px'
       )
     }

@@ -31,6 +31,7 @@ import {
   isValidSupplementalLineCommand,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
+import { calcCentralAngleFromHorizontalLine, calcDistance } from '../lib/function'
 
 interface Props {
   onExport?: (data: string) => void
@@ -124,6 +125,11 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           if (arcCommand === 'center-two-points') {
             set(drawStepState, 'center')
+            reset(temporaryShapeConstraintsState)
+          }
+
+          if (arcCommand === 'three-points') {
+            set(drawStepState, 'startPoint')
             reset(temporaryShapeConstraintsState)
           }
         }
@@ -256,7 +262,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (lineDrawStep === 'startPoint') {
           setTemporaryShapeConstraints({
             type: 'tmp-line',
-            start: { x: activeCoord.x, y: activeCoord.y },
+            startPoint: { x: activeCoord.x, y: activeCoord.y },
           } as TemporaryLineShapeBase)
           await goToNextStep()
         }
@@ -266,8 +272,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const newLineSeed: LineShapeSeed = {
             type: 'line',
-            start: { x: temporaryLineShape.start.x, y: temporaryLineShape.start.y },
-            end: { x: temporaryLineShape.end.x, y: temporaryLineShape.end.y },
+            startPoint: { x: temporaryLineShape.startPoint.x, y: temporaryLineShape.startPoint.y },
+            endPoint: { x: temporaryLineShape.endPoint.x, y: temporaryLineShape.endPoint.y },
           }
 
           await addShape(newLineSeed)
@@ -360,6 +366,64 @@ const App: React.FC<Props> = ({ onExport }) => {
           await goToFirstStep()
         }
       }
+
+      if (arcDrawCommand === 'three-points') {
+        const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'three-points'>
+
+        if (arcDrawStep === 'startPoint') {
+          const newValue: TemporaryArcStartPoint = {
+            type: 'tmp-three-points-arc',
+            startPoint: activeCoord,
+          }
+          setTemporaryShapeConstraints(newValue)
+          await goToNextStep()
+        }
+
+        if (arcDrawStep === 'endPoint') {
+          const temporaryArcStartPointAndEndPoint =
+            temporaryShape as TemporaryArcStartPointAndEndPoint
+
+          const temporaryArcCenter: Coordinate = {
+            x: (temporaryArcStartPointAndEndPoint.startPoint.x + activeCoord.x) / 2,
+            y: (temporaryArcStartPointAndEndPoint.startPoint.y + activeCoord.y) / 2,
+          }
+
+          const temporaryArcStartAngle = calcCentralAngleFromHorizontalLine(
+            temporaryArcStartPointAndEndPoint.startPoint,
+            temporaryArcCenter
+          )
+          const temporaryArcEndAngle = calcCentralAngleFromHorizontalLine(
+            activeCoord,
+            temporaryArcCenter
+          )
+
+          const newArcSeed: TemporaryArcThreePoint = {
+            ...temporaryArcStartPointAndEndPoint,
+            endPoint: activeCoord,
+            onLinePoint: activeCoord,
+            center: temporaryArcCenter,
+            startPointAngle: temporaryArcStartAngle ?? 0,
+            endPointAngle: temporaryArcEndAngle ?? 0,
+            radius: calcDistance(temporaryArcCenter, temporaryArcStartPointAndEndPoint.startPoint),
+          }
+
+          setTemporaryShapeConstraints(newArcSeed)
+          await goToNextStep()
+        }
+
+        if (arcDrawStep === 'onLinePoint') {
+          const temporaryArcThreePoint = temporaryShape as TemporaryArcThreePoint
+
+          const newArcSeed: ArcWithThreePointsShapeSeed = {
+            ...temporaryArcThreePoint,
+            type: 'arc',
+          }
+
+          await addShape(newArcSeed)
+          setTemporaryShapeConstraints(null)
+          await goToFirstStep()
+        }
+      }
     }
 
     if (operationMode === 'supplementalLine') {
@@ -374,7 +438,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (supplementalLineDrawStep === 'startPoint') {
           setTemporaryShapeConstraints({
             type: 'tmp-supplementalLine',
-            start: { x: activeCoord.x, y: activeCoord.y },
+            startPoint: { x: activeCoord.x, y: activeCoord.y },
           } as TemporarySupplementalLineShapeBase)
           await goToNextStep()
         }
@@ -384,13 +448,13 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const newLineSeed: SupplementalShapeSeed = {
             type: 'supplementalLine',
-            start: {
-              x: temporarySupplementalLineShape.start.x,
-              y: temporarySupplementalLineShape.start.y,
+            startPoint: {
+              x: temporarySupplementalLineShape.startPoint.x,
+              y: temporarySupplementalLineShape.startPoint.y,
             },
-            end: {
-              x: temporarySupplementalLineShape.end.x,
-              y: temporarySupplementalLineShape.end.y,
+            endPoint: {
+              x: temporarySupplementalLineShape.endPoint.x,
+              y: temporarySupplementalLineShape.endPoint.y,
             },
           }
 
@@ -493,13 +557,14 @@ const App: React.FC<Props> = ({ onExport }) => {
             isValidSupplementalLineCommand(newCommand))
         ) {
           set(drawCommandState, newCommand)
+          await goToFirstStep()
         } else {
           throw new Error(
             `Invalid shape and command combination: ${currentOperatingShape} & ${newCommand}`
           )
         }
       },
-    []
+    [goToFirstStep]
   )
 
   return (

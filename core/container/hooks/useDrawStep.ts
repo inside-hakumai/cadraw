@@ -47,6 +47,18 @@ const useDrawStep = () => {
               set(drawStepState, 'endPoint')
             }
           }
+
+          if (arcDrawCommand === 'three-points') {
+            const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'three-points'>
+
+            if (arcDrawStep === 'startPoint') {
+              set(drawStepState, 'endPoint')
+            }
+
+            if (arcDrawStep === 'endPoint') {
+              set(drawStepState, 'onLinePoint')
+            }
+          }
         }
 
         if (operationMode === 'supplementalLine') {
@@ -94,6 +106,10 @@ const useDrawStep = () => {
 
           if (arcDrawCommand === 'center-two-points') {
             set(drawStepState, 'center')
+          }
+
+          if (arcDrawCommand === 'three-points') {
+            set(drawStepState, 'startPoint')
           }
         }
 
