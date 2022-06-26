@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useRecoilValue } from 'recoil'
-import { temporaryShapeConstraintsState } from '../states'
+import { shapeSeedConstraintsState } from '../states'
 
 type eventList =
   | 'switchToSelect'
@@ -25,7 +25,7 @@ type EventCallbackType<T extends eventList> = CallbackTypeList[T]
  * キー操作をキャプチャして処理を行うカスタムフックです。
  */
 const useKeyboardEvent = () => {
-  const temporaryShapeConstraints = useRecoilValue(temporaryShapeConstraintsState)
+  const temporaryShapeConstraints = useRecoilValue(shapeSeedConstraintsState)
 
   const keyLister = useRef<CallbackTypeList>({
     switchToSelect: null,

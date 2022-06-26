@@ -1,12 +1,12 @@
 import React from 'react'
 
 interface Props {
-  shape: { startPoint: Coordinate; endPoint: Coordinate }
+  shape: LineStartEndSeed2 | SupplementalLineStartEndSeed2
   startCircleRef: React.Ref<SVGCircleElement>
   isSupplementalLine?: boolean
 }
 
-const TemporaryLine: React.FC<Props> = ({ shape, startCircleRef, isSupplementalLine = false }) => {
+const LineSeed: React.FC<Props> = ({ shape, startCircleRef, isSupplementalLine = false }) => {
   const { startPoint, endPoint } = shape
 
   return (
@@ -33,4 +33,4 @@ const TemporaryLine: React.FC<Props> = ({ shape, startCircleRef, isSupplementalL
   )
 }
 
-export default TemporaryLine
+export default LineSeed

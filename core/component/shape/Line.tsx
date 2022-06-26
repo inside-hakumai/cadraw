@@ -5,7 +5,7 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isLineShape, isSupplementalLineShape } from '../../lib/typeguard'
+import { isLine, isSupplementalLineShape } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as LineShape
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Line
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
@@ -25,7 +25,7 @@ const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
   else strokeColor = '#000000'
 
   useEffect(() => {
-    if (!isSupplementalLine && !isLineShape(shape)) {
+    if (!isSupplementalLine && !isLine(shape)) {
       throw new Error(`Shape(ID = ${shapeId} is not a line`)
     }
 
@@ -34,7 +34,7 @@ const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
     }
   }, [shapeId, shape])
 
-  const { startPoint, endPoint } = shape
+  const { startPoint, endPoint } = shape.constraints
 
   return (
     <line

@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react'
-import { isArcWithThreePointsShape } from '../../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
   indicatingShapeIdState,
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
+import { isArcThreePoints } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
 }
 
-const ArcWithThreePoints: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as ArcWithThreePointsShape
+const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ArcConstraintsWithThreePoints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isFocused = indicatingShapeId === shape.id
@@ -25,12 +25,12 @@ const ArcWithThreePoints: React.FC<Props> = ({ shapeId }) => {
 
   useEffect(() => {
     console.debug(shape)
-    if (!isArcWithThreePointsShape(shape)) {
+    if (!isArcThreePoints(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
     }
   }, [shapeId, shape])
 
-  const { startPoint, endPoint, onLinePoint, center } = shape
+  const { startPoint, endPoint, onLinePoint, center, radius } = shape.constraints
 
   const vectorStartToOnLinePoint = {
     x: onLinePoint.x - startPoint.x,
@@ -75,7 +75,7 @@ const ArcWithThreePoints: React.FC<Props> = ({ shapeId }) => {
 
   const pathNodeAttribute = [
     `M ${startPoint.x} ${startPoint.y}`,
-    `A ${shape.radius} ${shape.radius} 0 ` +
+    `A ${radius} ${radius} 0 ` +
       `${isUseShortArc ? 0 : 1} ` + // 1なら円弧の長いほう、0なら短いほう
       `${isDrawClockWise ? 1 : 0} ` + // 1なら時計回りに弧を描画、0なら半時計回りに弧を描画
       `${endPoint.x} ${endPoint.y}`,
@@ -92,4 +92,4 @@ const ArcWithThreePoints: React.FC<Props> = ({ shapeId }) => {
   )
 }
 
-export default ArcWithThreePoints
+export default ArcThreePoints

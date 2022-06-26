@@ -23,7 +23,10 @@ export const calcVectorLength = (vector: { x: number; y: number }): number => {
  * @param circle 点Aと円周との距離を求める円
  * @returns 距離
  */
-export const calcDistanceFromCircumference = (point: Coordinate, circle: CircleShape): number => {
+export const calcDistanceFromCircumference = (
+  point: Coordinate,
+  circle: Circle['constraints']
+): number => {
   return Math.abs(calcDistance(point, circle.center) - circle.radius)
 }
 
@@ -110,9 +113,9 @@ export const findNearestPointOnLine = (
  */
 export const findNearestPointOnArc = (
   point: Coordinate,
-  arc: ArcShapeSeed
+  arc: ArcConstraintsWithCenterAndTwoPoints
 ): { nearestCoord: Coordinate; distance: number; isArcTerminal: boolean } | null => {
-  const { center, radius, startCoord, endCoord, startAngle, endAngle, angleDeltaFromStart } = arc
+  const { center, radius, startPoint, endPoint, startAngle, endAngle, angleDeltaFromStart } = arc
 
   // 水平方向からの点までの角度
   const pointAngle = calcCentralAngleFromHorizontalLine(point, center)
@@ -153,17 +156,17 @@ export const findNearestPointOnArc = (
     }
   }
 
-  const distanceToArcStart = calcDistance(point, startCoord)
-  const distanceToArcEnd = calcDistance(point, endCoord)
+  const distanceToArcStart = calcDistance(point, startPoint)
+  const distanceToArcEnd = calcDistance(point, endPoint)
 
   return distanceToArcStart < distanceToArcEnd
     ? {
-        nearestCoord: startCoord,
+        nearestCoord: startPoint,
         distance: distanceToArcStart,
         isArcTerminal: true,
       }
     : {
-        nearestCoord: endCoord,
+        nearestCoord: endPoint,
         distance: distanceToArcEnd,
         isArcTerminal: true,
       }

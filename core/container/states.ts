@@ -12,16 +12,15 @@ import {
   findPointEquidistantFromThreePoints,
 } from '../lib/function'
 import {
-  isArcShape,
-  isCircleShape,
-  isLineShape,
+  isArcCenterTwoPoints,
+  isArcCenterTwoPointsSeed2,
+  isArcCenterTwoPointsSeed3,
+  isArcThreePointsSeed2,
+  isArcThreePointsSeed3,
+  isCircle,
+  isLine,
   isShapeType,
   isSupplementalLineShape,
-  isTemporaryArcCenter,
-  isTemporaryArcRadius,
-  isTemporaryArcShape,
-  isTemporaryArcStartPoint,
-  isTemporaryArcStartPointAndEndPoint,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
@@ -134,15 +133,17 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
     return shapes
       .map(shape => {
         if (shape.type === 'line') {
-          const lineShape = shape as LineShape
+          const lineShape = shape as Line
+          const { startPoint, endPoint } = lineShape.constraints
+
           return [
             {
-              coord: lineShape.startPoint,
+              coord: startPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
             {
-              coord: lineShape.endPoint,
+              coord: endPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
@@ -150,10 +151,12 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
         }
 
         if (shape.type === 'circle') {
-          const circleShape = shape as CircleShape
+          const circleShape = shape as Circle
+          const { center } = circleShape.constraints
+
           return [
             {
-              coord: circleShape.center,
+              coord: center,
               targetShapeId: shape.id,
               constraintType: 'circleCenter' as const,
             } as ShapeConstraintPoint,
@@ -161,37 +164,42 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
         }
 
         if (shape.type === 'arc') {
-          const { id, center, radius, startAngle, endAngle } = shape as ArcShape
+          if (shape.drawCommand === 'center-two-points') {
+            const arcShape = shape as Arc<ArcConstraintsWithCenterAndTwoPoints>
+            const { center, radius, startAngle, endAngle } = arcShape.constraints
 
-          return [
-            {
-              coord: center,
-              targetShapeId: id,
-              constraintType: 'arcCenter' as const,
-            } as ShapeConstraintPoint,
-            {
-              coord: calcCircumferenceCoordFromDegree(center, radius, startAngle),
-              targetShapeId: id,
-              constraintType: 'arcEdge' as const,
-            } as ShapeConstraintPoint,
-            {
-              coord: calcCircumferenceCoordFromDegree(center, radius, endAngle),
-              targetShapeId: shape.id,
-              constraintType: 'arcEdge' as const,
-            } as ShapeConstraintPoint,
-          ]
+            return [
+              {
+                coord: center,
+                targetShapeId: shape.id,
+                constraintType: 'arcCenter' as const,
+              } as ShapeConstraintPoint,
+              {
+                coord: calcCircumferenceCoordFromDegree(center, radius, startAngle),
+                targetShapeId: shape.id,
+                constraintType: 'arcEdge' as const,
+              } as ShapeConstraintPoint,
+              {
+                coord: calcCircumferenceCoordFromDegree(center, radius, endAngle),
+                targetShapeId: shape.id,
+                constraintType: 'arcEdge' as const,
+              } as ShapeConstraintPoint,
+            ]
+          }
         }
 
         if (shape.type === 'supplementalLine') {
-          const lineShape = shape as SupplementalLineShape
+          const lineShape = shape as SupplementalLine
+          const { startPoint, endPoint } = lineShape.constraints
+
           return [
             {
-              coord: lineShape.startPoint,
+              coord: startPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
             {
-              coord: lineShape.endPoint,
+              coord: endPoint,
               targetShapeId: shape.id,
               constraintType: 'lineEdge' as const,
             } as ShapeConstraintPoint,
@@ -209,27 +217,22 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
  */
 
 // 作成中の図形の拘束条件を管理するAtom
-export const temporaryShapeConstraintsState = atom<TemporaryShape | null>({
-  key: 'temporaryShapeConstraints',
+export const shapeSeedConstraintsState = atom<ShapeSeed | null>({
+  key: 'shapeSeedConstraints',
   default: null,
 })
 
 // 作成中の図形を返すSelector
-export const temporaryShapeState = selector<TemporaryShape | null>({
-  key: 'temporaryShape',
+export const shapeSeedState = selector<ShapeSeed | null>({
+  key: 'shapeSeed',
   get: ({ get }) => {
     const operationMode = get(operationModeState)
     const drawCommand = get(drawCommandState)
     const drawStep = get(drawStepState)
-    const temporaryShapeBase = get(temporaryShapeConstraintsState)
+    const shapeSeed = get(shapeSeedConstraintsState)
     const coord = get(activeCoordState)
 
-    if (
-      drawCommand === null ||
-      drawStep === null ||
-      temporaryShapeBase === null ||
-      coord === null
-    ) {
+    if (drawCommand === null || drawStep === null || shapeSeed === null || coord === null) {
       return null
     }
 
@@ -241,24 +244,23 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
       const circleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
       if (circleDrawStep === 'diameter') {
-        const temporaryCircleShapeBase = temporaryShapeBase as TemporaryCircleShapeBase
+        const CircleSeed = shapeSeed as CircleCenterDiameterSeed2
 
         const temporaryCircleRadius = Math.sqrt(
-          Math.pow(temporaryCircleShapeBase.center.x - coord.x, 2) +
-            Math.pow(temporaryCircleShapeBase.center.y - coord.y, 2)
+          Math.pow(CircleSeed.center.x - coord.x, 2) + Math.pow(CircleSeed.center.y - coord.y, 2)
         )
         const temporaryCircleDiameterStart = coord
         const temporaryCircleDiameterEnd = {
-          x: coord.x + (temporaryCircleShapeBase.center.x - coord.x) * 2,
-          y: coord.y + (temporaryCircleShapeBase.center.y - coord.y) * 2,
+          x: coord.x + (CircleSeed.center.x - coord.x) * 2,
+          y: coord.y + (CircleSeed.center.y - coord.y) * 2,
         }
 
         return {
-          ...temporaryShapeBase,
+          ...shapeSeed,
           radius: temporaryCircleRadius,
           diameterStart: temporaryCircleDiameterStart,
           diameterEnd: temporaryCircleDiameterEnd,
-        } as TemporaryCircleShape
+        } as CircleCenterDiameterSeed2
       }
     }
 
@@ -266,45 +268,42 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
       const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
       if (arcDrawStep === 'startPoint') {
-        if (!isTemporaryArcCenter(temporaryShapeBase)) {
-          console.warn('temporaryShapeBase is not temporaryArcCenter')
-          return null
+        if (!isArcCenterTwoPointsSeed2(shapeSeed)) {
+          console.warn('shapeSeed is not ArcCenterTwoPointsSeed2')
+          return shapeSeed
         }
 
-        const temporaryRadius = calcDistance(temporaryShapeBase.center, coord)
-        const temporaryStartAngle = calcCentralAngleFromHorizontalLine(
-          coord,
-          temporaryShapeBase.center
-        )
+        const temporaryRadius = calcDistance(shapeSeed.center, coord)
+        const temporaryStartAngle = calcCentralAngleFromHorizontalLine(coord, shapeSeed.center)
 
         if (temporaryStartAngle === null) {
-          return temporaryShapeBase
+          return shapeSeed
         } else {
-          const newValue: TemporaryArcRadius = {
-            ...temporaryShapeBase,
-            radius: temporaryRadius,
+          const newValue: ArcCenterTwoPointsSeed2 = {
+            ...shapeSeed,
+            startPoint: coord,
             startAngle: temporaryStartAngle,
-            startCoord: coord,
+            radius: temporaryRadius,
           }
           return newValue
         }
       }
 
       if (arcDrawStep === 'endPoint') {
-        if (!isTemporaryArcRadius(temporaryShapeBase)) {
-          console.warn('temporaryShapeBase is not temporaryArcRadius')
-          return null
+        if (!isArcCenterTwoPointsSeed3(shapeSeed)) {
+          console.warn('shapeSeed is not temporaryArcRadius')
+          return shapeSeed
         }
 
-        const { center, startAngle } = temporaryShapeBase
+        const { center, startAngle } = shapeSeed
         const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, center)
 
         if (temporaryEndAngle === null) {
-          return temporaryShapeBase
+          return shapeSeed
         } else {
           const endCoord = calcCircumferenceCoordFromDegree(
             center,
-            temporaryShapeBase.radius,
+            shapeSeed.radius,
             temporaryEndAngle
           )
           const counterClockWiseAngle =
@@ -312,9 +311,9 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
               ? temporaryEndAngle - startAngle
               : 360 - (startAngle - temporaryEndAngle)
 
-          const newValue: TemporaryArcShape = {
-            ...temporaryShapeBase,
-            endCoord: endCoord,
+          const newValue: ArcCenterTwoPointsSeed3 = {
+            ...shapeSeed,
+            endPoint: endCoord,
             endAngle: temporaryEndAngle,
             angleDeltaFromStart: counterClockWiseAngle,
           }
@@ -327,15 +326,15 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
       const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
       if (arcDrawStep === 'endPoint') {
-        if (!isTemporaryArcStartPoint(temporaryShapeBase)) {
-          console.warn('temporaryShapeBase is not temporaryArcStartPoint')
-          return null
+        if (!isArcThreePointsSeed2(shapeSeed)) {
+          console.warn('shapeSeed is not ArcThreePointsSeed2')
+          return shapeSeed
         }
 
-        const temporaryDistance = calcDistance(temporaryShapeBase.startPoint, coord)
+        const temporaryDistance = calcDistance(shapeSeed.startPoint, coord)
 
-        const newValue: TemporaryArcStartPointAndEndPoint = {
-          ...temporaryShapeBase,
+        const newValue: ArcThreePointsSeed2 = {
+          ...shapeSeed,
           endPoint: coord,
           distance: temporaryDistance,
         }
@@ -343,12 +342,12 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
       }
 
       if (arcDrawStep === 'onLinePoint') {
-        if (!isTemporaryArcStartPointAndEndPoint(temporaryShapeBase)) {
-          console.warn('temporaryShapeBase is not temporaryArcStartPointAndEndPoint')
-          return null
+        if (!isArcThreePointsSeed3(shapeSeed)) {
+          console.warn('shapeSeed is not ArcThreePointsSeed3')
+          return shapeSeed
         }
 
-        const { startPoint, endPoint } = temporaryShapeBase
+        const { startPoint, endPoint } = shapeSeed
 
         const center = findPointEquidistantFromThreePoints(startPoint, endPoint, coord)
         const radius = calcDistance(center, coord)
@@ -357,10 +356,10 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
         const endPointAngle = calcCentralAngleFromHorizontalLine(endPoint, center)
 
         if (startPointAngle === null || endPointAngle === null) {
-          return temporaryShapeBase
+          return shapeSeed
         } else {
-          const newValue: TemporaryArcThreePoint = {
-            ...temporaryShapeBase,
+          const newValue: ArcThreePointsSeed3 = {
+            ...shapeSeed,
             onLinePoint: coord,
             startPointAngle,
             endPointAngle,
@@ -376,12 +375,13 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
       const lineDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
       if (lineDrawStep === 'endPoint') {
-        const temporaryLineShapeBase = temporaryShapeBase as TemporaryLineShapeBase
+        const temporaryLineShapeBase = shapeSeed as LineStartEndSeed2
 
-        return {
+        const newValue: LineStartEndSeed2 = {
           ...temporaryLineShapeBase,
           endPoint: coord,
-        } as TemporaryLineShape
+        }
+        return newValue
       }
     }
 
@@ -390,12 +390,13 @@ export const temporaryShapeState = selector<TemporaryShape | null>({
         drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 
       if (supplementalLineDrawStep === 'endPoint') {
-        const temporaryLineShapeBase = temporaryShapeBase as TemporarySupplementalLineShapeBase
+        const temporaryLineShapeBase = shapeSeed as SupplementalLineStartEndSeed2
 
-        return {
+        const newValue: SupplementalLineStartEndSeed2 = {
           ...temporaryLineShapeBase,
           endPoint: coord,
-        } as TemporarySupplementalLineShape
+        }
+        return newValue
       }
     }
 
@@ -439,26 +440,26 @@ export const indicatingShapeIdState = selector<number | null>({
     let minimumDistance = Number.MAX_VALUE
     for (let i = 0; i < shapes.length; i++) {
       const shape = shapes[i]
-      if (isCircleShape(shape)) {
-        const distance = calcDistanceFromCircumference(pointingCoord, shape)
+      if (isCircle(shape)) {
+        const distance = calcDistanceFromCircumference(pointingCoord, shape.constraints)
         if (distance < minimumDistance) {
           minimumDistance = distance
           nearestIndex = i
         }
-      } else if (isLineShape(shape)) {
-        const nearest = findNearestPointOnLine(pointingCoord, shape)
+      } else if (isLine(shape)) {
+        const nearest = findNearestPointOnLine(pointingCoord, shape.constraints)
         if (nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
         }
-      } else if (isArcShape(shape)) {
-        const nearest = findNearestPointOnArc(pointingCoord, shape)
+      } else if (isArcCenterTwoPoints(shape)) {
+        const nearest = findNearestPointOnArc(pointingCoord, shape.constraints)
         if (nearest !== null && nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
         }
       } else if (isSupplementalLineShape(shape)) {
-        const nearest = findNearestPointOnLine(pointingCoord, shape)
+        const nearest = findNearestPointOnLine(pointingCoord, shape.constraints)
         if (nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
@@ -527,8 +528,8 @@ export const snapToShapeConstraintPointSelector = selector<{
   },
 })
 
-export const supplementalLinesState = selector<LineShapeSeed[]>({
-  key: 'supplementalLinesSelector',
+export const guidingLinesState = selector<Line['constraints'][]>({
+  key: 'guidingLinesSelector',
   get: ({ get }) => {
     const shapes = get(shapesState)
 
@@ -543,11 +544,12 @@ export const supplementalLinesState = selector<LineShapeSeed[]>({
         const circleCenterCoordInfo = snapInfo as SnapInfoCircumference
         const circle = shapes.find(
           shape => shape.id === circleCenterCoordInfo.targetShapeId
-        ) as CircleShape
+        ) as Circle
+        const { center, radius } = circle.constraints
         return {
           type: 'line' as const,
-          startPoint: { x: circle.center.x - circle.radius, y: circle.center.y },
-          endPoint: { x: circle.center.x + circle.radius, y: circle.center.y },
+          startPoint: { x: center.x - radius, y: center.y },
+          endPoint: { x: center.x + radius, y: center.y },
         }
       })
   },
@@ -568,18 +570,19 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     let closeShapes: Shape[] = []
     for (const shape of shapes) {
       if (shape.type === 'circle') {
-        const circle = shape as CircleShape
+        const circle = shape as Circle
+        const { center, radius } = circle.constraints
 
-        const distance = Math.abs(calcDistance(pointingCoord, circle.center) - circle.radius)
+        const distance = Math.abs(calcDistance(pointingCoord, center) - radius)
         if (distance < 10) {
           closeShapes = [...closeShapes, circle]
         }
       }
 
       if (shape.type === 'line') {
-        const line = shape as LineShape
+        const line = shape as Line
 
-        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line)
+        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line.constraints)
         // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
         if (distance < 10 && !isLineTerminal) {
           closeShapes = [...closeShapes, line]
@@ -587,12 +590,12 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'arc') {
-        if (!isArcShape(shape)) {
-          console.warn('shape is not ArcShape')
+        if (!isArcCenterTwoPoints(shape)) {
+          console.warn('shape is not ArcCenterTwoPoints')
           return null
         }
 
-        const nearest = findNearestPointOnArc(pointingCoord, shape)
+        const nearest = findNearestPointOnArc(pointingCoord, shape.constraints)
 
         // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
         if (nearest !== null && nearest.distance < 10 && !nearest.isArcTerminal) {
@@ -601,9 +604,9 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'supplementalLine') {
-        const line = shape as SupplementalLineShape
+        const line = shape as SupplementalLine
 
-        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line)
+        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line.constraints)
         // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
         if (distance < 10 && !isLineTerminal) {
           closeShapes = [...closeShapes, line]
@@ -619,11 +622,11 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     // カーソル座標と図形の最近傍点間の距離が1以下の場合は、スナップ先となる図形上の一点を特定する
     for (const shape of closeShapes) {
       if (shape.type === 'circle') {
-        const circle = shape as CircleShape
+        const circle = shape as Circle
 
         // 円の中心点とカーソル座標を含む直線と円の交点を求める
-        const intersections = findIntersectionOfCircleAndLine(circle, {
-          start: circle.center,
+        const intersections = findIntersectionOfCircleAndLine(circle.constraints, {
+          start: circle.constraints.center,
           end: pointingCoord,
         })
 
@@ -638,12 +641,12 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'arc') {
-        if (!isArcShape(shape)) {
-          console.warn('shape is not ArcShape')
+        if (!isArcCenterTwoPoints(shape)) {
+          console.warn('shape is not ArcCenterTwoPoints')
           return null
         }
 
-        const nearest = findNearestPointOnArc(pointingCoord, shape)
+        const nearest = findNearestPointOnArc(pointingCoord, shape.constraints)
 
         if (nearest !== null) {
           snapDestinationCoordOnShape = [
@@ -654,8 +657,8 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'line') {
-        const line = shape as LineShape
-        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line)
+        const line = shape as Line
+        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line.constraints)
         snapDestinationCoordOnShape = [
           ...snapDestinationCoordOnShape,
           [line.id, nearestCoord, 'onLine'],
@@ -663,8 +666,8 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'supplementalLine') {
-        const line = shape as SupplementalLineShape
-        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line)
+        const line = shape as SupplementalLine
+        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line.constraints)
         snapDestinationCoordOnShape = [
           ...snapDestinationCoordOnShape,
           [line.id, nearestCoord, 'onLine'],
@@ -795,32 +798,36 @@ export const canUndoSelector = selector<boolean>({
 export const tooltipContentState = selector<string | null>({
   key: 'tooltipContent',
   get: ({ get }) => {
-    const temporaryShape = get(temporaryShapeState)
+    const shapeSeed = get(shapeSeedState)
     const coord = get(activeCoordState)
 
-    if (temporaryShape === null || coord === null) {
+    if (shapeSeed === null || coord === null) {
       return null
     }
 
-    if (temporaryShape.type === 'tmp-circle') {
-      const temporaryCircleShape = temporaryShape as TemporaryCircleShape
-      return (temporaryCircleShape.radius * 2).toFixed(2) + 'px'
+    if (shapeSeed.type === 'circle') {
+      const circleSeed = shapeSeed as CircleCenterDiameterSeed2
+      return (circleSeed.radius * 2).toFixed(2) + 'px'
     }
 
-    if (temporaryShape.type === 'tmp-line') {
-      const temporaryLineShape = temporaryShape as TemporaryLineShape
+    if (shapeSeed.type === 'line') {
+      const lineSeed = shapeSeed as LineStartEndSeed2
 
       return (
         Math.sqrt(
-          Math.pow(temporaryLineShape.startPoint.x - coord.x, 2) +
-            Math.pow(temporaryLineShape.startPoint.y - coord.y, 2)
+          Math.pow(lineSeed.startPoint.x - coord.x, 2) +
+            Math.pow(lineSeed.startPoint.y - coord.y, 2)
         ).toFixed(2) + 'px'
       )
     }
 
-    if (temporaryShape.type === 'tmp-arc') {
-      if (isTemporaryArcShape(temporaryShape)) {
-        const { startAngle, endAngle } = temporaryShape
+    if (shapeSeed.type === 'arc') {
+      if (isArcCenterTwoPointsSeed2(shapeSeed)) {
+        return (shapeSeed.radius * 2).toFixed(2) + 'px'
+      }
+
+      if (isArcCenterTwoPointsSeed3(shapeSeed)) {
+        const { startAngle, endAngle } = shapeSeed
 
         let counterClockWiseAngle
         if (startAngle === endAngle) {
@@ -828,13 +835,9 @@ export const tooltipContentState = selector<string | null>({
         } else if (startAngle < endAngle) {
           counterClockWiseAngle = endAngle - startAngle
         } else {
-          counterClockWiseAngle = 360 - (temporaryShape.startAngle - temporaryShape.endAngle)
+          counterClockWiseAngle = 360 - (shapeSeed.startAngle - shapeSeed.endAngle)
         }
         return counterClockWiseAngle.toFixed(2) + '°'
-      }
-
-      if (isTemporaryArcRadius(temporaryShape)) {
-        return (temporaryShape.radius * 2).toFixed(2) + 'px'
       }
     }
 

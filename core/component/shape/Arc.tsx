@@ -1,9 +1,9 @@
 import React from 'react'
-import { isArcShape, isArcWithThreePointsShape } from '../../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import { shapeSelectorFamily } from '../../container/states'
-import ArcWithCenterTwoPoints from './ArcWithCenterTwoPoints'
-import ArcWithThreePoints from './ArcWithThreePoints'
+import ArcThreePoints from './ArcThreePoints'
+import ArcWithCenterTwoPoints from './ArcCenterTwoPoints'
+import { isArcCenterTwoPoints, isArcThreePoints } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
@@ -12,10 +12,10 @@ interface Props {
 const Arc: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
-  if (isArcShape(shape)) {
+  if (isArcCenterTwoPoints(shape)) {
     return <ArcWithCenterTwoPoints shapeId={shapeId} />
-  } else if (isArcWithThreePointsShape(shape)) {
-    return <ArcWithThreePoints shapeId={shapeId} />
+  } else if (isArcThreePoints(shape)) {
+    return <ArcThreePoints shapeId={shapeId} />
   } else {
     throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
   }
