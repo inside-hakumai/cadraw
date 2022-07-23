@@ -63,7 +63,7 @@ declare global {
     y: number
   }
 
-  interface Vector {
+  interface Vec {
     vx: number
     vy: number
   }

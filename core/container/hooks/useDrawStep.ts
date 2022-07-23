@@ -60,21 +60,6 @@ const useDrawStep = () => {
             }
           }
         }
-
-        if (operationMode === 'supplementalLine') {
-          const supplementalLineDrawCommand = drawCommand as ShapeDrawCommand<'supplementalLine'>
-
-          if (supplementalLineDrawCommand === 'start-end') {
-            const supplementalLineDrawStep = drawStep as DrawCommandSteps<
-              'supplementalLine',
-              'start-end'
-            >
-
-            if (supplementalLineDrawStep === 'startPoint') {
-              set(drawStepState, 'endPoint')
-            }
-          }
-        }
       },
     []
   )
@@ -109,14 +94,6 @@ const useDrawStep = () => {
           }
 
           if (arcDrawCommand === 'three-points') {
-            set(drawStepState, 'startPoint')
-          }
-        }
-
-        if (operationMode === 'supplementalLine') {
-          const supplementalLineDrawCommand = drawCommand as ShapeDrawCommand<'supplementalLine'>
-
-          if (supplementalLineDrawCommand === 'start-end') {
             set(drawStepState, 'startPoint')
           }
         }

@@ -290,7 +290,7 @@ export const findLineEquidistantFromTwoPoints = (
   point2: Coordinate
 ): {
   point: Coordinate
-  unitVector: Vector
+  unitVector: Vec
 } => {
   const pointBetweenTwoPoints: Coordinate = {
     x: (point1.x + point2.x) / 2,
@@ -299,7 +299,7 @@ export const findLineEquidistantFromTwoPoints = (
 
   const distance = calcDistance(point1, point2)
 
-  const unitVector: Vector = {
+  const unitVector: Vec = {
     vx: (point2.y - point1.y) / distance,
     vy: -(point2.x - point1.x) / distance,
   }

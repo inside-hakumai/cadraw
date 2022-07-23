@@ -762,12 +762,12 @@ export const tooltipContentState = selector<string | null>({
       return null
     }
 
-    if (shapeSeed.type === 'circle') {
+    if (shapeSeed.shape === 'circle') {
       const circleSeed = shapeSeed as CircleCenterDiameterSeed2
       return (circleSeed.radius * 2).toFixed(2) + 'px'
     }
 
-    if (shapeSeed.type === 'line') {
+    if (shapeSeed.shape === 'line') {
       const lineSeed = shapeSeed as LineStartEndSeed2
 
       return (
@@ -778,7 +778,7 @@ export const tooltipContentState = selector<string | null>({
       )
     }
 
-    if (shapeSeed.type === 'arc') {
+    if (shapeSeed.shape === 'arc') {
       if (isArcCenterTwoPointsSeed2(shapeSeed)) {
         return (shapeSeed.radius * 2).toFixed(2) + 'px'
       }
