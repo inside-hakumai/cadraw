@@ -103,8 +103,8 @@ declare global {
     radius: number
     startPoint: Coordinate
     endPoint: Coordinate
-    startAngle: number
-    endAngle: number
+    startPointAngle: number
+    endPointAngle: number
     angleDeltaFromStart: number
   }
 
@@ -116,6 +116,7 @@ declare global {
     center: Coordinate
     startPointAngle: number
     endPointAngle: number
+    angleDeltaFromStart: number
     radius: number
   }
 
@@ -279,13 +280,13 @@ declare global {
     drawStep: 'startPoint'
     radius: number
     startPoint: Coordinate
-    startAngle: number
+    startPointAngle: number
   }
 
   interface ArcCenterTwoPointsSeed3 extends ArcCenterTwoPointsSeed2 {
     drawStep: 'endPoint'
     endPoint: Coordinate
-    endAngle: number
+    endPointAngle: number
     angleDeltaFromStart: number
   }
 

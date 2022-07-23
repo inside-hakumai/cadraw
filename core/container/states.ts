@@ -15,6 +15,7 @@ import {
   isArcCenterTwoPoints,
   isArcCenterTwoPointsSeed2,
   isArcCenterTwoPointsSeed3,
+  isArcThreePoints,
   isArcThreePointsSeed2,
   isArcThreePointsSeed3,
   isCircle,
@@ -166,7 +167,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
         if (shape.type === 'arc') {
           if (shape.drawCommand === 'center-two-points') {
             const arcShape = shape as Arc<ArcConstraintsWithCenterAndTwoPoints>
-            const { center, radius, startAngle, endAngle } = arcShape.constraints
+            const { center, radius, startPointAngle, endPointAngle } = arcShape.constraints
 
             return [
               {
@@ -175,12 +176,12 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
                 constraintType: 'arcCenter' as const,
               } as ShapeConstraintPoint,
               {
-                coord: calcCircumferenceCoordFromDegree(center, radius, startAngle),
+                coord: calcCircumferenceCoordFromDegree(center, radius, startPointAngle),
                 targetShapeId: shape.id,
                 constraintType: 'arcEdge' as const,
               } as ShapeConstraintPoint,
               {
-                coord: calcCircumferenceCoordFromDegree(center, radius, endAngle),
+                coord: calcCircumferenceCoordFromDegree(center, radius, endPointAngle),
                 targetShapeId: shape.id,
                 constraintType: 'arcEdge' as const,
               } as ShapeConstraintPoint,
@@ -282,7 +283,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
           const newValue: ArcCenterTwoPointsSeed2 = {
             ...shapeSeed,
             startPoint: coord,
-            startAngle: temporaryStartAngle,
+            startPointAngle: temporaryStartAngle,
             radius: temporaryRadius,
           }
           return newValue
@@ -295,7 +296,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
           return shapeSeed
         }
 
-        const { center, startAngle } = shapeSeed
+        const { center, startPointAngle } = shapeSeed
         const temporaryEndAngle = calcCentralAngleFromHorizontalLine(coord, center)
 
         if (temporaryEndAngle === null) {
@@ -307,14 +308,14 @@ export const shapeSeedState = selector<ShapeSeed | null>({
             temporaryEndAngle
           )
           const counterClockWiseAngle =
-            temporaryEndAngle > startAngle
-              ? temporaryEndAngle - startAngle
-              : 360 - (startAngle - temporaryEndAngle)
+            temporaryEndAngle > startPointAngle
+              ? temporaryEndAngle - startPointAngle
+              : 360 - (startPointAngle - temporaryEndAngle)
 
           const newValue: ArcCenterTwoPointsSeed3 = {
             ...shapeSeed,
             endPoint: endCoord,
-            endAngle: temporaryEndAngle,
+            endPointAngle: temporaryEndAngle,
             angleDeltaFromStart: counterClockWiseAngle,
           }
           return newValue
@@ -590,7 +591,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'arc') {
-        if (!isArcCenterTwoPoints(shape)) {
+        if (!isArcCenterTwoPoints(shape) && !isArcThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
           return null
         }
@@ -641,7 +642,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.type === 'arc') {
-        if (!isArcCenterTwoPoints(shape)) {
+        if (!isArcCenterTwoPoints(shape) && !isArcThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
           return null
         }
@@ -827,15 +828,15 @@ export const tooltipContentState = selector<string | null>({
       }
 
       if (isArcCenterTwoPointsSeed3(shapeSeed)) {
-        const { startAngle, endAngle } = shapeSeed
+        const { startPointAngle, endPointAngle } = shapeSeed
 
         let counterClockWiseAngle
-        if (startAngle === endAngle) {
+        if (startPointAngle === endPointAngle) {
           counterClockWiseAngle = 0
-        } else if (startAngle < endAngle) {
-          counterClockWiseAngle = endAngle - startAngle
+        } else if (startPointAngle < endPointAngle) {
+          counterClockWiseAngle = endPointAngle - startPointAngle
         } else {
-          counterClockWiseAngle = 360 - (shapeSeed.startAngle - shapeSeed.endAngle)
+          counterClockWiseAngle = 360 - (shapeSeed.startPointAngle - shapeSeed.endPointAngle)
         }
         return counterClockWiseAngle.toFixed(2) + '°'
       }

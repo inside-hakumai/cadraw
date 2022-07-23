@@ -113,9 +113,17 @@ export const findNearestPointOnLine = (
  */
 export const findNearestPointOnArc = (
   point: Coordinate,
-  arc: ArcConstraintsWithCenterAndTwoPoints
+  arc: ArcConstraintsWithCenterAndTwoPoints | ArcConstraintsWithThreePoints
 ): { nearestCoord: Coordinate; distance: number; isArcTerminal: boolean } | null => {
-  const { center, radius, startPoint, endPoint, startAngle, endAngle, angleDeltaFromStart } = arc
+  const {
+    center,
+    radius,
+    startPoint,
+    endPoint,
+    startPointAngle,
+    endPointAngle,
+    angleDeltaFromStart,
+  } = arc
 
   // 水平方向からの点までの角度
   const pointAngle = calcCentralAngleFromHorizontalLine(point, center)
@@ -128,18 +136,21 @@ export const findNearestPointOnArc = (
     // 円弧がarcStartCoordから反時計回りに弧を形成している場合
     (angleDeltaFromStart > 0 &&
       // arcStartCoordとarcEndCoordの間に存在するか
-      ((endAngle > startAngle && isBetween(pointAngle, startAngle, endAngle, false, false)) ||
+      ((endPointAngle > startPointAngle &&
+        isBetween(pointAngle, startPointAngle, endPointAngle, false, false)) ||
         // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
-        (startAngle > endAngle &&
-          (isBetween(pointAngle, 0, endAngle, true, false) ||
-            isBetween(pointAngle, startAngle, 360, false, false))))) ||
+        (startPointAngle > endPointAngle &&
+          (isBetween(pointAngle, 0, endPointAngle, true, false) ||
+            isBetween(pointAngle, startPointAngle, 360, false, false))))) ||
     // 円弧がarcStartCoordから時計回りに弧を形成している場合
     (angleDeltaFromStart < 0 &&
       // arcStartCoordとarcEndCoordの間に存在するか
-      ((startAngle > endAngle && isBetween(pointAngle, endAngle, startAngle, false, false)) ||
+      ((startPointAngle > endPointAngle &&
+        isBetween(pointAngle, endPointAngle, startPointAngle, false, false)) ||
         // 弧がθ=0の直線を跨ぐ場合は、θ=0の上側と下側を分けて判定する
-        (endAngle > startAngle && isBetween(pointAngle, 0, startAngle, true, false)) ||
-        isBetween(pointAngle, endAngle, 360, false, false)))
+        (endPointAngle > startPointAngle &&
+          isBetween(pointAngle, 0, startPointAngle, true, false)) ||
+        isBetween(pointAngle, endPointAngle, 360, false, false)))
 
   if (isPointInArc) {
     const intersections = findIntersectionOfCircleAndLine(

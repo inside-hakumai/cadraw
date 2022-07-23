@@ -7,17 +7,17 @@ interface Props {
 }
 
 const ArcSeedCenterTwoPoints: React.FC<Props> = ({ shape, centerRef }) => {
-  const { center, startPoint, startAngle, radius } = shape
+  const { center, startPoint, startPointAngle, radius } = shape
   let endPoint = null
   let endAngle = null
 
   let pathNodeAttribute: string[] | null = null
   if (isArcCenterTwoPointsSeed3(shape)) {
     endPoint = shape.endPoint
-    endAngle = shape.endAngle
+    endAngle = shape.endPointAngle
 
     const counterClockWiseAngle =
-      endAngle > startAngle ? endAngle - startAngle : 360 - (startAngle - endAngle)
+      endAngle > startPointAngle ? endAngle - startPointAngle : 360 - (startPointAngle - endAngle)
 
     const useLargeArc = counterClockWiseAngle > 180
 

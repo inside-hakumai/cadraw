@@ -70,8 +70,8 @@ export const isArcCenterTwoPoints = (
     typeof shape?.constraints?.radius === 'number' &&
     isCoordinate(shape?.constraints?.startPoint) &&
     isCoordinate(shape?.constraints?.endPoint) &&
-    typeof shape?.constraints?.startAngle === 'number' &&
-    typeof shape?.constraints?.endAngle === 'number' &&
+    typeof shape?.constraints?.startPointAngle === 'number' &&
+    typeof shape?.constraints?.endPointAngle === 'number' &&
     typeof shape?.constraints?.angleDeltaFromStart === 'number'
   )
 }
@@ -185,7 +185,7 @@ export const isArcCenterTwoPointsSeed2 = (shape: any): shape is ArcCenterTwoPoin
     isCoordinate(shape?.center) &&
     typeof shape?.radius === 'number' &&
     isCoordinate(shape?.startPoint) &&
-    typeof shape?.startAngle === 'number'
+    typeof shape?.startPointAngle === 'number'
   )
 }
 
@@ -201,9 +201,9 @@ export const isArcCenterTwoPointsSeed3 = (shape: any): shape is ArcCenterTwoPoin
     isCoordinate(shape?.center) &&
     typeof shape?.radius === 'number' &&
     isCoordinate(shape?.startPoint) &&
-    typeof shape?.startAngle === 'number' &&
+    typeof shape?.startPointAngle === 'number' &&
     isCoordinate(shape?.endPoint) &&
-    typeof shape?.endAngle === 'number' &&
+    typeof shape?.endPointAngle === 'number' &&
     typeof shape?.angleDeltaFromStart === 'number'
   )
 }

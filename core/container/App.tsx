@@ -348,7 +348,7 @@ const App: React.FC<Props> = ({ onExport }) => {
             drawStep: 'startPoint',
             center: activeCoord,
             startPoint: activeCoord,
-            startAngle: 0,
+            startPointAngle: 0,
             radius: 0,
           }
           setShapeSeedConstraints(newArcSeed)
@@ -365,7 +365,7 @@ const App: React.FC<Props> = ({ onExport }) => {
             ...shapeSeed,
             drawStep: 'endPoint',
             endPoint: activeCoord,
-            endAngle: shapeSeed.startAngle,
+            endPointAngle: shapeSeed.startPointAngle,
             angleDeltaFromStart: 0,
           }
 
@@ -450,6 +450,13 @@ const App: React.FC<Props> = ({ onExport }) => {
             return
           }
 
+          const { startPointAngle, endPointAngle } = shapeSeed
+
+          const counterClockWiseAngle =
+            endPointAngle > startPointAngle
+              ? endPointAngle - startPointAngle
+              : 360 - (startPointAngle - endPointAngle)
+
           const newArcSeed: Arc<ArcConstraintsWithThreePoints> = {
             id: shapes.length,
             type: 'arc',
@@ -458,6 +465,7 @@ const App: React.FC<Props> = ({ onExport }) => {
               ...shapeSeed,
               constrainShape: 'arc',
               constraintType: 'three-points',
+              angleDeltaFromStart: counterClockWiseAngle,
             },
           }
 

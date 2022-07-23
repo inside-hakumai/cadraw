@@ -17,7 +17,7 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
   ) as Arc<ArcConstraintsWithCenterAndTwoPoints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
-  const { center, radius, startAngle, endAngle } = shape.constraints
+  const { center, radius, startPointAngle, endPointAngle } = shape.constraints
 
   const isFocused = indicatingShapeId === shape.id
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
@@ -34,16 +34,18 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
   }, [shapeId, shape])
 
   const arcStartEdgeCoord = {
-    x: center.x + radius * Math.cos((startAngle / 180) * Math.PI),
-    y: center.y - radius * Math.sin((startAngle / 180) * Math.PI), // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
+    x: center.x + radius * Math.cos((startPointAngle / 180) * Math.PI),
+    y: center.y - radius * Math.sin((startPointAngle / 180) * Math.PI), // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
   }
   const arcEndEdgeCoord = {
-    x: center.x + radius * Math.cos((endAngle / 180) * Math.PI),
-    y: center.y - radius * Math.sin((endAngle / 180) * Math.PI), // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
+    x: center.x + radius * Math.cos((endPointAngle / 180) * Math.PI),
+    y: center.y - radius * Math.sin((endPointAngle / 180) * Math.PI), // xy座標系とSVG空間の座標系ではy軸の正負が逆転する
   }
 
   const counterClockWiseAngle =
-    endAngle > startAngle ? endAngle - startAngle : 360 - (startAngle - endAngle)
+    endPointAngle > startPointAngle
+      ? endPointAngle - startPointAngle
+      : 360 - (startPointAngle - endPointAngle)
   const shouldUseLargeArc = counterClockWiseAngle > 180
 
   const pathNodeAttribute = [
