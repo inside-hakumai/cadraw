@@ -1,4 +1,8 @@
 const ja: TranslationSchema = {
+  drawType: {
+    solid: '実線',
+    supplemental: '補助線',
+  },
   shape: {
     line: '直線',
     circle: '円',

@@ -7,6 +7,7 @@ import {
   currentOperatingShapeSelector,
   currentSnapshotVersionState,
   drawCommandState,
+  drawTypeState,
   isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
@@ -88,6 +89,7 @@ const shortcutHintStyle = (keyLabel: string) => css`
 `
 
 interface Props {
+  changeDrawType: (newDrawType: DrawType) => void
   changeCommand: (newCommand: string) => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
@@ -100,6 +102,7 @@ interface Props {
 }
 
 const ToolWindow: React.FC<Props> = ({
+  changeDrawType,
   changeCommand,
   onActivateShapeSelect,
   onActivateLineDraw,
@@ -112,6 +115,7 @@ const ToolWindow: React.FC<Props> = ({
 }) => {
   const isShowingShortcutHint = useRecoilValue(isShowingShortcutKeyHintState)
   const operationMode = useRecoilValue(operationModeState)
+  const drawType = useRecoilValue(drawTypeState)
   const drawCommand = useRecoilValue(drawCommandState)
   const currentAvailableCommands = useRecoilValue(currentAvailableCommandSelector)
   const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
@@ -134,9 +138,40 @@ const ToolWindow: React.FC<Props> = ({
     [changeCommand]
   )
 
+  const onChangeDrawType = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.value === 'solid' || event.target.value === 'supplemental') {
+        changeDrawType(event.target.value)
+      } else {
+        throw new Error(`Unexpected DrawType: ${event.target.value}`)
+      }
+    },
+    [changeDrawType]
+  )
+
   return (
     <>
       <div css={rootStyle}>
+        <div css={toolGroupStyle}>
+          <input
+            type='radio'
+            id='solid'
+            name='drawType'
+            value='solid'
+            checked={drawType === 'solid'}
+            onChange={onChangeDrawType}
+          />
+          <label htmlFor='solid'>{t('drawType.solid')}</label>
+          <input
+            type='radio'
+            id='supplemental'
+            name='drawType'
+            value='supplemental'
+            checked={drawType === 'supplemental'}
+            onChange={onChangeDrawType}
+          />
+          <label htmlFor='supplemental'>{t('drawType.supplemental')}</label>
+        </div>
         {currentOperatingShape && currentAvailableCommands && (
           <div css={toolGroupStyle}>
             {currentAvailableCommands.map(command => {

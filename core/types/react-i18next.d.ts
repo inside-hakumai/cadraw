@@ -2,6 +2,10 @@ import 'react-i18next'
 
 declare global {
   interface TranslationSchema {
+    drawType: {
+      solid: string
+      supplemental: string
+    }
     shape: {
       line: string
       circle: string

@@ -545,6 +545,14 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const changeDrawCommand = useRecoilCallback(
+    ({ set }) =>
+      async (newDrawType: DrawType) => {
+        set(drawTypeState, newDrawType)
+      },
+    [goToFirstStep]
+  )
+
   const changeCommand = useRecoilCallback(
     ({ snapshot, set }) =>
       async (newCommand: string) => {
@@ -570,6 +578,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
+        changeDrawType={useCallback(changeDrawCommand, [changeDrawCommand])}
         changeCommand={changeCommand}
         onActivateShapeSelect={useCallback(
           () => changeOperationMode('select'),
