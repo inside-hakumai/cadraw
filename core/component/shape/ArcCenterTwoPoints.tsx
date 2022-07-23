@@ -62,6 +62,7 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
       fill='none'
       stroke={strokeColor}
       strokeWidth='1'
+      strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
 }

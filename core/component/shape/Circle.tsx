@@ -40,6 +40,7 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
       strokeWidth={1}
       fill={'none'}
       stroke={strokeColor}
+      strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
 }

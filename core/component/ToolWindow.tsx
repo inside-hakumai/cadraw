@@ -15,12 +15,7 @@ import {
 } from '../container/states'
 import { useTranslation } from 'react-i18next'
 
-import {
-  isValidArcCommand,
-  isValidCircleCommand,
-  isValidLineCommand,
-  isValidSupplementalLineCommand,
-} from '../lib/typeguard'
+import { isValidArcCommand, isValidCircleCommand, isValidLineCommand } from '../lib/typeguard'
 
 const rootStyle = css`
   display: flex;
@@ -94,7 +89,6 @@ const shortcutHintStyle = (keyLabel: string) => css`
 
 interface Props {
   changeCommand: (newCommand: string) => void
-  onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
   onActivateArcDraw: () => void
@@ -107,7 +101,6 @@ interface Props {
 
 const ToolWindow: React.FC<Props> = ({
   changeCommand,
-  onActivateSupplementalLineDraw,
   onActivateShapeSelect,
   onActivateLineDraw,
   onActivateCircleDraw,
@@ -190,40 +183,10 @@ const ToolWindow: React.FC<Props> = ({
                   </div>
                 )
               }
-              if (
-                currentOperatingShape === 'supplementalLine' &&
-                isValidSupplementalLineCommand(command)
-              ) {
-                const i18nKey = `command.${currentOperatingShape}.${command}` as const
-                return (
-                  <div css={buttonWrapperStyle} key={command}>
-                    <button
-                      css={buttonStyle}
-                      disabled={command === drawCommand}
-                      data-command={command}
-                      onClick={onClickCommandChangeButton}>
-                      {t(i18nKey)}
-                    </button>
-                  </div>
-                )
-              }
             })}
           </div>
         )}
         <div css={toolGroupStyle}>
-          <div css={buttonWrapperStyle}>
-            <button
-              css={buttonStyle}
-              onClick={onActivateSupplementalLineDraw}
-              disabled={operationMode === 'supplementalLine'}>
-              {t('shape.supplementalLine')}
-            </button>
-            {isShowingShortcutHint && (
-              <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('S')}></div>
-              </div>
-            )}
-          </div>
           <div css={buttonWrapperStyle}>
             <button
               css={buttonStyle}

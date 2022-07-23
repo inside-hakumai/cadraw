@@ -1,13 +1,13 @@
-import { drawCommandList, shapeList } from '../lib/constants'
+import { drawCommandList, drawType, shapeList } from '../lib/constants'
 
 declare global {
+  type DrawType = typeof drawType[number]
   type ShapeType = typeof shapeList[number]
 
   interface DrawCommandMap {
     line: typeof drawCommandList['line'][number]
     circle: typeof drawCommandList['circle'][number]
     arc: typeof drawCommandList['arc'][number]
-    supplementalLine: typeof drawCommandList['supplementalLine'][number]
   }
 
   type TemporaryShapeType =
@@ -27,9 +27,6 @@ declare global {
     arc: {
       'center-two-points': 'center' | 'startPoint' | 'endPoint'
       'three-points': 'startPoint' | 'endPoint' | 'onLinePoint'
-    }
-    supplementalLine: {
-      'start-end': 'startPoint' | 'endPoint'
     }
   }
 
@@ -78,7 +75,7 @@ declare global {
   }
 
   interface Line extends Shape {
-    type: 'line'
+    shape: 'line'
     constraints: {
       startPoint: Coordinate
       endPoint: Coordinate
@@ -86,7 +83,7 @@ declare global {
   }
 
   interface Circle extends Shape {
-    type: 'circle'
+    shape: 'circle'
     constraints: {
       center: Coordinate
       radius: number
@@ -121,16 +118,8 @@ declare global {
   }
 
   interface Arc<C extends ArcConstraints> extends Shape {
-    type: 'arc'
+    shape: 'arc'
     constraints: C
-  }
-
-  interface SupplementalLine extends Shape {
-    type: 'supplementalLine'
-    constraints: {
-      startPoint: Coordinate
-      endPoint: Coordinate
-    }
   }
 
   interface SnappingCoordCandidate extends Coordinate {
@@ -187,7 +176,8 @@ declare global {
   // }
 
   interface Shape {
-    type: ShapeType
+    type: DrawType
+    shape: ShapeType
     drawCommand: DrawCommand
     id: number
   }
@@ -238,13 +228,13 @@ declare global {
 
   interface ShapeSeed {
     isSeed: true
-    type: ShapeType
+    shape: ShapeType
     drawCommand: DrawCommand
     drawStep: DrawStep
   }
 
   interface LineStartEndSeed1 extends ShapeSeed {
-    type: 'line'
+    shape: 'line'
     drawCommand: 'start-end'
     drawStep: 'startPoint'
     startPoint: Coordinate
@@ -256,7 +246,7 @@ declare global {
   }
 
   interface CircleCenterDiameterSeed1 extends ShapeSeed {
-    type: 'circle'
+    shape: 'circle'
     drawCommand: 'center-diameter'
     drawStep: 'center'
     center: Coordinate
@@ -270,7 +260,7 @@ declare global {
   }
 
   interface ArcCenterTwoPointsSeed1 extends ShapeSeed {
-    type: 'arc'
+    shape: 'arc'
     drawCommand: 'center-two-points'
     drawStep: 'center'
     center: Coordinate
@@ -308,7 +298,7 @@ declare global {
   // }
 
   interface ArcThreePointsSeed1 extends ShapeSeed {
-    type: 'arc'
+    shape: 'arc'
     drawCommand: 'three-points'
     drawStep: 'startPoint'
     startPoint: Coordinate
@@ -348,18 +338,6 @@ declare global {
   //   endPointAngle: number
   //   radius: number
   // }
-
-  interface SupplementalLineStartEndSeed1 extends ShapeSeed {
-    type: 'supplementalLine'
-    drawCommand: 'start-end'
-    drawStep: 'startPoint'
-    startPoint: Coordinate
-  }
-
-  interface SupplementalLineStartEndSeed2 extends SupplementalLineStartEndSeed1 {
-    drawStep: 'endPoint'
-    endPoint: Coordinate
-  }
 
   // interface TemporarySupplementalLineShapeBase extends TemporaryShape {
   //   type: 'tmp-supplementalLine'

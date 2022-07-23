@@ -20,6 +20,7 @@ import {
   snapshotsState,
   shapeSeedConstraintsState,
   shapeSeedState,
+  drawTypeState,
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import {
@@ -27,11 +28,9 @@ import {
   isArcCenterTwoPointsSeed3,
   isArcThreePointsSeed2,
   isArcThreePointsSeed3,
-  isSupplementalLineStartEndSeed2,
   isValidArcCommand,
   isValidCircleCommand,
   isValidLineCommand,
-  isValidSupplementalLineCommand,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
 import { calcCentralAngleFromHorizontalLine, calcDistance } from '../lib/function'
@@ -48,6 +47,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const [snapshotVersion, setSnapshotVersion] = useRecoilState(currentSnapshotVersionState)
 
   const operationMode = useRecoilValue(operationModeState)
+  const drawType = useRecoilValue(drawTypeState)
   const drawCommand = useRecoilValue(drawCommandState)
   const drawStep = useRecoilValue(drawStepState)
   const shapeSeed = useRecoilValue(shapeSeedState)
@@ -136,15 +136,6 @@ const App: React.FC<Props> = ({ onExport }) => {
             reset(shapeSeedConstraintsState)
           }
         }
-
-        if (mode === 'supplementalLine') {
-          const supplementalLineCommand = command as DrawCommandMap['supplementalLine']
-
-          if (supplementalLineCommand === 'start-end') {
-            set(drawStepState, 'startPoint')
-            reset(shapeSeedConstraintsState)
-          }
-        }
       },
     []
   )
@@ -154,11 +145,6 @@ const App: React.FC<Props> = ({ onExport }) => {
       async (shapeKey: string) => {
         const mode = await snapshot.getPromise(operationModeState)
         switch (shapeKey) {
-          case 's':
-            if (mode !== 'supplementalLine') {
-              await changeOperationMode('supplementalLine')
-            }
-            break
           case 'l':
             if (mode !== 'line') {
               await changeOperationMode('line')
@@ -261,7 +247,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (lineDrawStep === 'startPoint') {
           const newLineSeed: LineStartEndSeed2 = {
             isSeed: true,
-            type: 'line',
+            shape: 'line',
             drawCommand: 'start-end',
             drawStep: 'endPoint',
             startPoint: { x: activeCoord.x, y: activeCoord.y },
@@ -276,7 +262,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const newLine: Line = {
             id: shapes.length,
-            type: 'line',
+            type: drawType,
+            shape: 'line',
             drawCommand: 'start-end',
             constraints: {
               startPoint: { x: lineSeed.startPoint.x, y: lineSeed.startPoint.y },
@@ -300,7 +287,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (circleDrawStep === 'center') {
           const newCircleSeed: CircleCenterDiameterSeed2 = {
             isSeed: true,
-            type: 'circle',
+            shape: 'circle',
             drawCommand: 'center-diameter',
             drawStep: 'diameter',
             center: activeCoord,
@@ -319,7 +306,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const newCircle: Circle = {
             id: shapes.length,
-            type: 'circle',
+            type: drawType,
+            shape: 'circle',
             drawCommand: 'center-diameter',
             constraints: {
               center,
@@ -343,7 +331,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (arcDrawStep === 'center') {
           const newArcSeed: ArcCenterTwoPointsSeed2 = {
             isSeed: true,
-            type: 'arc',
+            shape: 'arc',
             drawCommand: 'center-two-points',
             drawStep: 'startPoint',
             center: activeCoord,
@@ -381,7 +369,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const newArcSeed: Arc<ArcConstraintsWithCenterAndTwoPoints> = {
             id: shapes.length,
-            type: 'arc',
+            type: drawType,
+            shape: 'arc',
             drawCommand: 'center-two-points',
             constraints: {
               ...shapeSeed,
@@ -402,7 +391,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (arcDrawStep === 'startPoint') {
           const newArcSeed: ArcThreePointsSeed2 = {
             isSeed: true,
-            type: 'arc',
+            shape: 'arc',
             drawCommand: 'three-points',
             drawStep: 'endPoint',
             startPoint: activeCoord,
@@ -459,7 +448,8 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const newArcSeed: Arc<ArcConstraintsWithThreePoints> = {
             id: shapes.length,
-            type: 'arc',
+            type: drawType,
+            shape: 'arc',
             drawCommand: 'three-points',
             constraints: {
               ...shapeSeed,
@@ -470,50 +460,6 @@ const App: React.FC<Props> = ({ onExport }) => {
           }
 
           await addShape(newArcSeed)
-          setShapeSeedConstraints(null)
-          await goToFirstStep()
-        }
-      }
-    }
-
-    if (operationMode === 'supplementalLine') {
-      const supplementalLineDrawCommand = drawCommand as ShapeDrawCommand<'supplementalLine'>
-
-      if (supplementalLineDrawCommand === 'start-end') {
-        const supplementalLineDrawStep = drawStep as DrawCommandSteps<
-          'supplementalLine',
-          'start-end'
-        >
-
-        if (supplementalLineDrawStep === 'startPoint') {
-          const newSupplementalLineSeed: SupplementalLineStartEndSeed2 = {
-            isSeed: true,
-            type: 'supplementalLine',
-            drawCommand: 'start-end',
-            drawStep: 'endPoint',
-            startPoint: activeCoord,
-            endPoint: activeCoord,
-          }
-          setShapeSeedConstraints(newSupplementalLineSeed)
-          await goToNextStep()
-        }
-
-        if (supplementalLineDrawStep === 'endPoint') {
-          if (!isSupplementalLineStartEndSeed2(shapeSeed)) {
-            console.warn('shapeSeed is not SupplementalLineStartEndSeed2')
-            return
-          }
-
-          const newSupplementalLine: SupplementalLine = {
-            id: shapes.length,
-            type: 'supplementalLine',
-            drawCommand: 'start-end',
-            constraints: {
-              ...shapeSeed,
-            },
-          }
-
-          await addShape(newSupplementalLine)
           setShapeSeedConstraints(null)
           await goToFirstStep()
         }
@@ -582,7 +528,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const changeOperationMode = useRecoilCallback(
     ({ set }) =>
       async (mode: OperationMode) => {
-        if (mode === 'line' || mode === 'supplementalLine') {
+        if (mode === 'line') {
           set(drawCommandState, 'start-end')
           set(drawStepState, 'startPoint')
         } else if (mode === 'circle') {
@@ -607,9 +553,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (
           (currentOperatingShape === 'line' && isValidLineCommand(newCommand)) ||
           (currentOperatingShape === 'circle' && isValidCircleCommand(newCommand)) ||
-          (currentOperatingShape === 'arc' && isValidArcCommand(newCommand)) ||
-          (currentOperatingShape === 'supplementalLine' &&
-            isValidSupplementalLineCommand(newCommand))
+          (currentOperatingShape === 'arc' && isValidArcCommand(newCommand))
         ) {
           set(drawCommandState, newCommand)
           await goToFirstStep()
@@ -627,10 +571,6 @@ const App: React.FC<Props> = ({ onExport }) => {
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
         changeCommand={changeCommand}
-        onActivateSupplementalLineDraw={useCallback(
-          () => changeOperationMode('supplementalLine'),
-          [changeOperationMode]
-        )}
         onActivateShapeSelect={useCallback(
           () => changeOperationMode('select'),
           [changeOperationMode]

@@ -7,7 +7,6 @@ import {
   isArcThreePointsSeed3,
   isCircleCenterDiameterSeed2,
   isLineStartEndSeed2,
-  isSupplementalLineStartEndSeed2,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
@@ -20,7 +19,6 @@ import {
   cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
-import SupplementalLine from './shape/SupplementalLine'
 import CircleSeed from './shape/CircleSeed'
 import LineSeed from './shape/LineSeed'
 import Circle from './shape/Circle'
@@ -29,6 +27,7 @@ import SnapCircle from './shape/SnapCircle'
 import ArcSeedCenterTwoPoints from './shape/ArcSeedCenterTwoPoints'
 import Arc from './shape/Arc'
 import ArcSeedThreePoints from './shape/ArcSeedThreePoints'
+import GuidingLine from './shape/GuidingLine'
 
 const style = css`
   width: 100%;
@@ -71,12 +70,26 @@ interface Props {
 
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
-  const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
-  const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
-  const arcShapeIds = useRecoilValue(filteredShapeIdsSelector('arc'))
-  const supplementalLineShapeIds = useRecoilValue(filteredShapeIdsSelector('supplementalLine'))
+  const lineShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'line' })
+  )
+  const circleShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'circle' })
+  )
+  const arcShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'arc' })
+  )
+  const supplementalLineShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'supplemental', filterShapeType: 'line' })
+  )
+  const supplementalCircleShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'supplemental', filterShapeType: 'circle' })
+  )
+  const supplementalArcShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'supplemental', filterShapeType: 'arc' })
+  )
   const shapeSeed = useRecoilValue(shapeSeedState)
-  const supplementalLines = useRecoilValue(guidingLinesState)
+  const guidingLines = useRecoilValue(guidingLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const tooltipContent = useRecoilValue(tooltipContentState)
   const cursorClientPosition = useRecoilValue(cursorClientPositionState)
@@ -109,7 +122,13 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         css={svgStyle}>
         {/* 補助線 */}
         {supplementalLineShapeIds.map(shapeId => (
-          <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} isSupplementalLine={true} />
+          <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} />
+        ))}
+        {supplementalCircleShapeIds.map(shapeId => (
+          <Circle key={`supplementalCircle-${shapeId}`} shapeId={shapeId} />
+        ))}
+        {supplementalArcShapeIds.map(shapeId => (
+          <Arc key={`supplementalArc-${shapeId}`} shapeId={shapeId} />
         ))}
 
         {/* 近くの座標にスナップする際にスナップ先を示す点 */}
@@ -136,40 +155,36 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         xmlns='http://www.w3.org/2000/svg'
         css={rendererStyle(indicatingShapeId !== null)}>
         {/* エクスポート時には含まれない補助線 */}
-        {supplementalLines &&
-          supplementalLines.map((line, index) => (
-            <SupplementalLine
+        {guidingLines &&
+          guidingLines.map((line, index) => (
+            <GuidingLine
               key={`supplementalLine-${index}`}
               start={line.startPoint}
               end={line.endPoint}
             />
           ))}
 
-        {/* 作成中（確定前）の図形（円） */}
-        {isCircleCenterDiameterSeed2(shapeSeed) && (
-          <CircleSeed shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
-        )}
+        {shapeSeed && (
+          <>
+            {/* 作成中（確定前）の図形（円） */}
+            {isCircleCenterDiameterSeed2(shapeSeed) && (
+              <CircleSeed shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            )}
 
-        {/* 作成中（確定前）の図形（円弧） */}
-        {(isArcCenterTwoPointsSeed2(shapeSeed) || isArcCenterTwoPointsSeed3(shapeSeed)) && (
-          <ArcSeedCenterTwoPoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
-        )}
-        {(isArcThreePointsSeed2(shapeSeed) || isArcThreePointsSeed3(shapeSeed)) && (
-          <ArcSeedThreePoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
-        )}
+            {/* 作成中（確定前）の図形（円弧） */}
+            {(isArcCenterTwoPointsSeed2(shapeSeed) || isArcCenterTwoPointsSeed3(shapeSeed)) && (
+              <ArcSeedCenterTwoPoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            )}
+            {(isArcThreePointsSeed2(shapeSeed) || isArcThreePointsSeed3(shapeSeed)) && (
+              <ArcSeedThreePoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            )}
 
-        {/* 作成中（確定前）の図形（線） */}
-        {isLineStartEndSeed2(shapeSeed) && (
-          <LineSeed shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
+            {/* 作成中（確定前）の図形（線） */}
+            {isLineStartEndSeed2(shapeSeed) && (
+              <LineSeed shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
+            )}
+          </>
         )}
-        {isSupplementalLineStartEndSeed2(shapeSeed) && (
-          <LineSeed
-            shape={shapeSeed}
-            startCircleRef={temporaryLineStartRef}
-            isSupplementalLine={true}
-          />
-        )}
-
         {/* 作成した図形 */}
         {circleShapeIds.map(shapeId => (
           <Circle key={`circle-${shapeId}`} shapeId={shapeId} />

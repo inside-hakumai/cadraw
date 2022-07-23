@@ -5,14 +5,13 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isLine, isSupplementalLineShape } from '../../lib/typeguard'
+import { isLine } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
-  isSupplementalLine?: boolean
 }
 
-const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
+const Line: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Line
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
@@ -25,12 +24,8 @@ const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
   else strokeColor = '#000000'
 
   useEffect(() => {
-    if (!isSupplementalLine && !isLine(shape)) {
-      throw new Error(`Shape(ID = ${shapeId} is not a line`)
-    }
-
-    if (isSupplementalLine && !isSupplementalLineShape(shape)) {
-      throw new Error(`Shape(ID = ${shapeId} is not a supplemental line`)
+    if (!isLine(shape)) {
+      throw new Error(`Shape(ID = ${shapeId}) is not a line`)
     }
   }, [shapeId, shape])
 
@@ -44,7 +39,7 @@ const Line: React.FC<Props> = ({ shapeId, isSupplementalLine = false }) => {
       y2={endPoint.y}
       strokeWidth={1}
       stroke={strokeColor}
-      strokeDasharray={isSupplementalLine ? '3 3' : ''}
+      strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
 }

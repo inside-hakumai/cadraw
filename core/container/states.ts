@@ -21,13 +21,17 @@ import {
   isCircle,
   isLine,
   isShapeType,
-  isSupplementalLineShape,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
 export const operationModeState = atom<OperationMode>({
   key: 'operationMode',
   default: 'select',
+})
+
+export const drawTypeState = atom<DrawType>({
+  key: 'drawType',
+  default: 'supplemental',
 })
 
 export const drawCommandState = atom<DrawCommand | null>({
@@ -87,25 +91,35 @@ export const shapeSelectorFamily = selectorFamily<Shape, number>({
 })
 
 // 特定の形状の図形に限定してIDのリストを返すSelectorFamily
-export const filteredShapeIdsSelector = selectorFamily<number[], ShapeType>({
+export const filteredShapeIdsSelector = selectorFamily<
+  number[],
+  { filterDrawType: DrawType; filterShapeType: ShapeType }
+>({
   key: 'shapeTypeFilteredShapeIds',
   get:
-    (shapeType: ShapeType) =>
+    ({ filterDrawType, filterShapeType }) =>
     ({ get }) => {
       const allShapes = get(shapesState)
 
-      return allShapes.filter(shape => shape.type === shapeType).map(shape => shape.id)
+      return allShapes
+        .filter(shape => shape.type === filterDrawType && shape.shape === filterShapeType)
+        .map(shape => shape.id)
     },
 })
 
 // 特定の形状の図形に限定して図形のリストを返すSelectorFamily
-export const filteredShapesSelector = selectorFamily<Shape[], ShapeType>({
+export const filteredShapesSelector = selectorFamily<
+  Shape[],
+  { filterDrawType: DrawType; filterShapeType: ShapeType }
+>({
   key: 'shapeTypeFilteredShapeIds',
   get:
-    (shapeType: ShapeType) =>
+    ({ filterDrawType, filterShapeType }) =>
     ({ get }) => {
       const allShapes = get(shapesState)
-      return allShapes.filter(shape => shape.type === shapeType)
+      return allShapes.filter(
+        shape => shape.type === filterDrawType && shape.shape === filterShapeType
+      )
     },
 })
 
@@ -133,7 +147,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
     const shapes = get(shapesState)
     return shapes
       .map(shape => {
-        if (shape.type === 'line') {
+        if (shape.shape === 'line') {
           const lineShape = shape as Line
           const { startPoint, endPoint } = lineShape.constraints
 
@@ -151,7 +165,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
           ]
         }
 
-        if (shape.type === 'circle') {
+        if (shape.shape === 'circle') {
           const circleShape = shape as Circle
           const { center } = circleShape.constraints
 
@@ -164,7 +178,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
           ]
         }
 
-        if (shape.type === 'arc') {
+        if (shape.shape === 'arc') {
           if (shape.drawCommand === 'center-two-points') {
             const arcShape = shape as Arc<ArcConstraintsWithCenterAndTwoPoints>
             const { center, radius, startPointAngle, endPointAngle } = arcShape.constraints
@@ -187,24 +201,6 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
               } as ShapeConstraintPoint,
             ]
           }
-        }
-
-        if (shape.type === 'supplementalLine') {
-          const lineShape = shape as SupplementalLine
-          const { startPoint, endPoint } = lineShape.constraints
-
-          return [
-            {
-              coord: startPoint,
-              targetShapeId: shape.id,
-              constraintType: 'lineEdge' as const,
-            } as ShapeConstraintPoint,
-            {
-              coord: endPoint,
-              targetShapeId: shape.id,
-              constraintType: 'lineEdge' as const,
-            } as ShapeConstraintPoint,
-          ]
         }
 
         return [] as ShapeConstraintPoint[]
@@ -386,21 +382,6 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       }
     }
 
-    if (operationMode === 'supplementalLine' && drawCommand === 'start-end') {
-      const supplementalLineDrawStep =
-        drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
-
-      if (supplementalLineDrawStep === 'endPoint') {
-        const temporaryLineShapeBase = shapeSeed as SupplementalLineStartEndSeed2
-
-        const newValue: SupplementalLineStartEndSeed2 = {
-          ...temporaryLineShapeBase,
-          endPoint: coord,
-        }
-        return newValue
-      }
-    }
-
     return null
   },
 })
@@ -456,12 +437,6 @@ export const indicatingShapeIdState = selector<number | null>({
       } else if (isArcCenterTwoPoints(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape.constraints)
         if (nearest !== null && nearest.distance < minimumDistance) {
-          minimumDistance = nearest.distance
-          nearestIndex = i
-        }
-      } else if (isSupplementalLineShape(shape)) {
-        const nearest = findNearestPointOnLine(pointingCoord, shape.constraints)
-        if (nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
         }
@@ -570,7 +545,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     // 現在指している座標と図形の最近傍点との距離が近い図形を探す
     let closeShapes: Shape[] = []
     for (const shape of shapes) {
-      if (shape.type === 'circle') {
+      if (shape.shape === 'circle') {
         const circle = shape as Circle
         const { center, radius } = circle.constraints
 
@@ -580,7 +555,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
-      if (shape.type === 'line') {
+      if (shape.shape === 'line') {
         const line = shape as Line
 
         const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line.constraints)
@@ -590,7 +565,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
-      if (shape.type === 'arc') {
+      if (shape.shape === 'arc') {
         if (!isArcCenterTwoPoints(shape) && !isArcThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
           return null
@@ -603,16 +578,6 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
           closeShapes = [...closeShapes, shape]
         }
       }
-
-      if (shape.type === 'supplementalLine') {
-        const line = shape as SupplementalLine
-
-        const { distance, isLineTerminal } = findNearestPointOnLine(pointingCoord, line.constraints)
-        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
-        if (distance < 10 && !isLineTerminal) {
-          closeShapes = [...closeShapes, line]
-        }
-      }
     }
 
     let snapDestinationCoordOnShape: [
@@ -622,7 +587,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     ][] = []
     // カーソル座標と図形の最近傍点間の距離が1以下の場合は、スナップ先となる図形上の一点を特定する
     for (const shape of closeShapes) {
-      if (shape.type === 'circle') {
+      if (shape.shape === 'circle') {
         const circle = shape as Circle
 
         // 円の中心点とカーソル座標を含む直線と円の交点を求める
@@ -641,7 +606,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         ]
       }
 
-      if (shape.type === 'arc') {
+      if (shape.shape === 'arc') {
         if (!isArcCenterTwoPoints(shape) && !isArcThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
           return null
@@ -657,17 +622,8 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
-      if (shape.type === 'line') {
+      if (shape.shape === 'line') {
         const line = shape as Line
-        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line.constraints)
-        snapDestinationCoordOnShape = [
-          ...snapDestinationCoordOnShape,
-          [line.id, nearestCoord, 'onLine'],
-        ]
-      }
-
-      if (shape.type === 'supplementalLine') {
-        const line = shape as SupplementalLine
         const { nearestCoord } = findNearestPointOnLine(pointingCoord, line.constraints)
         snapDestinationCoordOnShape = [
           ...snapDestinationCoordOnShape,
