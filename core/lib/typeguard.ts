@@ -18,12 +18,6 @@ export const isValidArcCommand = (command: any): command is ShapeDrawCommand<'ar
   return [...drawCommandList['arc']].includes(command)
 }
 
-export const isValidSupplementalLineCommand = (
-  command: any
-): command is ShapeDrawCommand<'supplementalLine'> => {
-  return [...drawCommandList['supplementalLine']].includes(command)
-}
-
 export const isObject = (value: any): boolean => {
   return typeof value === 'object' && value !== null
 }
@@ -32,182 +26,214 @@ export const isCoordinate = (value: any): value is Coordinate => {
   return isObject(value) && typeof value?.x === 'number' && typeof value?.y === 'number'
 }
 
-export const isLineShape = (shape: any): shape is LineShape => {
+export const isLine = (shape: any): shape is Line => {
   const expectedType: ShapeType = 'line'
+  const expectedDrawCommand: ShapeDrawCommand<'line'> = 'start-end'
+
   return (
-    shape?.type === expectedType &&
-    isObject(shape?.startPoint) &&
-    typeof shape?.startPoint?.x === 'number' &&
-    typeof shape?.startPoint?.y === 'number' &&
-    isObject(shape?.endPoint) &&
-    typeof shape?.endPoint?.x === 'number' &&
-    typeof shape?.endPoint?.y === 'number'
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.startPoint) &&
+    isCoordinate(shape?.constraints?.endPoint)
   )
 }
 
-export const isCircleShape = (shape: any): shape is CircleShape => {
+export const isCircle = (shape: any): shape is Circle => {
   const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
   return (
-    shape?.type === expectedType &&
-    isObject(shape?.center) &&
-    typeof shape?.center?.x === 'number' &&
-    typeof shape?.center?.y === 'number' &&
-    typeof shape?.radius === 'number'
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.center) &&
+    typeof shape?.constraints?.radius === 'number'
   )
 }
 
-export const isArcShape = (shape: any): shape is ArcShape => {
+export const isArcCenterTwoPoints = (
+  shape: any
+): shape is Arc<ArcConstraintsWithCenterAndTwoPoints> => {
   const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
   return (
-    shape?.type === expectedType &&
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.center) &&
+    typeof shape?.constraints?.radius === 'number' &&
+    isCoordinate(shape?.constraints?.startPoint) &&
+    isCoordinate(shape?.constraints?.endPoint) &&
+    typeof shape?.constraints?.startPointAngle === 'number' &&
+    typeof shape?.constraints?.endPointAngle === 'number' &&
+    typeof shape?.constraints?.angleDeltaFromStart === 'number'
+  )
+}
+
+export const isArcThreePoints = (shape: any): shape is Arc<ArcConstraintsWithThreePoints> => {
+  const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.startPoint) &&
+    isCoordinate(shape?.constraints?.endPoint) &&
+    isCoordinate(shape?.constraints?.center) &&
+    typeof shape?.constraints?.startPointAngle === 'number' &&
+    typeof shape?.constraints?.endPointAngle === 'number' &&
+    typeof shape?.constraints?.radius === 'number'
+  )
+}
+
+export const isLineStartEndSeed1 = (shape: any): shape is LineStartEndSeed1 => {
+  const expectedType: ShapeType = 'line'
+  const expectedDrawCommand: ShapeDrawCommand<'line'> = 'start-end'
+  const expectedDrawStep: DrawCommandSteps<'line', 'start-end'> = 'startPoint'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.startPoint)
+  )
+}
+
+export const isLineStartEndSeed2 = (shape: any): shape is LineStartEndSeed2 => {
+  const expectedType: ShapeType = 'line'
+  const expectedDrawCommand: ShapeDrawCommand<'line'> = 'start-end'
+  const expectedDrawStep: DrawCommandSteps<'line', 'start-end'> = 'endPoint'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.startPoint) &&
+    isCoordinate(shape?.endPoint)
+  )
+}
+
+export const isCircleCenterDiameterSeed1 = (shape: any): shape is CircleCenterDiameterSeed1 => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
+  const expectedDrawStep: DrawCommandSteps<'circle', 'center-diameter'> = 'center'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.center)
+  )
+}
+
+export const isCircleCenterDiameterSeed2 = (shape: any): shape is CircleCenterDiameterSeed2 => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
+  const expectedDrawStep: DrawCommandSteps<'circle', 'center-diameter'> = 'diameter'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
     isCoordinate(shape?.center) &&
     typeof shape?.radius === 'number' &&
-    isCoordinate(shape?.startCoord) &&
-    isCoordinate(shape?.endCoord) &&
-    typeof shape?.startAngle === 'number' &&
-    typeof shape?.endAngle === 'number' &&
+    isCoordinate(shape?.diameterStart) &&
+    isCoordinate(shape?.diameterEnd)
+  )
+}
+
+export const isArcCenterTwoPointsSeed1 = (shape: any): shape is ArcCenterTwoPointsSeed1 => {
+  const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
+  const expectedDrawStep: DrawCommandSteps<'arc', 'center-two-points'> = 'center'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.center)
+  )
+}
+
+export const isArcCenterTwoPointsSeed2 = (shape: any): shape is ArcCenterTwoPointsSeed2 => {
+  const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
+  const expectedDrawStep: DrawCommandSteps<'arc', 'center-two-points'> = 'startPoint'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.center) &&
+    typeof shape?.radius === 'number' &&
+    isCoordinate(shape?.startPoint) &&
+    typeof shape?.startPointAngle === 'number'
+  )
+}
+
+export const isArcCenterTwoPointsSeed3 = (shape: any): shape is ArcCenterTwoPointsSeed3 => {
+  const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
+  const expectedDrawStep: DrawCommandSteps<'arc', 'center-two-points'> = 'endPoint'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.center) &&
+    typeof shape?.radius === 'number' &&
+    isCoordinate(shape?.startPoint) &&
+    typeof shape?.startPointAngle === 'number' &&
+    isCoordinate(shape?.endPoint) &&
+    typeof shape?.endPointAngle === 'number' &&
     typeof shape?.angleDeltaFromStart === 'number'
   )
 }
 
-export const isArcWithThreePointsShape = (shape: any): shape is ArcWithThreePointsShape => {
+export const isArcThreePointsSeed1 = (shape: any): shape is ArcThreePointsSeed1 => {
   const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
+  const expectedDrawStep: DrawCommandSteps<'arc', 'three-points'> = 'startPoint'
   return (
-    shape?.type === expectedType &&
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.startPoint)
+  )
+}
+
+export const isArcThreePointsSeed2 = (shape: any): shape is ArcThreePointsSeed2 => {
+  const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
+  const expectedDrawStep: DrawCommandSteps<'arc', 'three-points'> = 'endPoint'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
     isCoordinate(shape?.startPoint) &&
     isCoordinate(shape?.endPoint) &&
+    typeof shape?.distance === 'number'
+  )
+}
+
+export const isArcThreePointsSeed3 = (shape: any): shape is ArcThreePointsSeed3 => {
+  const expectedType: ShapeType = 'arc'
+  const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
+  const expectedDrawStep: DrawCommandSteps<'arc', 'three-points'> = 'onLinePoint'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.startPoint) &&
+    isCoordinate(shape?.endPoint) &&
+    typeof shape?.distance === 'number' &&
+    isCoordinate(shape?.onLinePoint) &&
     isCoordinate(shape?.center) &&
     typeof shape?.startPointAngle === 'number' &&
     typeof shape?.endPointAngle === 'number' &&
     typeof shape?.radius === 'number'
-  )
-}
-
-export const isSupplementalLineShape = (shape: any): shape is SupplementalLineShape => {
-  const expectedType: ShapeType = 'supplementalLine'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.startPoint) &&
-    typeof shape?.startPoint?.x === 'number' &&
-    typeof shape?.startPoint?.y === 'number' &&
-    isObject(shape?.endPoint) &&
-    typeof shape?.endPoint?.x === 'number' &&
-    typeof shape?.endPoint?.y === 'number'
-  )
-}
-
-export const isTemporaryLineShape = (shape: any): shape is TemporaryLineShape => {
-  const expectedType: TemporaryShapeType = 'tmp-line'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.startPoint) &&
-    typeof shape.startPoint?.x === 'number' &&
-    typeof shape.startPoint?.y === 'number' &&
-    isObject(shape?.endPoint) &&
-    typeof shape.endPoint?.x === 'number' &&
-    typeof shape.endPoint?.y === 'number'
-  )
-}
-
-export const isTemporaryCircleShape = (shape: any): shape is TemporaryCircleShape => {
-  const expectedType: TemporaryShapeType = 'tmp-circle'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.center) &&
-    typeof shape?.center.x === 'number' &&
-    typeof shape?.center.y === 'number' &&
-    typeof shape?.radius === 'number' &&
-    isObject(shape?.diameterStart) &&
-    typeof shape?.diameterStart.x === 'number' &&
-    typeof shape?.diameterStart.y === 'number' &&
-    isObject(shape?.diameterEnd) &&
-    typeof shape?.diameterEnd?.x === 'number' &&
-    typeof shape?.diameterEnd?.y === 'number'
-  )
-}
-
-export const isTemporaryArcCenter = (shape: any): shape is TemporaryArcCenter => {
-  const expectedType: TemporaryShapeType = 'tmp-arc'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.center) &&
-    typeof shape?.center.x === 'number' &&
-    typeof shape?.center.y === 'number'
-  )
-}
-
-export const isTemporaryArcRadius = (shape: any): shape is TemporaryArcRadius => {
-  const expectedType: TemporaryShapeType = 'tmp-arc'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.center) &&
-    typeof shape?.center.x === 'number' &&
-    typeof shape?.center.y === 'number' &&
-    typeof shape?.radius === 'number' &&
-    typeof shape?.startAngle === 'number'
-  )
-}
-
-export const isTemporaryArcShape = (shape: any): shape is TemporaryArcShape => {
-  const expectedType: TemporaryShapeType = 'tmp-arc'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.center) &&
-    typeof shape?.center.x === 'number' &&
-    typeof shape?.center.y === 'number' &&
-    typeof shape?.radius === 'number' &&
-    typeof shape?.startAngle === 'number' &&
-    typeof shape?.endAngle === 'number'
-  )
-}
-
-export const isTemporaryArcStartPoint = (shape: any): shape is TemporaryArcStartPoint => {
-  const expectedType: TemporaryShapeType = 'tmp-three-points-arc'
-  return (
-    shape?.type === expectedType && isObject(shape?.startPoint) && isCoordinate(shape.startPoint)
-  )
-}
-
-export const isTemporaryArcStartPointAndEndPoint = (
-  shape: any
-): shape is TemporaryArcStartPointAndEndPoint => {
-  const expectedType: TemporaryShapeType = 'tmp-three-points-arc'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.startPoint) &&
-    isCoordinate(shape.startPoint) &&
-    isObject(shape?.endPoint) &&
-    isCoordinate(shape.endPoint)
-  )
-}
-
-export const isTemporaryArcThreePoint = (shape: any): shape is TemporaryArcThreePoint => {
-  const expectedType: TemporaryShapeType = 'tmp-three-points-arc'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.startPoint) &&
-    isCoordinate(shape.startPoint) &&
-    isObject(shape?.endPoint) &&
-    isCoordinate(shape.endPoint) &&
-    isObject(shape?.onLinePoint) &&
-    isCoordinate(shape.onLinePoint) &&
-    isObject(shape?.center) &&
-    isCoordinate(shape.center) &&
-    typeof shape?.startPointAngle === 'number' &&
-    typeof shape?.endPointAngle === 'number' &&
-    typeof shape?.radius === 'number'
-  )
-}
-
-export const isTemporarySupplementalLineShape = (shape: any): shape is TemporaryLineShape => {
-  const expectedType: TemporaryShapeType = 'tmp-supplementalLine'
-  return (
-    shape?.type === expectedType &&
-    isObject(shape?.startPoint) &&
-    typeof shape?.startPoint?.x === 'number' &&
-    typeof shape?.startPoint?.y === 'number' &&
-    isObject(shape?.endPoint) &&
-    typeof shape?.endPoint?.x === 'number' &&
-    typeof shape?.endPoint?.y === 'number'
   )
 }

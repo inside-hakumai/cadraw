@@ -5,7 +5,7 @@ interface Props {
   end: Coordinate
 }
 
-const SupplementalLine: React.FC<Props> = ({ start, end }) => {
+const GuidingLine: React.FC<Props> = ({ start, end }) => {
   return (
     <line
       x1={start.x}
@@ -19,4 +19,4 @@ const SupplementalLine: React.FC<Props> = ({ start, end }) => {
   )
 }
 
-export default SupplementalLine
+export default GuidingLine

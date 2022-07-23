@@ -34,7 +34,7 @@ describe('calcCentralAngleFromHorizontalLine()', () => {
 })
 
 describe('findLineEquidistantFromTwoPoints()', () => {
-  const cases: [Coordinate, Coordinate, { point: Coordinate; unitVector: Vector }][] = [
+  const cases: [Coordinate, Coordinate, { point: Coordinate; unitVector: Vec }][] = [
     [
       { x: 0, y: 0 },
       { x: 1, y: 0 },

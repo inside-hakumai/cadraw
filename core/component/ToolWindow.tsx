@@ -7,6 +7,7 @@ import {
   currentOperatingShapeSelector,
   currentSnapshotVersionState,
   drawCommandState,
+  drawTypeState,
   isShowingShortcutKeyHintState,
   operationModeState,
   pointingCoordState,
@@ -15,12 +16,7 @@ import {
 } from '../container/states'
 import { useTranslation } from 'react-i18next'
 
-import {
-  isValidArcCommand,
-  isValidCircleCommand,
-  isValidLineCommand,
-  isValidSupplementalLineCommand,
-} from '../lib/typeguard'
+import { isValidArcCommand, isValidCircleCommand, isValidLineCommand } from '../lib/typeguard'
 
 const rootStyle = css`
   display: flex;
@@ -93,8 +89,8 @@ const shortcutHintStyle = (keyLabel: string) => css`
 `
 
 interface Props {
+  changeDrawType: (newDrawType: DrawType) => void
   changeCommand: (newCommand: string) => void
-  onActivateSupplementalLineDraw: () => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
   onActivateArcDraw: () => void
@@ -106,8 +102,8 @@ interface Props {
 }
 
 const ToolWindow: React.FC<Props> = ({
+  changeDrawType,
   changeCommand,
-  onActivateSupplementalLineDraw,
   onActivateShapeSelect,
   onActivateLineDraw,
   onActivateCircleDraw,
@@ -119,6 +115,7 @@ const ToolWindow: React.FC<Props> = ({
 }) => {
   const isShowingShortcutHint = useRecoilValue(isShowingShortcutKeyHintState)
   const operationMode = useRecoilValue(operationModeState)
+  const drawType = useRecoilValue(drawTypeState)
   const drawCommand = useRecoilValue(drawCommandState)
   const currentAvailableCommands = useRecoilValue(currentAvailableCommandSelector)
   const currentOperatingShape = useRecoilValue(currentOperatingShapeSelector)
@@ -141,9 +138,40 @@ const ToolWindow: React.FC<Props> = ({
     [changeCommand]
   )
 
+  const onChangeDrawType = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.value === 'solid' || event.target.value === 'supplemental') {
+        changeDrawType(event.target.value)
+      } else {
+        throw new Error(`Unexpected DrawType: ${event.target.value}`)
+      }
+    },
+    [changeDrawType]
+  )
+
   return (
     <>
       <div css={rootStyle}>
+        <div css={toolGroupStyle}>
+          <input
+            type='radio'
+            id='solid'
+            name='drawType'
+            value='solid'
+            checked={drawType === 'solid'}
+            onChange={onChangeDrawType}
+          />
+          <label htmlFor='solid'>{t('drawType.solid')}</label>
+          <input
+            type='radio'
+            id='supplemental'
+            name='drawType'
+            value='supplemental'
+            checked={drawType === 'supplemental'}
+            onChange={onChangeDrawType}
+          />
+          <label htmlFor='supplemental'>{t('drawType.supplemental')}</label>
+        </div>
         {currentOperatingShape && currentAvailableCommands && (
           <div css={toolGroupStyle}>
             {currentAvailableCommands.map(command => {
@@ -190,40 +218,10 @@ const ToolWindow: React.FC<Props> = ({
                   </div>
                 )
               }
-              if (
-                currentOperatingShape === 'supplementalLine' &&
-                isValidSupplementalLineCommand(command)
-              ) {
-                const i18nKey = `command.${currentOperatingShape}.${command}` as const
-                return (
-                  <div css={buttonWrapperStyle} key={command}>
-                    <button
-                      css={buttonStyle}
-                      disabled={command === drawCommand}
-                      data-command={command}
-                      onClick={onClickCommandChangeButton}>
-                      {t(i18nKey)}
-                    </button>
-                  </div>
-                )
-              }
             })}
           </div>
         )}
         <div css={toolGroupStyle}>
-          <div css={buttonWrapperStyle}>
-            <button
-              css={buttonStyle}
-              onClick={onActivateSupplementalLineDraw}
-              disabled={operationMode === 'supplementalLine'}>
-              {t('shape.supplementalLine')}
-            </button>
-            {isShowingShortcutHint && (
-              <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('S')}></div>
-              </div>
-            )}
-          </div>
           <div css={buttonWrapperStyle}>
             <button
               css={buttonStyle}

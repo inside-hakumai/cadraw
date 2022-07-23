@@ -1,33 +1,33 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import {
-  isTemporaryArcRadius,
-  isTemporaryArcStartPointAndEndPoint,
-  isTemporaryArcThreePoint,
-  isTemporaryCircleShape,
-  isTemporaryLineShape,
-  isTemporarySupplementalLineShape,
+  isArcCenterTwoPointsSeed2,
+  isArcCenterTwoPointsSeed3,
+  isArcThreePointsSeed2,
+  isArcThreePointsSeed3,
+  isCircleCenterDiameterSeed2,
+  isLineStartEndSeed2,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
   filteredShapeIdsSelector,
   snappingCoordState,
-  supplementalLinesState,
-  temporaryShapeState,
+  guidingLinesState,
+  shapeSeedState,
   tooltipContentState,
   indicatingShapeIdState,
   cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
-import SupplementalLine from './shape/SupplementalLine'
-import TemporaryCircle from './shape/TemporaryCircle'
-import TemporaryLine from './shape/TemporaryLine'
+import CircleSeed from './shape/CircleSeed'
+import LineSeed from './shape/LineSeed'
 import Circle from './shape/Circle'
 import Line from './shape/Line'
 import SnapCircle from './shape/SnapCircle'
-import TemporaryArc from './shape/TemporaryArc'
+import ArcSeedCenterTwoPoints from './shape/ArcSeedCenterTwoPoints'
 import Arc from './shape/Arc'
-import TemporaryArcWithThreePoints from './shape/TemporaryArcWithThreePoints'
+import ArcSeedThreePoints from './shape/ArcSeedThreePoints'
+import GuidingLine from './shape/GuidingLine'
 
 const style = css`
   width: 100%;
@@ -70,12 +70,26 @@ interface Props {
 
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
-  const circleShapeIds = useRecoilValue(filteredShapeIdsSelector('circle'))
-  const lineShapeIds = useRecoilValue(filteredShapeIdsSelector('line'))
-  const arcShapeIds = useRecoilValue(filteredShapeIdsSelector('arc'))
-  const supplementalLineShapeIds = useRecoilValue(filteredShapeIdsSelector('supplementalLine'))
-  const temporaryShape = useRecoilValue(temporaryShapeState)
-  const supplementalLines = useRecoilValue(supplementalLinesState)
+  const lineShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'line' })
+  )
+  const circleShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'circle' })
+  )
+  const arcShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'arc' })
+  )
+  const supplementalLineShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'supplemental', filterShapeType: 'line' })
+  )
+  const supplementalCircleShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'supplemental', filterShapeType: 'circle' })
+  )
+  const supplementalArcShapeIds = useRecoilValue(
+    filteredShapeIdsSelector({ filterDrawType: 'supplemental', filterShapeType: 'arc' })
+  )
+  const shapeSeed = useRecoilValue(shapeSeedState)
+  const guidingLines = useRecoilValue(guidingLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
   const tooltipContent = useRecoilValue(tooltipContentState)
   const cursorClientPosition = useRecoilValue(cursorClientPositionState)
@@ -108,7 +122,13 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         css={svgStyle}>
         {/* 補助線 */}
         {supplementalLineShapeIds.map(shapeId => (
-          <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} isSupplementalLine={true} />
+          <Line key={`supplementalLine-${shapeId}`} shapeId={shapeId} />
+        ))}
+        {supplementalCircleShapeIds.map(shapeId => (
+          <Circle key={`supplementalCircle-${shapeId}`} shapeId={shapeId} />
+        ))}
+        {supplementalArcShapeIds.map(shapeId => (
+          <Arc key={`supplementalArc-${shapeId}`} shapeId={shapeId} />
         ))}
 
         {/* 近くの座標にスナップする際にスナップ先を示す点 */}
@@ -135,50 +155,36 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         xmlns='http://www.w3.org/2000/svg'
         css={rendererStyle(indicatingShapeId !== null)}>
         {/* エクスポート時には含まれない補助線 */}
-        {supplementalLines &&
-          supplementalLines.map((line, index) => (
-            <SupplementalLine
+        {guidingLines &&
+          guidingLines.map((line, index) => (
+            <GuidingLine
               key={`supplementalLine-${index}`}
               start={line.startPoint}
               end={line.endPoint}
             />
           ))}
 
-        {/* 作成中（確定前）の図形（円） */}
-        {isTemporaryCircleShape(temporaryShape) && (
-          <TemporaryCircle shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
-        )}
+        {shapeSeed && (
+          <>
+            {/* 作成中（確定前）の図形（円） */}
+            {isCircleCenterDiameterSeed2(shapeSeed) && (
+              <CircleSeed shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            )}
 
-        {/* 作成中（確定前）の図形（円弧） */}
-        {isTemporaryArcRadius(temporaryShape) && (
-          <TemporaryArc shape={temporaryShape} centerRef={temporaryCircleCenterRef} />
-        )}
-        {isTemporaryArcThreePoint(temporaryShape) && (
-          <TemporaryArcWithThreePoints
-            shape={temporaryShape}
-            centerRef={temporaryCircleCenterRef}
-          />
-        )}
+            {/* 作成中（確定前）の図形（円弧） */}
+            {(isArcCenterTwoPointsSeed2(shapeSeed) || isArcCenterTwoPointsSeed3(shapeSeed)) && (
+              <ArcSeedCenterTwoPoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            )}
+            {(isArcThreePointsSeed2(shapeSeed) || isArcThreePointsSeed3(shapeSeed)) && (
+              <ArcSeedThreePoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            )}
 
-        {/* 作成中（確定前）の図形（線） */}
-        {isTemporaryLineShape(temporaryShape) && (
-          <TemporaryLine shape={temporaryShape} startCircleRef={temporaryLineStartRef} />
+            {/* 作成中（確定前）の図形（線） */}
+            {isLineStartEndSeed2(shapeSeed) && (
+              <LineSeed shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
+            )}
+          </>
         )}
-        {isTemporaryArcStartPointAndEndPoint(temporaryShape) && (
-          <TemporaryLine
-            shape={temporaryShape}
-            startCircleRef={temporaryLineStartRef}
-            isSupplementalLine={true}
-          />
-        )}
-        {isTemporarySupplementalLineShape(temporaryShape) && (
-          <TemporaryLine
-            shape={temporaryShape}
-            startCircleRef={temporaryLineStartRef}
-            isSupplementalLine={true}
-          />
-        )}
-
         {/* 作成した図形 */}
         {circleShapeIds.map(shapeId => (
           <Circle key={`circle-${shapeId}`} shapeId={shapeId} />

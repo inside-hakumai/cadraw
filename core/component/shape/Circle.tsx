@@ -5,14 +5,14 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isCircleShape } from '../../lib/typeguard'
+import { isCircle } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
 }
 
 const Circle: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as CircleShape
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Circle
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isFocused = indicatingShapeId === shape.id
@@ -24,12 +24,13 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
   else strokeColor = '#000000'
 
   useEffect(() => {
-    if (!isCircleShape(shape)) {
+    console.debug(shape)
+    if (!isCircle(shape)) {
       throw new Error(`Shape(ID = ${shapeId} is not a circle`)
     }
   }, [shapeId, shape])
 
-  const { center, radius } = shape
+  const { center, radius } = shape.constraints
 
   return (
     <circle
@@ -39,6 +40,7 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
       strokeWidth={1}
       fill={'none'}
       stroke={strokeColor}
+      strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
 }

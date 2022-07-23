@@ -2,11 +2,14 @@ import 'react-i18next'
 
 declare global {
   interface TranslationSchema {
+    drawType: {
+      solid: string
+      supplemental: string
+    }
     shape: {
       line: string
       circle: string
       arc: string
-      supplementalLine: string
     }
     operation: {
       select: string
@@ -24,9 +27,6 @@ declare global {
       arc: {
         'center-two-points': string
         'three-points': string
-      }
-      supplementalLine: {
-        'start-end': string
       }
     }
   }

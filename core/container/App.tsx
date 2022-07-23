@@ -18,17 +18,19 @@ import {
   selectedShapeIdsState,
   shapesState,
   snapshotsState,
-  temporaryShapeConstraintsState,
-  temporaryShapeState,
+  shapeSeedConstraintsState,
+  shapeSeedState,
+  drawTypeState,
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import {
-  isTemporaryArcCenter,
-  isTemporaryArcShape,
+  isArcCenterTwoPointsSeed2,
+  isArcCenterTwoPointsSeed3,
+  isArcThreePointsSeed2,
+  isArcThreePointsSeed3,
   isValidArcCommand,
   isValidCircleCommand,
   isValidLineCommand,
-  isValidSupplementalLineCommand,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
 import { calcCentralAngleFromHorizontalLine, calcDistance } from '../lib/function'
@@ -45,14 +47,15 @@ const App: React.FC<Props> = ({ onExport }) => {
   const [snapshotVersion, setSnapshotVersion] = useRecoilState(currentSnapshotVersionState)
 
   const operationMode = useRecoilValue(operationModeState)
+  const drawType = useRecoilValue(drawTypeState)
   const drawCommand = useRecoilValue(drawCommandState)
   const drawStep = useRecoilValue(drawStepState)
-  const temporaryShape = useRecoilValue(temporaryShapeState)
+  const shapeSeed = useRecoilValue(shapeSeedState)
   const activeCoord = useRecoilValue(activeCoordState)
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const setCursorClientPosition = useSetRecoilState(cursorClientPositionState)
-  const setTemporaryShapeConstraints = useSetRecoilState(temporaryShapeConstraintsState)
+  const setShapeSeedConstraints = useSetRecoilState(shapeSeedConstraintsState)
   const setPointingCoord = useSetRecoilState(pointingCoordState)
   const setSelectedShapeIds = useSetRecoilState(selectedShapeIdsState)
   const setSnapshotsState = useSetRecoilState(snapshotsState)
@@ -79,7 +82,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     ({ set, reset }) =>
       async () => {
         set(operationModeState, 'select')
-        reset(temporaryShapeConstraintsState)
+        reset(shapeSeedConstraintsState)
         reset(drawCommandState)
       },
     []
@@ -107,7 +110,7 @@ const App: React.FC<Props> = ({ onExport }) => {
           const lineCommand = command as DrawCommandMap['line']
           if (lineCommand === 'start-end') {
             set(drawStepState, 'startPoint')
-            reset(temporaryShapeConstraintsState)
+            reset(shapeSeedConstraintsState)
           }
         }
 
@@ -116,7 +119,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           if (circleCommand === 'center-diameter') {
             set(drawStepState, 'center')
-            reset(temporaryShapeConstraintsState)
+            reset(shapeSeedConstraintsState)
           }
         }
 
@@ -125,21 +128,12 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           if (arcCommand === 'center-two-points') {
             set(drawStepState, 'center')
-            reset(temporaryShapeConstraintsState)
+            reset(shapeSeedConstraintsState)
           }
 
           if (arcCommand === 'three-points') {
             set(drawStepState, 'startPoint')
-            reset(temporaryShapeConstraintsState)
-          }
-        }
-
-        if (mode === 'supplementalLine') {
-          const supplementalLineCommand = command as DrawCommandMap['supplementalLine']
-
-          if (supplementalLineCommand === 'start-end') {
-            set(drawStepState, 'startPoint')
-            reset(temporaryShapeConstraintsState)
+            reset(shapeSeedConstraintsState)
           }
         }
       },
@@ -151,11 +145,6 @@ const App: React.FC<Props> = ({ onExport }) => {
       async (shapeKey: string) => {
         const mode = await snapshot.getPromise(operationModeState)
         switch (shapeKey) {
-          case 's':
-            if (mode !== 'supplementalLine') {
-              await changeOperationMode('supplementalLine')
-            }
-            break
           case 'l':
             if (mode !== 'line') {
               await changeOperationMode('line')
@@ -240,11 +229,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     undo,
   ])
 
-  const addShape = async (newShapeSeed: ShapeSeed) => {
-    const newShape: Shape = {
-      ...newShapeSeed,
-      id: shapes.length,
-    }
+  const addShape = async (newShape: Shape) => {
     await setShape(newShape)
   }
 
@@ -260,24 +245,34 @@ const App: React.FC<Props> = ({ onExport }) => {
         const lineDrawStep = drawStep as DrawCommandSteps<'line', 'start-end'>
 
         if (lineDrawStep === 'startPoint') {
-          setTemporaryShapeConstraints({
-            type: 'tmp-line',
+          const newLineSeed: LineStartEndSeed2 = {
+            isSeed: true,
+            shape: 'line',
+            drawCommand: 'start-end',
+            drawStep: 'endPoint',
             startPoint: { x: activeCoord.x, y: activeCoord.y },
-          } as TemporaryLineShapeBase)
+            endPoint: { x: activeCoord.x, y: activeCoord.y },
+          }
+          setShapeSeedConstraints(newLineSeed)
           await goToNextStep()
         }
 
         if (lineDrawStep === 'endPoint') {
-          const temporaryLineShape = temporaryShape as TemporaryLineShape
+          const lineSeed = shapeSeed as LineStartEndSeed2
 
-          const newLineSeed: LineShapeSeed = {
-            type: 'line',
-            startPoint: { x: temporaryLineShape.startPoint.x, y: temporaryLineShape.startPoint.y },
-            endPoint: { x: temporaryLineShape.endPoint.x, y: temporaryLineShape.endPoint.y },
+          const newLine: Line = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'line',
+            drawCommand: 'start-end',
+            constraints: {
+              startPoint: { x: lineSeed.startPoint.x, y: lineSeed.startPoint.y },
+              endPoint: { x: lineSeed.endPoint.x, y: lineSeed.endPoint.y },
+            },
           }
 
-          await addShape(newLineSeed)
-          setTemporaryShapeConstraints(null)
+          await addShape(newLine)
+          setShapeSeedConstraints(null)
           await goToFirstStep()
         }
       }
@@ -290,26 +285,38 @@ const App: React.FC<Props> = ({ onExport }) => {
         const circleDrawStep = drawStep as DrawCommandSteps<'circle', 'center-diameter'>
 
         if (circleDrawStep === 'center') {
-          setTemporaryShapeConstraints({
-            type: 'tmp-circle',
-            center: { x: activeCoord.x, y: activeCoord.y },
-          } as TemporaryCircleShapeBase)
+          const newCircleSeed: CircleCenterDiameterSeed2 = {
+            isSeed: true,
+            shape: 'circle',
+            drawCommand: 'center-diameter',
+            drawStep: 'diameter',
+            center: activeCoord,
+            diameterStart: activeCoord,
+            diameterEnd: activeCoord,
+            radius: 0,
+          }
+          setShapeSeedConstraints(newCircleSeed)
           await goToNextStep()
         }
 
         if (circleDrawStep === 'diameter') {
-          const temporaryCircleShape = temporaryShape as TemporaryCircleShape
+          const circleSeed = shapeSeed as CircleCenterDiameterSeed2
 
-          const { center, radius } = temporaryCircleShape
+          const { center, radius } = circleSeed
 
-          const newCircleSeed: CircleShapeSeed = {
-            type: 'circle',
-            center,
-            radius,
+          const newCircle: Circle = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'circle',
+            drawCommand: 'center-diameter',
+            constraints: {
+              center,
+              radius,
+            },
           }
 
-          await addShape(newCircleSeed)
-          setTemporaryShapeConstraints(null)
+          await addShape(newCircle)
+          setShapeSeedConstraints(null)
           await goToFirstStep()
         }
       }
@@ -322,47 +329,58 @@ const App: React.FC<Props> = ({ onExport }) => {
         const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'center-two-points'>
 
         if (arcDrawStep === 'center') {
-          const newValue: TemporaryArcCenter = {
-            type: 'tmp-arc',
-            center: { x: activeCoord.x, y: activeCoord.y },
+          const newArcSeed: ArcCenterTwoPointsSeed2 = {
+            isSeed: true,
+            shape: 'arc',
+            drawCommand: 'center-two-points',
+            drawStep: 'startPoint',
+            center: activeCoord,
+            startPoint: activeCoord,
+            startPointAngle: 0,
+            radius: 0,
           }
-          setTemporaryShapeConstraints(newValue)
+          setShapeSeedConstraints(newArcSeed)
           await goToNextStep()
         }
 
         if (arcDrawStep === 'startPoint') {
-          const temporaryArcRadius = temporaryShape as TemporaryArcRadius
-          setTemporaryShapeConstraints(oldValue => {
-            if (!isTemporaryArcCenter(oldValue)) {
-              console.warn('temporaryShape is not TemporaryArcRadius')
-              return null
-            }
+          if (!isArcCenterTwoPointsSeed2(shapeSeed)) {
+            console.warn('shapeSeed is not ArcCenterTwoPointsSeed2')
+            return null
+          }
 
-            const newValue: TemporaryArcRadius = {
-              ...oldValue,
-              radius: temporaryArcRadius.radius,
-              startAngle: temporaryArcRadius.startAngle,
-              startCoord: temporaryArcRadius.startCoord,
-            }
+          const newValue: ArcCenterTwoPointsSeed3 = {
+            ...shapeSeed,
+            drawStep: 'endPoint',
+            endPoint: activeCoord,
+            endPointAngle: shapeSeed.startPointAngle,
+            angleDeltaFromStart: 0,
+          }
 
-            return newValue
-          })
+          setShapeSeedConstraints(newValue)
           await goToNextStep()
         }
 
         if (arcDrawStep === 'endPoint') {
-          if (!isTemporaryArcShape(temporaryShape)) {
-            console.warn('temporaryShape is not TemporaryArcShape')
+          if (!isArcCenterTwoPointsSeed3(shapeSeed)) {
+            console.warn('shapeSeed is not ArcCenterTwoPointsSeed3')
             return
           }
 
-          const newArcSeed: ArcShapeSeed = {
-            ...temporaryShape,
-            type: 'arc',
+          const newArcSeed: Arc<ArcConstraintsWithCenterAndTwoPoints> = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'arc',
+            drawCommand: 'center-two-points',
+            constraints: {
+              ...shapeSeed,
+              constrainShape: 'arc',
+              constraintType: 'center-two-points',
+            },
           }
 
           await addShape(newArcSeed)
-          setTemporaryShapeConstraints(null)
+          setShapeSeedConstraints(null)
           await goToFirstStep()
         }
       }
@@ -371,95 +389,78 @@ const App: React.FC<Props> = ({ onExport }) => {
         const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'three-points'>
 
         if (arcDrawStep === 'startPoint') {
-          const newValue: TemporaryArcStartPoint = {
-            type: 'tmp-three-points-arc',
+          const newArcSeed: ArcThreePointsSeed2 = {
+            isSeed: true,
+            shape: 'arc',
+            drawCommand: 'three-points',
+            drawStep: 'endPoint',
             startPoint: activeCoord,
+            endPoint: activeCoord,
+            distance: 0,
           }
-          setTemporaryShapeConstraints(newValue)
+          setShapeSeedConstraints(newArcSeed)
           await goToNextStep()
         }
 
         if (arcDrawStep === 'endPoint') {
-          const temporaryArcStartPointAndEndPoint =
-            temporaryShape as TemporaryArcStartPointAndEndPoint
+          setShapeSeedConstraints(oldValue => {
+            if (!isArcThreePointsSeed2(oldValue)) {
+              console.warn('shapeSeed is not ArcThreePointsSeed2')
+              return null
+            }
 
-          const temporaryArcCenter: Coordinate = {
-            x: (temporaryArcStartPointAndEndPoint.startPoint.x + activeCoord.x) / 2,
-            y: (temporaryArcStartPointAndEndPoint.startPoint.y + activeCoord.y) / 2,
-          }
+            const arcCenter: Coordinate = {
+              x: (oldValue.startPoint.x + activeCoord.x) / 2,
+              y: (oldValue.startPoint.y + activeCoord.y) / 2,
+            }
 
-          const temporaryArcStartAngle = calcCentralAngleFromHorizontalLine(
-            temporaryArcStartPointAndEndPoint.startPoint,
-            temporaryArcCenter
-          )
-          const temporaryArcEndAngle = calcCentralAngleFromHorizontalLine(
-            activeCoord,
-            temporaryArcCenter
-          )
+            const arcStartAngle = calcCentralAngleFromHorizontalLine(oldValue.startPoint, arcCenter)
+            const arcEndAngle = calcCentralAngleFromHorizontalLine(activeCoord, arcCenter)
 
-          const newArcSeed: TemporaryArcThreePoint = {
-            ...temporaryArcStartPointAndEndPoint,
-            endPoint: activeCoord,
-            onLinePoint: activeCoord,
-            center: temporaryArcCenter,
-            startPointAngle: temporaryArcStartAngle ?? 0,
-            endPointAngle: temporaryArcEndAngle ?? 0,
-            radius: calcDistance(temporaryArcCenter, temporaryArcStartPointAndEndPoint.startPoint),
-          }
+            const newValue: ArcThreePointsSeed3 = {
+              ...oldValue,
+              drawStep: 'onLinePoint',
+              endPoint: activeCoord,
+              onLinePoint: activeCoord,
+              center: arcCenter,
+              startPointAngle: arcStartAngle ?? 0,
+              endPointAngle: arcEndAngle ?? 0,
+              radius: calcDistance(arcCenter, oldValue.startPoint),
+            }
 
-          setTemporaryShapeConstraints(newArcSeed)
+            return newValue
+          })
           await goToNextStep()
         }
 
         if (arcDrawStep === 'onLinePoint') {
-          const temporaryArcThreePoint = temporaryShape as TemporaryArcThreePoint
+          if (!isArcThreePointsSeed3(shapeSeed)) {
+            console.warn('shapeSeed is not ArcThreePointsSeed3')
+            return
+          }
 
-          const newArcSeed: ArcWithThreePointsShapeSeed = {
-            ...temporaryArcThreePoint,
-            type: 'arc',
+          const { startPointAngle, endPointAngle } = shapeSeed
+
+          const counterClockWiseAngle =
+            endPointAngle > startPointAngle
+              ? endPointAngle - startPointAngle
+              : 360 - (startPointAngle - endPointAngle)
+
+          const newArcSeed: Arc<ArcConstraintsWithThreePoints> = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'arc',
+            drawCommand: 'three-points',
+            constraints: {
+              ...shapeSeed,
+              constrainShape: 'arc',
+              constraintType: 'three-points',
+              angleDeltaFromStart: counterClockWiseAngle,
+            },
           }
 
           await addShape(newArcSeed)
-          setTemporaryShapeConstraints(null)
-          await goToFirstStep()
-        }
-      }
-    }
-
-    if (operationMode === 'supplementalLine') {
-      const supplementalLineDrawCommand = drawCommand as ShapeDrawCommand<'supplementalLine'>
-
-      if (supplementalLineDrawCommand === 'start-end') {
-        const supplementalLineDrawStep = drawStep as DrawCommandSteps<
-          'supplementalLine',
-          'start-end'
-        >
-
-        if (supplementalLineDrawStep === 'startPoint') {
-          setTemporaryShapeConstraints({
-            type: 'tmp-supplementalLine',
-            startPoint: { x: activeCoord.x, y: activeCoord.y },
-          } as TemporarySupplementalLineShapeBase)
-          await goToNextStep()
-        }
-
-        if (supplementalLineDrawStep === 'endPoint') {
-          const temporarySupplementalLineShape = temporaryShape as TemporarySupplementalLineShape
-
-          const newLineSeed: SupplementalShapeSeed = {
-            type: 'supplementalLine',
-            startPoint: {
-              x: temporarySupplementalLineShape.startPoint.x,
-              y: temporarySupplementalLineShape.startPoint.y,
-            },
-            endPoint: {
-              x: temporarySupplementalLineShape.endPoint.x,
-              y: temporarySupplementalLineShape.endPoint.y,
-            },
-          }
-
-          await addShape(newLineSeed)
-          setTemporaryShapeConstraints(null)
+          setShapeSeedConstraints(null)
           await goToFirstStep()
         }
       }
@@ -527,7 +528,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const changeOperationMode = useRecoilCallback(
     ({ set }) =>
       async (mode: OperationMode) => {
-        if (mode === 'line' || mode === 'supplementalLine') {
+        if (mode === 'line') {
           set(drawCommandState, 'start-end')
           set(drawStepState, 'startPoint')
         } else if (mode === 'circle') {
@@ -544,6 +545,14 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
+  const changeDrawCommand = useRecoilCallback(
+    ({ set }) =>
+      async (newDrawType: DrawType) => {
+        set(drawTypeState, newDrawType)
+      },
+    [goToFirstStep]
+  )
+
   const changeCommand = useRecoilCallback(
     ({ snapshot, set }) =>
       async (newCommand: string) => {
@@ -552,9 +561,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (
           (currentOperatingShape === 'line' && isValidLineCommand(newCommand)) ||
           (currentOperatingShape === 'circle' && isValidCircleCommand(newCommand)) ||
-          (currentOperatingShape === 'arc' && isValidArcCommand(newCommand)) ||
-          (currentOperatingShape === 'supplementalLine' &&
-            isValidSupplementalLineCommand(newCommand))
+          (currentOperatingShape === 'arc' && isValidArcCommand(newCommand))
         ) {
           set(drawCommandState, newCommand)
           await goToFirstStep()
@@ -571,11 +578,8 @@ const App: React.FC<Props> = ({ onExport }) => {
     <>
       <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
       <ToolWindow
+        changeDrawType={useCallback(changeDrawCommand, [changeDrawCommand])}
         changeCommand={changeCommand}
-        onActivateSupplementalLineDraw={useCallback(
-          () => changeOperationMode('supplementalLine'),
-          [changeOperationMode]
-        )}
         onActivateShapeSelect={useCallback(
           () => changeOperationMode('select'),
           [changeOperationMode]

@@ -1,15 +1,15 @@
 import React from 'react'
 
 interface Props {
-  shape: TemporaryCircleShape
+  shape: CircleCenterDiameterSeed2
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const TemporaryCircle: React.FC<Props> = ({ shape, centerRef }) => {
+const CircleSeed: React.FC<Props> = ({ shape, centerRef }) => {
   return (
     <>
       <line
-        key={'temporaryCircleDiameter'}
+        key={'circleSeedDiameter'}
         x1={shape.diameterStart.x}
         y1={shape.diameterStart.y}
         x2={shape.diameterEnd.x}
@@ -19,7 +19,7 @@ const TemporaryCircle: React.FC<Props> = ({ shape, centerRef }) => {
         strokeWidth={1}
       />
       <circle
-        key={'temporaryCircle'}
+        key={'circleSeedCircle'}
         cx={shape.center.x}
         cy={shape.center.y}
         r={shape.radius}
@@ -28,7 +28,7 @@ const TemporaryCircle: React.FC<Props> = ({ shape, centerRef }) => {
         fill={'none'}
       />
       <circle
-        key={'temporaryCircleCenter'}
+        key={'circleSeedCenter'}
         cx={shape.center.x}
         cy={shape.center.y}
         r={2}
@@ -39,4 +39,4 @@ const TemporaryCircle: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default TemporaryCircle
+export default CircleSeed
