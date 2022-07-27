@@ -653,18 +653,9 @@ const App: React.FC<Props> = ({ onExport }) => {
       <ToolWindow
         changeDrawType={useCallback(changeDrawCommand, [changeDrawCommand])}
         changeCommand={changeCommand}
+        changeShape={useCallback(newShape => changeOperationMode(newShape), [changeOperationMode])}
         onActivateShapeSelect={useCallback(
           () => changeOperationMode('select'),
-          [changeOperationMode]
-        )}
-        onActivateLineDraw={useCallback(() => changeOperationMode('line'), [changeOperationMode])}
-        onActivateRectangleDraw={useCallback(
-          () => changeOperationMode('rectangle'),
-          [changeOperationMode]
-        )}
-        onActivateArcDraw={useCallback(() => changeOperationMode('arc'), [changeOperationMode])}
-        onActivateCircleDraw={useCallback(
-          () => changeOperationMode('circle'),
           [changeOperationMode]
         )}
         onUndo={undo}
