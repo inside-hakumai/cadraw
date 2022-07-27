@@ -10,6 +10,7 @@ import {
   findNearestPointOnArc,
   getSnapDestinationCoordDefaultValue,
   findPointEquidistantFromThreePoints,
+  findNearestPointOnRectangle,
 } from '../lib/function'
 import {
   isArcCenterTwoPoints,
@@ -20,6 +21,7 @@ import {
   isArcThreePointsSeed3,
   isCircle,
   isLine,
+  isRectangleTwoCorners,
   isShapeType,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
@@ -464,6 +466,12 @@ export const indicatingShapeIdState = selector<number | null>({
           minimumDistance = distance
           nearestIndex = i
         }
+      } else if (isRectangleTwoCorners(shape)) {
+        const { distance } = findNearestPointOnRectangle(pointingCoord, shape.computed)
+        if (distance < minimumDistance) {
+          minimumDistance = distance
+          nearestIndex = i
+        }
       } else if (isLine(shape)) {
         const nearest = findNearestPointOnLine(pointingCoord, shape.constraints)
         if (nearest.distance < minimumDistance) {
@@ -601,6 +609,19 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
+      if (shape.shape === 'rectangle') {
+        const rectangle = shape as Rectangle
+
+        const { distance, isRectangleCorner } = findNearestPointOnRectangle(
+          pointingCoord,
+          rectangle.computed
+        )
+        // 最近傍点が長方形の角の場合は除外する（別途スナップ判定するため）
+        if (distance < 10 && !isRectangleCorner) {
+          closeShapes = [...closeShapes, rectangle]
+        }
+      }
+
       if (shape.shape === 'arc') {
         if (!isArcCenterTwoPoints(shape) && !isArcThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
@@ -623,6 +644,26 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     ][] = []
     // カーソル座標と図形の最近傍点間の距離が1以下の場合は、スナップ先となる図形上の一点を特定する
     for (const shape of closeShapes) {
+      if (shape.shape === 'line') {
+        const line = shape as Line
+        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line.constraints)
+
+        snapDestinationCoordOnShape = [
+          ...snapDestinationCoordOnShape,
+          [line.id, nearestCoord, 'onLine'],
+        ]
+      }
+
+      if (shape.shape === 'rectangle') {
+        const rectangle = shape as Rectangle
+        const { nearestCoord } = findNearestPointOnRectangle(pointingCoord, rectangle.computed)
+
+        snapDestinationCoordOnShape = [
+          ...snapDestinationCoordOnShape,
+          [rectangle.id, nearestCoord, 'onRectangle'],
+        ]
+      }
+
       if (shape.shape === 'circle') {
         const circle = shape as Circle
 
@@ -656,15 +697,6 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
             [shape.id, nearest.nearestCoord, 'onArc'],
           ]
         }
-      }
-
-      if (shape.shape === 'line') {
-        const line = shape as Line
-        const { nearestCoord } = findNearestPointOnLine(pointingCoord, line.constraints)
-        snapDestinationCoordOnShape = [
-          ...snapDestinationCoordOnShape,
-          [line.id, nearestCoord, 'onLine'],
-        ]
       }
     }
 

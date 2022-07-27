@@ -31,6 +31,63 @@ export const calcDistanceFromCircumference = (
 }
 
 /**
+ * 点Aと、長方形の線上の点Aに最も近い点との距離を返します。
+ * @param point 点A
+ * @param rectangle 点Aとの距離を求める長方形
+ * @returns 距離
+ */
+export const findNearestPointOnRectangle = (
+  point: Coordinate,
+  rectangle: {
+    upperLeftPoint: Coordinate
+    upperRightPoint: Coordinate
+    lowerLeftPoint: Coordinate
+    lowerRightPoint: Coordinate
+  }
+): {
+  nearestCoord: Coordinate
+  distance: number
+  isRectangleCorner: boolean
+} => {
+  const nearestPointOnLineUpperLeftToUpperRight = findNearestPointOnLine(point, {
+    startPoint: rectangle.upperLeftPoint,
+    endPoint: rectangle.upperRightPoint,
+  })
+
+  const nearestPointOnLineUpperRightToLowerRight = findNearestPointOnLine(point, {
+    startPoint: rectangle.upperRightPoint,
+    endPoint: rectangle.lowerRightPoint,
+  })
+
+  const nearestPointOnLineLowerRightToLowerLeft = findNearestPointOnLine(point, {
+    startPoint: rectangle.lowerRightPoint,
+    endPoint: rectangle.lowerLeftPoint,
+  })
+
+  const nearestPointOnLineLowerLeftToUpperLeft = findNearestPointOnLine(point, {
+    startPoint: rectangle.lowerLeftPoint,
+    endPoint: rectangle.upperLeftPoint,
+  })
+
+  const nearestPointCandidates = [
+    nearestPointOnLineUpperLeftToUpperRight,
+    nearestPointOnLineUpperRightToLowerRight,
+    nearestPointOnLineLowerRightToLowerLeft,
+    nearestPointOnLineLowerLeftToUpperLeft,
+  ]
+
+  const nearestPoint = nearestPointCandidates.reduce((acc, cur) => {
+    return acc.distance > cur.distance ? cur : acc
+  })
+
+  return {
+    nearestCoord: nearestPoint.nearestCoord,
+    distance: nearestPoint.distance,
+    isRectangleCorner: nearestPoint.isLineTerminal,
+  }
+}
+
+/**
  * 点からの線分上の最近傍点とその距離を返します。
  * @param point 点の座標
  * @param line 線分。両端座標の情報を持ちます。

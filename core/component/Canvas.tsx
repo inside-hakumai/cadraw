@@ -253,6 +253,8 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
                 return '線の端'
               } else if (info.type === 'onLine') {
                 return '線上'
+              } else if (info.type === 'onRectangle') {
+                return '長方形上'
               } else if (info.type === 'onArc') {
                 return '円弧上'
               } else {

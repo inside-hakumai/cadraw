@@ -305,25 +305,45 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const { corner1Point, corner2Point } = newRectangleSeed
 
-          // TODO: state.tsにほぼ同じ記述が存在する
-          if (corner2Point.x - corner1Point.x === 0) {
+          if (corner2Point.x - corner1Point.x === 0 || corner2Point.y - corner1Point.y === 0) {
             return
           }
 
           const diagonalSlope =
             (corner2Point.y - corner1Point.y) / (corner2Point.x - corner1Point.x)
-          console.debug(diagonalSlope)
 
           let upperLeftPoint: Coordinate
+          let upperRightPoint: Coordinate
+          let lowerLeftPoint: Coordinate
+          let lowerRightPoint: Coordinate
           if (diagonalSlope > 0) {
             // 対角線が右下に向かって引かれている場合
-            upperLeftPoint = corner1Point.x < corner2Point.x ? corner1Point : corner2Point
+
+            if (corner1Point.x < corner2Point.x) {
+              upperLeftPoint = { x: corner1Point.x, y: corner1Point.y }
+              upperRightPoint = { x: corner2Point.x, y: corner1Point.y }
+              lowerLeftPoint = { x: corner1Point.x, y: corner2Point.y }
+              lowerRightPoint = { x: corner2Point.x, y: corner2Point.y }
+            } else {
+              upperLeftPoint = { x: corner2Point.x, y: corner2Point.y }
+              upperRightPoint = { x: corner1Point.x, y: corner2Point.y }
+              lowerLeftPoint = { x: corner2Point.x, y: corner1Point.y }
+              lowerRightPoint = { x: corner1Point.x, y: corner1Point.y }
+            }
           } else {
             // 対角線が右上に向かって引かれている場合
-            upperLeftPoint =
-              corner1Point.x < corner2Point.x
-                ? { x: corner1Point.x, y: corner2Point.y }
-                : { x: corner2Point.x, y: corner1Point.y }
+
+            if (corner1Point.x < corner2Point.x) {
+              upperLeftPoint = { x: corner1Point.x, y: corner2Point.y }
+              upperRightPoint = { x: corner2Point.x, y: corner2Point.y }
+              lowerLeftPoint = { x: corner1Point.x, y: corner1Point.y }
+              lowerRightPoint = { x: corner2Point.x, y: corner1Point.y }
+            } else {
+              upperLeftPoint = { x: corner2Point.x, y: corner1Point.y }
+              upperRightPoint = { x: corner1Point.x, y: corner1Point.y }
+              lowerLeftPoint = { x: corner2Point.x, y: corner2Point.y }
+              lowerRightPoint = { x: corner1Point.x, y: corner2Point.y }
+            }
           }
 
           const newRectangle: Rectangle = {
@@ -337,6 +357,9 @@ const App: React.FC<Props> = ({ onExport }) => {
             },
             computed: {
               upperLeftPoint,
+              upperRightPoint,
+              lowerLeftPoint,
+              lowerRightPoint,
             },
           }
 

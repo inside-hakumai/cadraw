@@ -60,7 +60,13 @@ declare global {
 
   type OperationMode = ShapeType | 'select'
   type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
-  type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine' | 'onArc'
+  type SnapType =
+    | ConstraintType
+    | 'gridIntersection'
+    | 'circumference'
+    | 'onLine'
+    | 'onArc'
+    | 'onRectangle'
 
   interface Coordinate {
     x: number
@@ -94,6 +100,9 @@ declare global {
     }
     computed: {
       upperLeftPoint: Coordinate
+      upperRightPoint: Coordinate
+      lowerLeftPoint: Coordinate
+      lowerRightPoint: Coordinate
     }
   }
 

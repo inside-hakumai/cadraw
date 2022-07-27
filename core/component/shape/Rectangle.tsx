@@ -29,16 +29,15 @@ const Rectangle: React.FC<Props> = ({ shapeId }) => {
     }
   }, [shapeId, shape])
 
-  const { corner1Point, corner2Point } = shape.constraints
-  const { upperLeftPoint } = shape.computed
+  const { upperLeftPoint, upperRightPoint, lowerLeftPoint } = shape.computed
 
   return (
     <>
       <rect
         x={upperLeftPoint.x}
         y={upperLeftPoint.y}
-        width={Math.abs(corner2Point.x - corner1Point.x)}
-        height={Math.abs(corner2Point.y - corner1Point.y)}
+        width={Math.abs(upperRightPoint.x - upperLeftPoint.x)}
+        height={Math.abs(lowerLeftPoint.y - upperLeftPoint.y)}
         stroke={strokeColor}
         strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
         fill={'none'}
