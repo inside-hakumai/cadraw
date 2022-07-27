@@ -10,6 +10,10 @@ export const isValidLineCommand = (command: any): command is ShapeDrawCommand<'l
   return [...drawCommandList['line']].includes(command)
 }
 
+export const isValidRectangleCommand = (command: any): command is ShapeDrawCommand<'rectangle'> => {
+  return [...drawCommandList['rectangle']].includes(command)
+}
+
 export const isValidCircleCommand = (command: any): command is ShapeDrawCommand<'circle'> => {
   return [...drawCommandList['circle']].includes(command)
 }
@@ -36,6 +40,19 @@ export const isLine = (shape: any): shape is Line => {
     shape?.drawCommand === expectedDrawCommand &&
     isCoordinate(shape?.constraints?.startPoint) &&
     isCoordinate(shape?.constraints?.endPoint)
+  )
+}
+
+export const isRectangleTwoCorners = (shape: any): shape is Rectangle => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'two-corners'
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.corner1Point) &&
+    isCoordinate(shape?.constraints?.corner2Point) &&
+    isCoordinate(shape?.computed?.upperLeftPoint)
   )
 }
 
@@ -110,6 +127,20 @@ export const isLineStartEndSeed2 = (shape: any): shape is LineStartEndSeed2 => {
     shape?.drawStep === expectedDrawStep &&
     isCoordinate(shape?.startPoint) &&
     isCoordinate(shape?.endPoint)
+  )
+}
+
+export const isRectangleTwoCornersSeed2 = (shape: any): shape is RectangleTwoCornersSeed2 => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'two-corners'
+  const expectedDrawStep: DrawCommandSteps<'rectangle', 'two-corners'> = 'corner-2'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.corner1Point) &&
+    isCoordinate(shape?.corner2Point)
   )
 }
 

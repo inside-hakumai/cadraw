@@ -16,7 +16,13 @@ import {
 } from '../container/states'
 import { useTranslation } from 'react-i18next'
 
-import { isValidArcCommand, isValidCircleCommand, isValidLineCommand } from '../lib/typeguard'
+import {
+  isValidArcCommand,
+  isValidCircleCommand,
+  isValidLineCommand,
+  isValidRectangleCommand,
+} from '../lib/typeguard'
+import { shapeList } from '../lib/constants'
 
 const rootStyle = css`
   display: flex;
@@ -88,13 +94,18 @@ const shortcutHintStyle = (keyLabel: string) => css`
   color: #ffffff;
 `
 
+const shortCutKeyMapping: { [key: string]: string } = {
+  line: 'L',
+  rectangle: 'R',
+  circle: 'C',
+  arc: 'E',
+}
+
 interface Props {
   changeDrawType: (newDrawType: DrawType) => void
   changeCommand: (newCommand: string) => void
+  changeShape: (newShape: ShapeType) => void
   onActivateShapeSelect: () => void
-  onActivateLineDraw: () => void
-  onActivateArcDraw: () => void
-  onActivateCircleDraw: () => void
   onUndo: () => void
   onClickExportButton: () => void
   showShortcutKeyHint: () => void
@@ -104,10 +115,8 @@ interface Props {
 const ToolWindow: React.FC<Props> = ({
   changeDrawType,
   changeCommand,
+  changeShape,
   onActivateShapeSelect,
-  onActivateLineDraw,
-  onActivateCircleDraw,
-  onActivateArcDraw,
   onUndo,
   onClickExportButton,
   showShortcutKeyHint,
@@ -149,6 +158,22 @@ const ToolWindow: React.FC<Props> = ({
     [changeDrawType]
   )
 
+  const ShapeSelector: React.FC<{ shape: ShapeType }> = ({ shape }) => (
+    <div css={buttonWrapperStyle}>
+      <button
+        css={buttonStyle}
+        onClick={useCallback(() => changeShape(shape), [shape])}
+        disabled={operationMode === shape}>
+        {t(`shape.${shape}`)}
+      </button>
+      {isShowingShortcutHint && (
+        <div css={shortcutHintWrapperStyle}>
+          <div css={shortcutHintStyle(shortCutKeyMapping[shape])}>{shortCutKeyMapping[shape]}</div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <>
       <div css={rootStyle}>
@@ -175,92 +200,40 @@ const ToolWindow: React.FC<Props> = ({
         {currentOperatingShape && currentAvailableCommands && (
           <div css={toolGroupStyle}>
             {currentAvailableCommands.map(command => {
-              // TODO: if文の条件文以外の中身が同じものが4つ並んでいる冗長な書き方をしているので改善する
+              let i18nKey
               if (currentOperatingShape === 'line' && isValidLineCommand(command)) {
-                const i18nKey = `command.${currentOperatingShape}.${command}` as const
-                return (
-                  <div css={buttonWrapperStyle} key={i18nKey}>
-                    <button
-                      css={buttonStyle}
-                      disabled={command === drawCommand}
-                      data-command={command}
-                      onClick={onClickCommandChangeButton}>
-                      {t(i18nKey)}
-                    </button>
-                  </div>
-                )
+                i18nKey = `command.${currentOperatingShape}.${command}` as const
+              } else if (
+                currentOperatingShape === 'rectangle' &&
+                isValidRectangleCommand(command)
+              ) {
+                i18nKey = `command.${currentOperatingShape}.${command}` as const
+              } else if (currentOperatingShape === 'circle' && isValidCircleCommand(command)) {
+                i18nKey = `command.${currentOperatingShape}.${command}` as const
+              } else if (currentOperatingShape === 'arc' && isValidArcCommand(command)) {
+                i18nKey = `command.${currentOperatingShape}.${command}` as const
+              } else {
+                return null
               }
-              if (currentOperatingShape === 'circle' && isValidCircleCommand(command)) {
-                const i18nKey = `command.${currentOperatingShape}.${command}` as const
-                return (
-                  <div css={buttonWrapperStyle} key={command}>
-                    <button
-                      css={buttonStyle}
-                      disabled={command === drawCommand}
-                      data-command={command}
-                      onClick={onClickCommandChangeButton}>
-                      {t(i18nKey)}
-                    </button>
-                  </div>
-                )
-              }
-              if (currentOperatingShape === 'arc' && isValidArcCommand(command)) {
-                const i18nKey = `command.${currentOperatingShape}.${command}` as const
-                return (
-                  <div css={buttonWrapperStyle} key={command}>
-                    <button
-                      css={buttonStyle}
-                      disabled={command === drawCommand}
-                      data-command={command}
-                      onClick={onClickCommandChangeButton}>
-                      {t(i18nKey)}
-                    </button>
-                  </div>
-                )
-              }
+
+              return (
+                <div css={buttonWrapperStyle} key={i18nKey}>
+                  <button
+                    css={buttonStyle}
+                    disabled={command === drawCommand}
+                    data-command={command}
+                    onClick={onClickCommandChangeButton}>
+                    {t(i18nKey)}
+                  </button>
+                </div>
+              )
             })}
           </div>
         )}
         <div css={toolGroupStyle}>
-          <div css={buttonWrapperStyle}>
-            <button
-              css={buttonStyle}
-              onClick={onActivateLineDraw}
-              disabled={operationMode === 'line'}>
-              {t('shape.line')}
-            </button>
-            {isShowingShortcutHint && (
-              <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('L')}>L</div>
-              </div>
-            )}
-          </div>
-          <div css={buttonWrapperStyle}>
-            <button
-              css={buttonStyle}
-              onClick={onActivateArcDraw}
-              disabled={operationMode === 'arc'}>
-              {t('shape.arc')}
-            </button>
-            {isShowingShortcutHint && (
-              <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('E')}>E</div>
-              </div>
-            )}
-          </div>
-          <div css={buttonWrapperStyle}>
-            <button
-              css={buttonStyle}
-              onClick={onActivateCircleDraw}
-              disabled={operationMode === 'circle'}>
-              {t('shape.circle')}
-            </button>
-            {isShowingShortcutHint && (
-              <div css={shortcutHintWrapperStyle}>
-                <div css={shortcutHintStyle('C')}>C</div>
-              </div>
-            )}
-          </div>
+          {shapeList.map(shape => (
+            <ShapeSelector shape={shape} />
+          ))}
         </div>
         <div css={toolGroupStyle}>
           <div css={buttonWrapperStyle}>

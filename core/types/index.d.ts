@@ -8,6 +8,7 @@ declare global {
     line: typeof drawCommandList['line'][number]
     circle: typeof drawCommandList['circle'][number]
     arc: typeof drawCommandList['arc'][number]
+    rectangle: typeof drawCommandList['rectangle'][number]
   }
 
   type TemporaryShapeType =
@@ -27,6 +28,9 @@ declare global {
     arc: {
       'center-two-points': 'center' | 'startPoint' | 'endPoint'
       'three-points': 'startPoint' | 'endPoint' | 'onLinePoint'
+    }
+    rectangle: {
+      'two-corners': 'corner-1' | 'corner-2'
     }
   }
 
@@ -56,7 +60,13 @@ declare global {
 
   type OperationMode = ShapeType | 'select'
   type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
-  type SnapType = ConstraintType | 'gridIntersection' | 'circumference' | 'onLine' | 'onArc'
+  type SnapType =
+    | ConstraintType
+    | 'gridIntersection'
+    | 'circumference'
+    | 'onLine'
+    | 'onArc'
+    | 'onRectangle'
 
   interface Coordinate {
     x: number
@@ -79,6 +89,20 @@ declare global {
     constraints: {
       startPoint: Coordinate
       endPoint: Coordinate
+    }
+  }
+
+  interface Rectangle extends Shape {
+    shape: 'rectangle'
+    constraints: {
+      corner1Point: Coordinate
+      corner2Point: Coordinate
+    }
+    computed: {
+      upperLeftPoint: Coordinate
+      upperRightPoint: Coordinate
+      lowerLeftPoint: Coordinate
+      lowerRightPoint: Coordinate
     }
   }
 
@@ -243,6 +267,18 @@ declare global {
   interface LineStartEndSeed2 extends LineStartEndSeed1 {
     drawStep: 'endPoint'
     endPoint: Coordinate
+  }
+
+  interface RectangleTwoCornersSeed1 extends ShapeSeed {
+    shape: 'rectangle'
+    drawStep: 'corner-1'
+    corner1Point: Coordinate
+  }
+
+  interface RectangleTwoCornersSeed2 extends RectangleTwoCornersSeed1 {
+    drawStep: 'corner-2'
+    corner2Point: Coordinate
+    upperLeftPoint: Coordinate
   }
 
   interface CircleCenterDiameterSeed1 extends ShapeSeed {
