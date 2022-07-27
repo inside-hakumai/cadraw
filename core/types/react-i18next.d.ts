@@ -10,6 +10,7 @@ declare global {
       line: string
       circle: string
       arc: string
+      rectangle: string
     }
     operation: {
       select: string
@@ -27,6 +28,9 @@ declare global {
       arc: {
         'center-two-points': string
         'three-points': string
+      }
+      rectangle: {
+        'two-corners': string
       }
     }
   }

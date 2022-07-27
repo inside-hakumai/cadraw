@@ -21,6 +21,18 @@ const useDrawStep = () => {
           }
         }
 
+        if (operationMode === 'rectangle') {
+          const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
+
+          if (rectangleDrawCommand === 'two-corners') {
+            const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'two-corners'>
+
+            if (rectangleDrawStep === 'corner-1') {
+              set(drawStepState, 'corner-2')
+            }
+          }
+        }
+
         if (operationMode === 'circle') {
           const circleDrawCommand = drawCommand as ShapeDrawCommand<'circle'>
 
@@ -75,6 +87,14 @@ const useDrawStep = () => {
 
           if (lineDrawCommand === 'start-end') {
             set(drawStepState, 'startPoint')
+          }
+        }
+
+        if (operationMode === 'rectangle') {
+          const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
+
+          if (rectangleDrawCommand === 'two-corners') {
+            set(drawStepState, 'corner-1')
           }
         }
 

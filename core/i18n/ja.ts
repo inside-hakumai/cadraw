@@ -7,6 +7,7 @@ const ja: TranslationSchema = {
     line: '直線',
     circle: '円',
     arc: '円弧',
+    rectangle: '長方形',
   },
   operation: {
     select: '選択',
@@ -24,6 +25,9 @@ const ja: TranslationSchema = {
     arc: {
       'center-two-points': '中心・両端指定',
       'three-points': '3点指定',
+    },
+    rectangle: {
+      'two-corners': '2点指定',
     },
   },
 } as const

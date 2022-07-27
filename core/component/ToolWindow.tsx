@@ -16,7 +16,12 @@ import {
 } from '../container/states'
 import { useTranslation } from 'react-i18next'
 
-import { isValidArcCommand, isValidCircleCommand, isValidLineCommand } from '../lib/typeguard'
+import {
+  isValidArcCommand,
+  isValidCircleCommand,
+  isValidLineCommand,
+  isValidRectangleCommand,
+} from '../lib/typeguard'
 
 const rootStyle = css`
   display: flex;
@@ -93,6 +98,7 @@ interface Props {
   changeCommand: (newCommand: string) => void
   onActivateShapeSelect: () => void
   onActivateLineDraw: () => void
+  onActivateRectangleDraw: () => void
   onActivateArcDraw: () => void
   onActivateCircleDraw: () => void
   onUndo: () => void
@@ -106,6 +112,7 @@ const ToolWindow: React.FC<Props> = ({
   changeCommand,
   onActivateShapeSelect,
   onActivateLineDraw,
+  onActivateRectangleDraw,
   onActivateCircleDraw,
   onActivateArcDraw,
   onUndo,
@@ -190,6 +197,20 @@ const ToolWindow: React.FC<Props> = ({
                   </div>
                 )
               }
+              if (currentOperatingShape === 'rectangle' && isValidRectangleCommand(command)) {
+                const i18nKey = `command.${currentOperatingShape}.${command}` as const
+                return (
+                  <div css={buttonWrapperStyle} key={i18nKey}>
+                    <button
+                      css={buttonStyle}
+                      disabled={command === drawCommand}
+                      data-command={command}
+                      onClick={onClickCommandChangeButton}>
+                      {t(i18nKey)}
+                    </button>
+                  </div>
+                )
+              }
               if (currentOperatingShape === 'circle' && isValidCircleCommand(command)) {
                 const i18nKey = `command.${currentOperatingShape}.${command}` as const
                 return (
@@ -232,6 +253,19 @@ const ToolWindow: React.FC<Props> = ({
             {isShowingShortcutHint && (
               <div css={shortcutHintWrapperStyle}>
                 <div css={shortcutHintStyle('L')}>L</div>
+              </div>
+            )}
+          </div>
+          <div css={buttonWrapperStyle}>
+            <button
+              css={buttonStyle}
+              onClick={onActivateRectangleDraw}
+              disabled={operationMode === 'rectangle'}>
+              {t('shape.rectangle')}
+            </button>
+            {isShowingShortcutHint && (
+              <div css={shortcutHintWrapperStyle}>
+                <div css={shortcutHintStyle('R')}>R</div>
               </div>
             )}
           </div>

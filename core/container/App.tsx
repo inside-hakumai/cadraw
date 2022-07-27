@@ -31,6 +31,7 @@ import {
   isValidArcCommand,
   isValidCircleCommand,
   isValidLineCommand,
+  isValidRectangleCommand,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
 import { calcCentralAngleFromHorizontalLine, calcDistance } from '../lib/function'
@@ -272,6 +273,74 @@ const App: React.FC<Props> = ({ onExport }) => {
           }
 
           await addShape(newLine)
+          setShapeSeedConstraints(null)
+          await goToFirstStep()
+        }
+      }
+    }
+
+    if (operationMode === 'rectangle') {
+      const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
+
+      if (rectangleDrawCommand === 'two-corners') {
+        const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'two-corners'>
+
+        if (rectangleDrawStep === 'corner-1') {
+          const newRectangleSeed: RectangleTwoCornersSeed2 = {
+            isSeed: true,
+            shape: 'rectangle',
+            drawCommand: 'two-corners',
+            drawStep: 'corner-2',
+            corner1Point: activeCoord,
+            corner2Point: activeCoord,
+            upperLeftPoint: activeCoord,
+          }
+
+          setShapeSeedConstraints(newRectangleSeed)
+          await goToNextStep()
+        }
+
+        if (rectangleDrawStep === 'corner-2') {
+          const newRectangleSeed = shapeSeed as RectangleTwoCornersSeed2
+
+          const { corner1Point, corner2Point } = newRectangleSeed
+
+          // TODO: state.tsにほぼ同じ記述が存在する
+          if (corner2Point.x - corner1Point.x === 0) {
+            return
+          }
+
+          const diagonalSlope =
+            (corner2Point.y - corner1Point.y) / (corner2Point.x - corner1Point.x)
+          console.debug(diagonalSlope)
+
+          let upperLeftPoint: Coordinate
+          if (diagonalSlope > 0) {
+            // 対角線が右下に向かって引かれている場合
+            upperLeftPoint = corner1Point.x < corner2Point.x ? corner1Point : corner2Point
+          } else {
+            // 対角線が右上に向かって引かれている場合
+            upperLeftPoint =
+              corner1Point.x < corner2Point.x
+                ? { x: corner1Point.x, y: corner2Point.y }
+                : { x: corner2Point.x, y: corner1Point.y }
+          }
+
+          const newRectangle: Rectangle = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'rectangle',
+            drawCommand: 'two-corners',
+            constraints: {
+              corner1Point,
+              corner2Point,
+            },
+            computed: {
+              upperLeftPoint,
+            },
+          }
+
+          await addShape(newRectangle)
           setShapeSeedConstraints(null)
           await goToFirstStep()
         }
@@ -531,6 +600,9 @@ const App: React.FC<Props> = ({ onExport }) => {
         if (mode === 'line') {
           set(drawCommandState, 'start-end')
           set(drawStepState, 'startPoint')
+        } else if (mode === 'rectangle') {
+          set(drawCommandState, 'two-corners')
+          set(drawStepState, 'corner-1')
         } else if (mode === 'circle') {
           set(drawCommandState, 'center-diameter')
           set(drawStepState, 'center')
@@ -560,6 +632,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
         if (
           (currentOperatingShape === 'line' && isValidLineCommand(newCommand)) ||
+          (currentOperatingShape === 'rectangle' && isValidRectangleCommand(newCommand)) ||
           (currentOperatingShape === 'circle' && isValidCircleCommand(newCommand)) ||
           (currentOperatingShape === 'arc' && isValidArcCommand(newCommand))
         ) {
@@ -585,6 +658,10 @@ const App: React.FC<Props> = ({ onExport }) => {
           [changeOperationMode]
         )}
         onActivateLineDraw={useCallback(() => changeOperationMode('line'), [changeOperationMode])}
+        onActivateRectangleDraw={useCallback(
+          () => changeOperationMode('rectangle'),
+          [changeOperationMode]
+        )}
         onActivateArcDraw={useCallback(() => changeOperationMode('arc'), [changeOperationMode])}
         onActivateCircleDraw={useCallback(
           () => changeOperationMode('circle'),

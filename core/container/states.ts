@@ -31,7 +31,7 @@ export const operationModeState = atom<OperationMode>({
 
 export const drawTypeState = atom<DrawType>({
   key: 'drawType',
-  default: 'supplemental',
+  default: 'solid',
 })
 
 export const drawCommandState = atom<DrawCommand | null>({
@@ -235,6 +235,42 @@ export const shapeSeedState = selector<ShapeSeed | null>({
 
     if (operationMode === 'select') {
       return null
+    }
+
+    if (operationMode === 'rectangle' && drawCommand === 'two-corners') {
+      const rectangleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+
+      if (rectangleDrawStep === 'corner-2') {
+        const rectangleSeed = shapeSeed as RectangleTwoCornersSeed2
+
+        const corner2Point = coord
+        const { corner1Point } = rectangleSeed
+
+        if (corner2Point.x - corner1Point.x === 0) {
+          return rectangleSeed
+        }
+
+        const diagonalSlope = (corner2Point.y - corner1Point.y) / (corner2Point.x - corner1Point.x)
+        console.debug(diagonalSlope)
+
+        let upperLeftPoint: Coordinate
+        if (diagonalSlope > 0) {
+          // 対角線が右下に向かって引かれている場合
+          upperLeftPoint = corner1Point.x < corner2Point.x ? corner1Point : corner2Point
+        } else {
+          // 対角線が右上に向かって引かれている場合
+          upperLeftPoint =
+            corner1Point.x < corner2Point.x
+              ? { x: corner1Point.x, y: corner2Point.y }
+              : { x: corner2Point.x, y: corner1Point.y }
+        }
+
+        return {
+          ...rectangleSeed,
+          corner2Point,
+          upperLeftPoint,
+        } as RectangleTwoCornersSeed2
+      }
     }
 
     if (operationMode === 'circle' && drawCommand === 'center-diameter') {
