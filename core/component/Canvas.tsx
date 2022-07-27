@@ -31,6 +31,7 @@ import ArcSeedThreePoints from './shape/ArcSeedThreePoints'
 import GuidingLine from './shape/GuidingLine'
 import RectangleSeed from './shape/RectangleSeed'
 import Rectangle from './shape/Rectangle'
+import { useTranslation } from 'react-i18next'
 
 const style = css`
   width: 100%;
@@ -72,6 +73,7 @@ interface Props {
 }
 
 const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup }) => {
+  const { t } = useTranslation()
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
   const lineShapeIds = useRecoilValue(
     filteredShapeIdsSelector({ filterDrawType: 'solid', filterShapeType: 'line' })
@@ -237,31 +239,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
             top: currentCoordInfoPosition.y,
             cursor: 'default',
           }}>
-          {snappingCoord.snapInfoList
-            .map(info => {
-              if (info.type === 'gridIntersection') {
-                return 'グリッドの交点'
-              } else if (info.type === 'circleCenter') {
-                return '円の中心'
-              } else if (info.type === 'circumference') {
-                return '円周上'
-              } else if (info.type === 'arcCenter') {
-                return '円弧の中心'
-              } else if (info.type === 'arcEdge') {
-                return '円弧の端'
-              } else if (info.type === 'lineEdge') {
-                return '線の端'
-              } else if (info.type === 'onLine') {
-                return '線上'
-              } else if (info.type === 'onRectangle') {
-                return '長方形上'
-              } else if (info.type === 'onArc') {
-                return '円弧上'
-              } else {
-                throw new Error(`Unknown infoType: ${info.type}`)
-              }
-            })
-            .join('・')}
+          {snappingCoord.snapInfoList.map(info => t(`snapInfo.${info.type}`)).join('・')}
         </div>
       )}
     </div>

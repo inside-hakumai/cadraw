@@ -2,37 +2,16 @@ import 'react-i18next'
 
 declare global {
   interface TranslationSchema {
-    drawType: {
-      solid: string
-      supplemental: string
-    }
-    shape: {
-      line: string
-      circle: string
-      arc: string
-      rectangle: string
-    }
+    drawType: { [key in DrawType]: string }
+    shape: { [key in ShapeType]: string }
     operation: {
       select: string
       undo: string
       showShortcut: string
       export: string
     }
-    command: {
-      line: {
-        'start-end': string
-      }
-      circle: {
-        'center-diameter': string
-      }
-      arc: {
-        'center-two-points': string
-        'three-points': string
-      }
-      rectangle: {
-        'two-corners': string
-      }
-    }
+    command: { [shape in ShapeType]: { [command in ShapeDrawCommand<shape>]: string } }
+    snapInfo: { [key in SnapType]: string }
   }
 }
 

@@ -30,6 +30,17 @@ const ja: TranslationSchema = {
       'two-corners': '2点指定',
     },
   },
+  snapInfo: {
+    circleCenter: '円の中心',
+    lineEdge: '線の端',
+    arcCenter: '円弧の中心',
+    arcEdge: '円弧の端',
+    gridIntersection: 'グリッドの交点',
+    circumference: '円周上',
+    onLine: '線上',
+    onArc: '円弧上',
+    onRectangle: '長方形上',
+  },
 } as const
 
 export default ja
