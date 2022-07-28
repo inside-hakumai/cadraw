@@ -240,7 +240,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'rectangle' && drawCommand === 'two-corners') {
-      const rectangleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
       if (rectangleDrawStep === 'corner-2') {
         const rectangleSeed = shapeSeed as RectangleTwoCornersSeed2
@@ -276,7 +276,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'rectangle' && drawCommand === 'center-corner') {
-      const rectangleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
 
       if (rectangleDrawStep === 'corner') {
         const rectangleSeed = shapeSeed as RectangleCenterCornerSeed2
@@ -327,7 +327,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'circle' && drawCommand === 'center-diameter') {
-      const circleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
       if (circleDrawStep === 'diameter') {
         const CircleSeed = shapeSeed as CircleCenterDiameterSeed2
@@ -351,7 +351,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'arc' && drawCommand === 'center-two-points') {
-      const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
       if (arcDrawStep === 'startPoint') {
         if (!isArcCenterTwoPointsSeed2(shapeSeed)) {
@@ -409,7 +409,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'arc' && drawCommand === 'three-points') {
-      const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
       if (arcDrawStep === 'endPoint') {
         if (!isArcThreePointsSeed2(shapeSeed)) {
@@ -458,7 +458,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'line' && drawCommand === 'start-end') {
-      const lineDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
       if (lineDrawStep === 'endPoint') {
         const temporaryLineShapeBase = shapeSeed as LineStartEndSeed2

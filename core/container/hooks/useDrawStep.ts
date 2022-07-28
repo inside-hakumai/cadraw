@@ -13,7 +13,7 @@ const useDrawStep = () => {
           const lineDrawCommand = drawCommand as ShapeDrawCommand<'line'>
 
           if (lineDrawCommand === 'start-end') {
-            const lineDrawStep = drawStep as DrawCommandSteps<'line', 'start-end'>
+            const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
             if (lineDrawStep === 'startPoint') {
               set(drawStepState, 'endPoint')
@@ -25,7 +25,7 @@ const useDrawStep = () => {
           const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
 
           if (rectangleDrawCommand === 'two-corners') {
-            const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'two-corners'>
+            const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
             if (rectangleDrawStep === 'corner-1') {
               set(drawStepState, 'corner-2')
@@ -33,7 +33,7 @@ const useDrawStep = () => {
           }
 
           if (rectangleDrawCommand === 'center-corner') {
-            const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'center-corner'>
+            const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
 
             if (rectangleDrawStep === 'center') {
               set(drawStepState, 'corner')
@@ -45,7 +45,7 @@ const useDrawStep = () => {
           const circleDrawCommand = drawCommand as ShapeDrawCommand<'circle'>
 
           if (circleDrawCommand === 'center-diameter') {
-            const circleDrawStep = drawStep as DrawCommandSteps<'circle', 'center-diameter'>
+            const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
             if (circleDrawStep === 'center') {
               set(drawStepState, 'diameter')
@@ -57,7 +57,7 @@ const useDrawStep = () => {
           const arcDrawCommand = drawCommand as ShapeDrawCommand<'arc'>
 
           if (arcDrawCommand === 'center-two-points') {
-            const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'center-two-points'>
+            const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
             if (arcDrawStep === 'center') {
               set(drawStepState, 'startPoint')
@@ -69,7 +69,7 @@ const useDrawStep = () => {
           }
 
           if (arcDrawCommand === 'three-points') {
-            const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'three-points'>
+            const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
             if (arcDrawStep === 'startPoint') {
               set(drawStepState, 'endPoint')

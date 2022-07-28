@@ -257,7 +257,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const lineDrawCommand = drawCommand as ShapeDrawCommand<'line'>
 
       if (lineDrawCommand === 'start-end') {
-        const lineDrawStep = drawStep as DrawCommandSteps<'line', 'start-end'>
+        const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
         if (lineDrawStep === 'startPoint') {
           const newLineSeed: LineStartEndSeed2 = {
@@ -297,7 +297,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
 
       if (rectangleDrawCommand === 'two-corners') {
-        const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'two-corners'>
+        const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
         if (rectangleDrawStep === 'corner-1') {
           const newRectangleSeed: RectangleTwoCornersSeed2 = {
@@ -384,7 +384,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       if (rectangleDrawCommand === 'center-corner') {
-        const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'center-corner'>
+        const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
 
         if (rectangleDrawStep === 'center') {
           const newRectangleSeed: RectangleCenterCornerSeed2 = {
@@ -509,7 +509,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const circleDrawCommand = drawCommand as ShapeDrawCommand<'circle'>
 
       if (circleDrawCommand === 'center-diameter') {
-        const circleDrawStep = drawStep as DrawCommandSteps<'circle', 'center-diameter'>
+        const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
         if (circleDrawStep === 'center') {
           const newCircleSeed: CircleCenterDiameterSeed2 = {
@@ -553,7 +553,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const arcDrawCommand = drawCommand as ShapeDrawCommand<'arc'>
 
       if (arcDrawCommand === 'center-two-points') {
-        const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'center-two-points'>
+        const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
         if (arcDrawStep === 'center') {
           const newArcSeed: ArcCenterTwoPointsSeed2 = {
@@ -613,7 +613,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       if (arcDrawCommand === 'three-points') {
-        const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'three-points'>
+        const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
         if (arcDrawStep === 'startPoint') {
           const newArcSeed: ArcThreePointsSeed2 = {
