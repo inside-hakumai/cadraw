@@ -1,5 +1,12 @@
 import { useRecoilCallback } from 'recoil'
 import { drawCommandState, drawStepState, operationModeState } from '../states'
+import { drawStepList } from '../../lib/constants'
+import {
+  isValidArcCommand,
+  isValidCircleCommand,
+  isValidLineCommand,
+  isValidRectangleCommand,
+} from '../../lib/typeguard'
 
 const useDrawStep = () => {
   const goToNextStep = useRecoilCallback(
@@ -9,75 +16,76 @@ const useDrawStep = () => {
         const drawCommand = await snapshot.getPromise(drawCommandState)
         const drawStep = await snapshot.getPromise(drawStepState)
 
-        if (operationMode === 'line') {
-          const lineDrawCommand = drawCommand as ShapeDrawCommand<'line'>
+        const goIfValidIndex = (stepList: ReadonlyArray<DrawStep>, currentStepIndex: number) => {
+          if (currentStepIndex === -1) {
+            console.warn(`${drawStep} is not found in ${drawCommand}`)
+          } else if (currentStepIndex === stepList.length - 1) {
+            console.warn(`${drawStep} is last step of ${drawCommand}`)
+          } else {
+            set(drawStepState, stepList[currentStepIndex + 1])
+          }
+        }
 
-          if (lineDrawCommand === 'start-end') {
+        if (drawStep === null) {
+          return
+        }
+
+        if (operationMode === 'line' && isValidLineCommand(drawCommand)) {
+          if (drawCommand === 'start-end') {
             const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
+            const stepList = drawStepList[operationMode][drawCommand]
 
-            if (lineDrawStep === 'startPoint') {
-              set(drawStepState, 'endPoint')
-            }
+            const currentStepIndex = stepList.indexOf(lineDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
           }
+          return
         }
 
-        if (operationMode === 'rectangle') {
-          const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
-
-          if (rectangleDrawCommand === 'two-corners') {
+        if (operationMode === 'rectangle' && isValidRectangleCommand(drawCommand)) {
+          if (drawCommand === 'two-corners') {
             const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
+            const stepList = drawStepList[operationMode][drawCommand]
 
-            if (rectangleDrawStep === 'corner-1') {
-              set(drawStepState, 'corner-2')
-            }
+            const currentStepIndex = stepList.indexOf(rectangleDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
           }
 
-          if (rectangleDrawCommand === 'center-corner') {
+          if (drawCommand === 'center-corner') {
             const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
+            const stepList = drawStepList[operationMode][drawCommand]
 
-            if (rectangleDrawStep === 'center') {
-              set(drawStepState, 'corner')
-            }
+            const currentStepIndex = stepList.indexOf(rectangleDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
           }
+          return
         }
 
-        if (operationMode === 'circle') {
-          const circleDrawCommand = drawCommand as ShapeDrawCommand<'circle'>
-
-          if (circleDrawCommand === 'center-diameter') {
+        if (operationMode === 'circle' && isValidCircleCommand(drawCommand)) {
+          if (drawCommand === 'center-diameter') {
             const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
+            const stepList = drawStepList[operationMode][drawCommand]
 
-            if (circleDrawStep === 'center') {
-              set(drawStepState, 'diameter')
-            }
+            const currentStepIndex = stepList.indexOf(circleDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
           }
+          return
         }
 
-        if (operationMode === 'arc') {
-          const arcDrawCommand = drawCommand as ShapeDrawCommand<'arc'>
-
-          if (arcDrawCommand === 'center-two-points') {
+        if (operationMode === 'arc' && isValidArcCommand(drawCommand)) {
+          if (drawCommand === 'center-two-points') {
             const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
+            const stepList = drawStepList[operationMode][drawCommand]
 
-            if (arcDrawStep === 'center') {
-              set(drawStepState, 'startPoint')
-            }
-
-            if (arcDrawStep === 'startPoint') {
-              set(drawStepState, 'endPoint')
-            }
+            const currentStepIndex = stepList.indexOf(arcDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
           }
 
-          if (arcDrawCommand === 'three-points') {
+          if (drawCommand === 'three-points') {
             const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
+            const stepList = drawStepList[operationMode][drawCommand]
 
-            if (arcDrawStep === 'startPoint') {
-              set(drawStepState, 'endPoint')
-            }
-
-            if (arcDrawStep === 'endPoint') {
-              set(drawStepState, 'onLinePoint')
-            }
+            const currentStepIndex = stepList.indexOf(arcDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
           }
         }
       },
@@ -90,44 +98,23 @@ const useDrawStep = () => {
         const operationMode = await snapshot.getPromise(operationModeState)
         const drawCommand = await snapshot.getPromise(drawCommandState)
 
-        if (operationMode === 'line') {
-          const lineDrawCommand = drawCommand as ShapeDrawCommand<'line'>
-
-          if (lineDrawCommand === 'start-end') {
-            set(drawStepState, 'startPoint')
-          }
+        if (operationMode === 'line' && isValidLineCommand(drawCommand)) {
+          set(drawStepState, drawStepList[operationMode][drawCommand][0])
+          return
         }
 
-        if (operationMode === 'rectangle') {
-          const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
-
-          if (rectangleDrawCommand === 'two-corners') {
-            set(drawStepState, 'corner-1')
-          }
-
-          if (rectangleDrawCommand === 'center-corner') {
-            set(drawStepState, 'center')
-          }
+        if (operationMode === 'rectangle' && isValidRectangleCommand(drawCommand)) {
+          set(drawStepState, drawStepList[operationMode][drawCommand][0])
+          return
         }
 
-        if (operationMode === 'circle') {
-          const circleDrawCommand = drawCommand as ShapeDrawCommand<'circle'>
-
-          if (circleDrawCommand === 'center-diameter') {
-            set(drawStepState, 'center')
-          }
+        if (operationMode === 'circle' && isValidCircleCommand(drawCommand)) {
+          set(drawStepState, drawStepList[operationMode][drawCommand][0])
+          return
         }
 
-        if (operationMode === 'arc') {
-          const arcDrawCommand = drawCommand as ShapeDrawCommand<'arc'>
-
-          if (arcDrawCommand === 'center-two-points') {
-            set(drawStepState, 'center')
-          }
-
-          if (arcDrawCommand === 'three-points') {
-            set(drawStepState, 'startPoint')
-          }
+        if (operationMode === 'arc' && isValidArcCommand(drawCommand)) {
+          set(drawStepState, drawStepList[operationMode][drawCommand][0])
         }
       },
     []

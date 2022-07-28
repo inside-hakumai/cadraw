@@ -28,6 +28,7 @@ import {
   isArcCenterTwoPointsSeed3,
   isArcThreePointsSeed2,
   isArcThreePointsSeed3,
+  isShapeType,
   isValidArcCommand,
   isValidCircleCommand,
   isValidLineCommand,
@@ -102,54 +103,13 @@ const App: React.FC<Props> = ({ onExport }) => {
   )
 
   const cancelDrawing = useRecoilCallback(
-    ({ snapshot, set, reset }) =>
+    ({ snapshot, reset }) =>
       async () => {
         const mode = await snapshot.getPromise(operationModeState)
-        const command = await snapshot.getPromise(drawCommandState)
 
-        if (mode === 'line') {
-          const lineCommand = command as DrawCommandMap['line']
-          if (lineCommand === 'start-end') {
-            set(drawStepState, 'startPoint')
-            reset(shapeSeedConstraintsState)
-          }
-        }
-
-        if (mode === 'rectangle') {
-          const rectangleCommand = command as DrawCommandMap['rectangle']
-
-          if (rectangleCommand === 'two-corners') {
-            set(drawStepState, 'corner-1')
-            reset(shapeSeedConstraintsState)
-          }
-
-          if (rectangleCommand === 'center-corner') {
-            set(drawStepState, 'center')
-            reset(shapeSeedConstraintsState)
-          }
-        }
-
-        if (mode === 'circle') {
-          const circleCommand = command as DrawCommandMap['circle']
-
-          if (circleCommand === 'center-diameter') {
-            set(drawStepState, 'center')
-            reset(shapeSeedConstraintsState)
-          }
-        }
-
-        if (mode === 'arc') {
-          const arcCommand = command as DrawCommandMap['arc']
-
-          if (arcCommand === 'center-two-points') {
-            set(drawStepState, 'center')
-            reset(shapeSeedConstraintsState)
-          }
-
-          if (arcCommand === 'three-points') {
-            set(drawStepState, 'startPoint')
-            reset(shapeSeedConstraintsState)
-          }
+        if (isShapeType(mode)) {
+          await goToFirstStep()
+          reset(shapeSeedConstraintsState)
         }
       },
     []
