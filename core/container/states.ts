@@ -21,6 +21,7 @@ import {
   isArcThreePointsSeed3,
   isCircle,
   isLine,
+  isRectangleCenterCorner,
   isRectangleTwoCorners,
   isShapeType,
 } from '../lib/typeguard'
@@ -517,7 +518,7 @@ export const indicatingShapeIdState = selector<number | null>({
           minimumDistance = distance
           nearestIndex = i
         }
-      } else if (isRectangleTwoCorners(shape)) {
+      } else if (isRectangleTwoCorners(shape) || isRectangleCenterCorner(shape)) {
         const { distance } = findNearestPointOnRectangle(pointingCoord, shape.computed)
         if (distance < minimumDistance) {
           minimumDistance = distance
@@ -536,7 +537,7 @@ export const indicatingShapeIdState = selector<number | null>({
           nearestIndex = i
         }
       } else {
-        throw new Error(`unknown shape type: ${shape.type}`)
+        throw new Error(`unknown shape type: ${shape.shape}`)
       }
     }
 
