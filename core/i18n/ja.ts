@@ -28,6 +28,7 @@ const ja: TranslationSchema = {
     },
     rectangle: {
       'two-corners': '2点指定',
+      'center-corner': '中心・角指定',
     },
   },
   snapInfo: {

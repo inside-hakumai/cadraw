@@ -1,49 +1,24 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useRecoilValue } from 'recoil'
-import {
-  indicatingShapeIdState,
-  isShapeSelectedSelectorFamily,
-  shapeSelectorFamily,
-} from '../../container/states'
-import { isRectangleTwoCorners } from '../../lib/typeguard'
+import { shapeSelectorFamily } from '../../container/states'
+import { isRectangleCenterCorner, isRectangleTwoCorners } from '../../lib/typeguard'
+import RectangleTwoCorners from './RectangleTwoCorners'
+import RectangleCenterCorner from './RectangleCenterCorner'
 
 interface Props {
   shapeId: number
 }
 
 const Rectangle: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Rectangle
-  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
-  const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
-  const isFocused = indicatingShapeId === shape.id
-
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
-
-  useEffect(() => {
-    if (!isRectangleTwoCorners(shape)) {
-      throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
-    }
-  }, [shapeId, shape])
-
-  const { upperLeftPoint, upperRightPoint, lowerLeftPoint } = shape.computed
-
-  return (
-    <>
-      <rect
-        x={upperLeftPoint.x}
-        y={upperLeftPoint.y}
-        width={Math.abs(upperRightPoint.x - upperLeftPoint.x)}
-        height={Math.abs(lowerLeftPoint.y - upperLeftPoint.y)}
-        stroke={strokeColor}
-        strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
-        fill={'none'}
-      />
-    </>
-  )
+  if (isRectangleTwoCorners(shape)) {
+    return <RectangleTwoCorners shapeId={shapeId} />
+  } else if (isRectangleCenterCorner(shape)) {
+    return <RectangleCenterCorner shapeId={shapeId} />
+  } else {
+    throw new Error(`Shape(ID = ${shapeId}) is not a rectangle`)
+  }
 }
 
 export default Rectangle

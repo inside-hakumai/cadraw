@@ -21,6 +21,7 @@ import {
   isArcThreePointsSeed3,
   isCircle,
   isLine,
+  isRectangleCenterCorner,
   isRectangleTwoCorners,
   isShapeType,
 } from '../lib/typeguard'
@@ -240,7 +241,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'rectangle' && drawCommand === 'two-corners') {
-      const rectangleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
       if (rectangleDrawStep === 'corner-2') {
         const rectangleSeed = shapeSeed as RectangleTwoCornersSeed2
@@ -275,8 +276,59 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       }
     }
 
+    if (operationMode === 'rectangle' && drawCommand === 'center-corner') {
+      const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
+
+      if (rectangleDrawStep === 'corner') {
+        const rectangleSeed = shapeSeed as RectangleCenterCornerSeed2
+
+        const cornerPoint = coord
+        const { center } = rectangleSeed
+
+        if (center.x === cornerPoint.x && center.y === cornerPoint.y) {
+          return rectangleSeed
+        }
+
+        const diagonalSlope = (cornerPoint.y - center.y) / (cornerPoint.x - center.x)
+
+        let upperLeftPoint: Coordinate
+        if (diagonalSlope > 0) {
+          // 対角線が右下に向かって引かれている場合
+
+          if (center.x < cornerPoint.x) {
+            upperLeftPoint = {
+              x: center.x - (cornerPoint.x - center.x),
+              y: center.y - (cornerPoint.y - center.y),
+            }
+          } else {
+            upperLeftPoint = cornerPoint
+          }
+        } else {
+          // 対角線が右上に向かって引かれている場合
+
+          if (center.x < cornerPoint.x) {
+            upperLeftPoint = {
+              x: center.x - (cornerPoint.x - center.x),
+              y: cornerPoint.y,
+            }
+          } else {
+            upperLeftPoint = {
+              x: cornerPoint.x,
+              y: center.y - (cornerPoint.y - center.y),
+            }
+          }
+        }
+
+        return {
+          ...rectangleSeed,
+          cornerPoint,
+          upperLeftPoint,
+        } as RectangleCenterCornerSeed2
+      }
+    }
+
     if (operationMode === 'circle' && drawCommand === 'center-diameter') {
-      const circleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
       if (circleDrawStep === 'diameter') {
         const CircleSeed = shapeSeed as CircleCenterDiameterSeed2
@@ -300,7 +352,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'arc' && drawCommand === 'center-two-points') {
-      const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
       if (arcDrawStep === 'startPoint') {
         if (!isArcCenterTwoPointsSeed2(shapeSeed)) {
@@ -358,7 +410,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'arc' && drawCommand === 'three-points') {
-      const arcDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
       if (arcDrawStep === 'endPoint') {
         if (!isArcThreePointsSeed2(shapeSeed)) {
@@ -407,7 +459,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     }
 
     if (operationMode === 'line' && drawCommand === 'start-end') {
-      const lineDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+      const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
       if (lineDrawStep === 'endPoint') {
         const temporaryLineShapeBase = shapeSeed as LineStartEndSeed2
@@ -466,7 +518,7 @@ export const indicatingShapeIdState = selector<number | null>({
           minimumDistance = distance
           nearestIndex = i
         }
-      } else if (isRectangleTwoCorners(shape)) {
+      } else if (isRectangleTwoCorners(shape) || isRectangleCenterCorner(shape)) {
         const { distance } = findNearestPointOnRectangle(pointingCoord, shape.computed)
         if (distance < minimumDistance) {
           minimumDistance = distance
@@ -485,7 +537,7 @@ export const indicatingShapeIdState = selector<number | null>({
           nearestIndex = i
         }
       } else {
-        throw new Error(`unknown shape type: ${shape.type}`)
+        throw new Error(`unknown shape type: ${shape.shape}`)
       }
     }
 

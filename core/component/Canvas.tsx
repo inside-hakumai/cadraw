@@ -7,6 +7,7 @@ import {
   isArcThreePointsSeed3,
   isCircleCenterDiameterSeed2,
   isLineStartEndSeed2,
+  isRectangleCenterCornerSeed2,
   isRectangleTwoCornersSeed2,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
@@ -29,9 +30,10 @@ import ArcSeedCenterTwoPoints from './shape/ArcSeedCenterTwoPoints'
 import Arc from './shape/Arc'
 import ArcSeedThreePoints from './shape/ArcSeedThreePoints'
 import GuidingLine from './shape/GuidingLine'
-import RectangleSeed from './shape/RectangleSeed'
-import Rectangle from './shape/Rectangle'
+import RectangleSeedTwoCorners from './shape/RectangleSeedTwoCorners'
 import { useTranslation } from 'react-i18next'
+import RectangleSeedCenterCorner from './shape/RectangleSeedCenterCorner'
+import Rectangle from './shape/Rectangle'
 
 const style = css`
   width: 100%;
@@ -181,7 +183,10 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {shapeSeed && (
           <>
             {/* 作成中（確定前）の図形（長方形） */}
-            {isRectangleTwoCornersSeed2(shapeSeed) && <RectangleSeed shape={shapeSeed} />}
+            {isRectangleTwoCornersSeed2(shapeSeed) && <RectangleSeedTwoCorners shape={shapeSeed} />}
+            {isRectangleCenterCornerSeed2(shapeSeed) && (
+              <RectangleSeedCenterCorner shape={shapeSeed} />
+            )}
 
             {/* 作成中（確定前）の図形（円） */}
             {isCircleCenterDiameterSeed2(shapeSeed) && (

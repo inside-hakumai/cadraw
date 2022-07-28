@@ -28,6 +28,7 @@ import {
   isArcCenterTwoPointsSeed3,
   isArcThreePointsSeed2,
   isArcThreePointsSeed3,
+  isShapeType,
   isValidArcCommand,
   isValidCircleCommand,
   isValidLineCommand,
@@ -102,40 +103,13 @@ const App: React.FC<Props> = ({ onExport }) => {
   )
 
   const cancelDrawing = useRecoilCallback(
-    ({ snapshot, set, reset }) =>
+    ({ snapshot, reset }) =>
       async () => {
         const mode = await snapshot.getPromise(operationModeState)
-        const command = await snapshot.getPromise(drawCommandState)
 
-        if (mode === 'line') {
-          const lineCommand = command as DrawCommandMap['line']
-          if (lineCommand === 'start-end') {
-            set(drawStepState, 'startPoint')
-            reset(shapeSeedConstraintsState)
-          }
-        }
-
-        if (mode === 'circle') {
-          const circleCommand = command as DrawCommandMap['circle']
-
-          if (circleCommand === 'center-diameter') {
-            set(drawStepState, 'center')
-            reset(shapeSeedConstraintsState)
-          }
-        }
-
-        if (mode === 'arc') {
-          const arcCommand = command as DrawCommandMap['arc']
-
-          if (arcCommand === 'center-two-points') {
-            set(drawStepState, 'center')
-            reset(shapeSeedConstraintsState)
-          }
-
-          if (arcCommand === 'three-points') {
-            set(drawStepState, 'startPoint')
-            reset(shapeSeedConstraintsState)
-          }
+        if (isShapeType(mode)) {
+          await goToFirstStep()
+          reset(shapeSeedConstraintsState)
         }
       },
     []
@@ -243,7 +217,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const lineDrawCommand = drawCommand as ShapeDrawCommand<'line'>
 
       if (lineDrawCommand === 'start-end') {
-        const lineDrawStep = drawStep as DrawCommandSteps<'line', 'start-end'>
+        const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
         if (lineDrawStep === 'startPoint') {
           const newLineSeed: LineStartEndSeed2 = {
@@ -283,7 +257,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const rectangleDrawCommand = drawCommand as ShapeDrawCommand<'rectangle'>
 
       if (rectangleDrawCommand === 'two-corners') {
-        const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'two-corners'>
+        const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
         if (rectangleDrawStep === 'corner-1') {
           const newRectangleSeed: RectangleTwoCornersSeed2 = {
@@ -368,13 +342,134 @@ const App: React.FC<Props> = ({ onExport }) => {
           await goToFirstStep()
         }
       }
+
+      if (rectangleDrawCommand === 'center-corner') {
+        const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
+
+        if (rectangleDrawStep === 'center') {
+          const newRectangleSeed: RectangleCenterCornerSeed2 = {
+            isSeed: true,
+            shape: 'rectangle',
+            drawCommand: 'center-corner',
+            drawStep: 'corner',
+            center: activeCoord,
+            cornerPoint: activeCoord,
+            upperLeftPoint: activeCoord,
+          }
+
+          setShapeSeedConstraints(newRectangleSeed)
+          await goToNextStep()
+        }
+
+        if (rectangleDrawStep === 'corner') {
+          const newRectangleSeed = shapeSeed as RectangleCenterCornerSeed2
+          const { center, cornerPoint } = newRectangleSeed
+
+          if (cornerPoint.x === center.x || cornerPoint.y === center.y) {
+            return
+          }
+
+          const diagonalSlope = (cornerPoint.y - center.y) / (cornerPoint.x - center.x)
+
+          let upperLeftPoint: Coordinate
+          let upperRightPoint: Coordinate
+          let lowerLeftPoint: Coordinate
+          let lowerRightPoint: Coordinate
+          if (diagonalSlope > 0) {
+            // 対角線が右下に向かって引かれている場合
+
+            if (center.x < cornerPoint.x) {
+              upperLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              upperRightPoint = {
+                x: cornerPoint.x,
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              lowerLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: cornerPoint.y,
+              }
+              lowerRightPoint = cornerPoint
+            } else {
+              upperLeftPoint = cornerPoint
+              upperRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: cornerPoint.y,
+              }
+              lowerLeftPoint = {
+                x: cornerPoint.x,
+                y: center.y + (center.y - cornerPoint.y),
+              }
+              lowerRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: center.y + (center.y - cornerPoint.y),
+              }
+            }
+          } else {
+            // 対角線が右上に向かって引かれている場合
+
+            if (center.x < cornerPoint.x) {
+              upperLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: cornerPoint.y,
+              }
+              upperRightPoint = cornerPoint
+              lowerLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: center.y + (center.y - cornerPoint.y),
+              }
+              lowerRightPoint = {
+                x: cornerPoint.x,
+                y: center.y + (center.y - cornerPoint.y),
+              }
+            } else {
+              upperLeftPoint = {
+                x: cornerPoint.x,
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              upperRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              lowerLeftPoint = cornerPoint
+              lowerRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: cornerPoint.y,
+              }
+            }
+          }
+
+          const newRectangle: RectangleCenterCorner = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'rectangle',
+            drawCommand: 'center-corner',
+            constraints: {
+              center,
+              cornerPoint,
+            },
+            computed: {
+              upperLeftPoint,
+              upperRightPoint,
+              lowerLeftPoint,
+              lowerRightPoint,
+            },
+          }
+
+          await addShape(newRectangle)
+          setShapeSeedConstraints(null)
+          await goToFirstStep()
+        }
+      }
     }
 
     if (operationMode === 'circle') {
       const circleDrawCommand = drawCommand as ShapeDrawCommand<'circle'>
 
       if (circleDrawCommand === 'center-diameter') {
-        const circleDrawStep = drawStep as DrawCommandSteps<'circle', 'center-diameter'>
+        const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
         if (circleDrawStep === 'center') {
           const newCircleSeed: CircleCenterDiameterSeed2 = {
@@ -418,7 +513,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       const arcDrawCommand = drawCommand as ShapeDrawCommand<'arc'>
 
       if (arcDrawCommand === 'center-two-points') {
-        const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'center-two-points'>
+        const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
         if (arcDrawStep === 'center') {
           const newArcSeed: ArcCenterTwoPointsSeed2 = {
@@ -478,7 +573,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       }
 
       if (arcDrawCommand === 'three-points') {
-        const arcDrawStep = drawStep as DrawCommandSteps<'arc', 'three-points'>
+        const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
         if (arcDrawStep === 'startPoint') {
           const newArcSeed: ArcThreePointsSeed2 = {

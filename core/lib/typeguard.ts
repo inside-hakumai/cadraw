@@ -56,6 +56,22 @@ export const isRectangleTwoCorners = (shape: any): shape is Rectangle => {
   )
 }
 
+export const isRectangleCenterCorner = (shape: any): shape is RectangleCenterCorner => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'center-corner'
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.center) &&
+    isCoordinate(shape?.constraints?.cornerPoint) &&
+    isCoordinate(shape?.computed?.upperLeftPoint) &&
+    isCoordinate(shape?.computed?.upperRightPoint) &&
+    isCoordinate(shape?.computed?.lowerLeftPoint) &&
+    isCoordinate(shape?.computed?.lowerRightPoint)
+  )
+}
+
 export const isCircle = (shape: any): shape is Circle => {
   const expectedType: ShapeType = 'circle'
   const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
@@ -106,7 +122,7 @@ export const isArcThreePoints = (shape: any): shape is Arc<ArcConstraintsWithThr
 export const isLineStartEndSeed1 = (shape: any): shape is LineStartEndSeed1 => {
   const expectedType: ShapeType = 'line'
   const expectedDrawCommand: ShapeDrawCommand<'line'> = 'start-end'
-  const expectedDrawStep: DrawCommandSteps<'line', 'start-end'> = 'startPoint'
+  const expectedDrawStep: CommandDrawStep<'line', 'start-end'> = 'startPoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -119,7 +135,7 @@ export const isLineStartEndSeed1 = (shape: any): shape is LineStartEndSeed1 => {
 export const isLineStartEndSeed2 = (shape: any): shape is LineStartEndSeed2 => {
   const expectedType: ShapeType = 'line'
   const expectedDrawCommand: ShapeDrawCommand<'line'> = 'start-end'
-  const expectedDrawStep: DrawCommandSteps<'line', 'start-end'> = 'endPoint'
+  const expectedDrawStep: CommandDrawStep<'line', 'start-end'> = 'endPoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -133,7 +149,7 @@ export const isLineStartEndSeed2 = (shape: any): shape is LineStartEndSeed2 => {
 export const isRectangleTwoCornersSeed2 = (shape: any): shape is RectangleTwoCornersSeed2 => {
   const expectedType: ShapeType = 'rectangle'
   const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'two-corners'
-  const expectedDrawStep: DrawCommandSteps<'rectangle', 'two-corners'> = 'corner-2'
+  const expectedDrawStep: CommandDrawStep<'rectangle', 'two-corners'> = 'corner-2'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -144,10 +160,25 @@ export const isRectangleTwoCornersSeed2 = (shape: any): shape is RectangleTwoCor
   )
 }
 
+export const isRectangleCenterCornerSeed2 = (shape: any): shape is RectangleCenterCornerSeed2 => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'center-corner'
+  const expectedDrawStep: CommandDrawStep<'rectangle', 'center-corner'> = 'corner'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.center) &&
+    isCoordinate(shape?.cornerPoint) &&
+    isCoordinate(shape?.upperLeftPoint)
+  )
+}
+
 export const isCircleCenterDiameterSeed1 = (shape: any): shape is CircleCenterDiameterSeed1 => {
   const expectedType: ShapeType = 'circle'
   const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
-  const expectedDrawStep: DrawCommandSteps<'circle', 'center-diameter'> = 'center'
+  const expectedDrawStep: CommandDrawStep<'circle', 'center-diameter'> = 'center'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -160,7 +191,7 @@ export const isCircleCenterDiameterSeed1 = (shape: any): shape is CircleCenterDi
 export const isCircleCenterDiameterSeed2 = (shape: any): shape is CircleCenterDiameterSeed2 => {
   const expectedType: ShapeType = 'circle'
   const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
-  const expectedDrawStep: DrawCommandSteps<'circle', 'center-diameter'> = 'diameter'
+  const expectedDrawStep: CommandDrawStep<'circle', 'center-diameter'> = 'diameter'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -176,7 +207,7 @@ export const isCircleCenterDiameterSeed2 = (shape: any): shape is CircleCenterDi
 export const isArcCenterTwoPointsSeed1 = (shape: any): shape is ArcCenterTwoPointsSeed1 => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
-  const expectedDrawStep: DrawCommandSteps<'arc', 'center-two-points'> = 'center'
+  const expectedDrawStep: CommandDrawStep<'arc', 'center-two-points'> = 'center'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -189,7 +220,7 @@ export const isArcCenterTwoPointsSeed1 = (shape: any): shape is ArcCenterTwoPoin
 export const isArcCenterTwoPointsSeed2 = (shape: any): shape is ArcCenterTwoPointsSeed2 => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
-  const expectedDrawStep: DrawCommandSteps<'arc', 'center-two-points'> = 'startPoint'
+  const expectedDrawStep: CommandDrawStep<'arc', 'center-two-points'> = 'startPoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -205,7 +236,7 @@ export const isArcCenterTwoPointsSeed2 = (shape: any): shape is ArcCenterTwoPoin
 export const isArcCenterTwoPointsSeed3 = (shape: any): shape is ArcCenterTwoPointsSeed3 => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
-  const expectedDrawStep: DrawCommandSteps<'arc', 'center-two-points'> = 'endPoint'
+  const expectedDrawStep: CommandDrawStep<'arc', 'center-two-points'> = 'endPoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -224,7 +255,7 @@ export const isArcCenterTwoPointsSeed3 = (shape: any): shape is ArcCenterTwoPoin
 export const isArcThreePointsSeed1 = (shape: any): shape is ArcThreePointsSeed1 => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
-  const expectedDrawStep: DrawCommandSteps<'arc', 'three-points'> = 'startPoint'
+  const expectedDrawStep: CommandDrawStep<'arc', 'three-points'> = 'startPoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -237,7 +268,7 @@ export const isArcThreePointsSeed1 = (shape: any): shape is ArcThreePointsSeed1 
 export const isArcThreePointsSeed2 = (shape: any): shape is ArcThreePointsSeed2 => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
-  const expectedDrawStep: DrawCommandSteps<'arc', 'three-points'> = 'endPoint'
+  const expectedDrawStep: CommandDrawStep<'arc', 'three-points'> = 'endPoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
@@ -252,7 +283,7 @@ export const isArcThreePointsSeed2 = (shape: any): shape is ArcThreePointsSeed2 
 export const isArcThreePointsSeed3 = (shape: any): shape is ArcThreePointsSeed3 => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
-  const expectedDrawStep: DrawCommandSteps<'arc', 'three-points'> = 'onLinePoint'
+  const expectedDrawStep: CommandDrawStep<'arc', 'three-points'> = 'onLinePoint'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&

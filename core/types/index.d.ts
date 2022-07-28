@@ -1,8 +1,9 @@
-import { drawCommandList, drawType, shapeList } from '../lib/constants'
+import { drawCommandList, drawType, shapeList, drawStepList } from '../lib/constants'
 
 declare global {
   type DrawType = typeof drawType[number]
   type ShapeType = typeof shapeList[number]
+  type DrawStepMap = typeof drawStepList
 
   interface DrawCommandMap {
     line: typeof drawCommandList['line'][number]
@@ -11,41 +12,18 @@ declare global {
     rectangle: typeof drawCommandList['rectangle'][number]
   }
 
-  type TemporaryShapeType =
-    | 'tmp-line'
-    | 'tmp-circle'
-    | 'tmp-arc'
-    | 'tmp-three-points-arc'
-    | 'tmp-supplementalLine'
-
-  interface DrawStepMap {
-    line: {
-      'start-end': 'startPoint' | 'endPoint'
-    }
-    circle: {
-      'center-diameter': 'center' | 'diameter'
-    }
-    arc: {
-      'center-two-points': 'center' | 'startPoint' | 'endPoint'
-      'three-points': 'startPoint' | 'endPoint' | 'onLinePoint'
-    }
-    rectangle: {
-      'two-corners': 'corner-1' | 'corner-2'
-    }
-  }
-
   // SにShapeTypeを指定し、その図形のコマンドのUnionを返す
   type ShapeDrawCommand<S extends ShapeType> = S extends keyof DrawCommandMap
     ? DrawCommandMap[S]
     : never
 
-  // SにShapeType、CにそのShapeTypeのDrawCommandを指定し、その図形・コマンドのDrawStepを返す
-  type DrawCommandSteps<
+  // SにShapeType、CにそのShapeTypeのDrawCommandを指定し、その図形・コマンドのDrawStepのUnionを返す
+  type CommandDrawStep<
     S extends ShapeType,
     C extends typeof DrawCommandMap[S][number]
   > = S extends ShapeType
     ? C extends typeof DrawCommandMap[S][number]
-      ? DrawStepMap[S][C]
+      ? DrawStepMap[S][C][number]
       : never
     : never
 
@@ -53,10 +31,12 @@ declare global {
   type DrawCommand = DrawCommandMap[keyof DrawCommandMap]
 
   // TにShapeTypeを指定し、そのShapeのすべてのDrawCommandにおけるDrawStepを返す
-  type AllStepsOfShape<T> = T extends ShapeType ? DrawStepMap[T][keyof DrawStepMap[T]] : never
+  type ShapeDrawStep<S extends ShapeType> = S extends ShapeType
+    ? CommandDrawStep<S, ShapeDrawCommand<S>>
+    : never
 
   // すべてのShapeType、すべてのDrawCommandのDrawStepのUnion
-  type DrawStep = AllStepsOfShape<ShapeType>
+  type DrawStep = ShapeDrawStep<ShapeType>
 
   type OperationMode = ShapeType | 'select'
   type ConstraintType = 'circleCenter' | 'lineEdge' | 'arcCenter' | 'arcEdge'
@@ -97,6 +77,20 @@ declare global {
     constraints: {
       corner1Point: Coordinate
       corner2Point: Coordinate
+    }
+    computed: {
+      upperLeftPoint: Coordinate
+      upperRightPoint: Coordinate
+      lowerLeftPoint: Coordinate
+      lowerRightPoint: Coordinate
+    }
+  }
+
+  interface RectangleCenterCorner extends Shape {
+    shape: 'rectangle'
+    constraints: {
+      center: Coordinate
+      cornerPoint: Coordinate
     }
     computed: {
       upperLeftPoint: Coordinate
@@ -278,6 +272,18 @@ declare global {
   interface RectangleTwoCornersSeed2 extends RectangleTwoCornersSeed1 {
     drawStep: 'corner-2'
     corner2Point: Coordinate
+    upperLeftPoint: Coordinate
+  }
+
+  interface RectangleCenterCornerSeed1 extends ShapeSeed {
+    shape: 'rectangle'
+    drawStep: 'center'
+    center: Coordinate
+  }
+
+  interface RectangleCenterCornerSeed2 extends RectangleCenterCornerSeed1 {
+    drawStep: 'corner'
+    cornerPoint: Coordinate
     upperLeftPoint: Coordinate
   }
 
