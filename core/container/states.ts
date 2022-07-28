@@ -275,6 +275,57 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       }
     }
 
+    if (operationMode === 'rectangle' && drawCommand === 'center-corner') {
+      const rectangleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
+
+      if (rectangleDrawStep === 'corner') {
+        const rectangleSeed = shapeSeed as RectangleCenterCornerSeed2
+
+        const cornerPoint = coord
+        const { center } = rectangleSeed
+
+        if (center.x === cornerPoint.x && center.y === cornerPoint.y) {
+          return rectangleSeed
+        }
+
+        const diagonalSlope = (cornerPoint.y - center.y) / (cornerPoint.x - center.x)
+
+        let upperLeftPoint: Coordinate
+        if (diagonalSlope > 0) {
+          // 対角線が右下に向かって引かれている場合
+
+          if (center.x < cornerPoint.x) {
+            upperLeftPoint = {
+              x: center.x - (cornerPoint.x - center.x),
+              y: center.y - (cornerPoint.y - center.y),
+            }
+          } else {
+            upperLeftPoint = cornerPoint
+          }
+        } else {
+          // 対角線が右上に向かって引かれている場合
+
+          if (center.x < cornerPoint.x) {
+            upperLeftPoint = {
+              x: center.x - (cornerPoint.x - center.x),
+              y: cornerPoint.y,
+            }
+          } else {
+            upperLeftPoint = {
+              x: cornerPoint.x,
+              y: center.y - (cornerPoint.y - center.y),
+            }
+          }
+        }
+
+        return {
+          ...rectangleSeed,
+          cornerPoint,
+          upperLeftPoint,
+        } as RectangleCenterCornerSeed2
+      }
+    }
+
     if (operationMode === 'circle' && drawCommand === 'center-diameter') {
       const circleDrawStep = drawStep as DrawStepMap[typeof operationMode][typeof drawCommand]
 

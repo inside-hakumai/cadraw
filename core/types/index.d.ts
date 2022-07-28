@@ -31,6 +31,7 @@ declare global {
     }
     rectangle: {
       'two-corners': 'corner-1' | 'corner-2'
+      'center-corner': 'center' | 'corner'
     }
   }
 
@@ -97,6 +98,20 @@ declare global {
     constraints: {
       corner1Point: Coordinate
       corner2Point: Coordinate
+    }
+    computed: {
+      upperLeftPoint: Coordinate
+      upperRightPoint: Coordinate
+      lowerLeftPoint: Coordinate
+      lowerRightPoint: Coordinate
+    }
+  }
+
+  interface RectangleCenterCorner extends Shape {
+    shape: 'rectangle'
+    constraints: {
+      center: Coordinate
+      cornerPoint: Coordinate
     }
     computed: {
       upperLeftPoint: Coordinate
@@ -278,6 +293,18 @@ declare global {
   interface RectangleTwoCornersSeed2 extends RectangleTwoCornersSeed1 {
     drawStep: 'corner-2'
     corner2Point: Coordinate
+    upperLeftPoint: Coordinate
+  }
+
+  interface RectangleCenterCornerSeed1 extends ShapeSeed {
+    shape: 'rectangle'
+    drawStep: 'center'
+    center: Coordinate
+  }
+
+  interface RectangleCenterCornerSeed2 extends RectangleCenterCornerSeed1 {
+    drawStep: 'corner'
+    cornerPoint: Coordinate
     upperLeftPoint: Coordinate
   }
 

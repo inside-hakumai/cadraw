@@ -31,6 +31,14 @@ const useDrawStep = () => {
               set(drawStepState, 'corner-2')
             }
           }
+
+          if (rectangleDrawCommand === 'center-corner') {
+            const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'center-corner'>
+
+            if (rectangleDrawStep === 'center') {
+              set(drawStepState, 'corner')
+            }
+          }
         }
 
         if (operationMode === 'circle') {
@@ -95,6 +103,10 @@ const useDrawStep = () => {
 
           if (rectangleDrawCommand === 'two-corners') {
             set(drawStepState, 'corner-1')
+          }
+
+          if (rectangleDrawCommand === 'center-corner') {
+            set(drawStepState, 'center')
           }
         }
 

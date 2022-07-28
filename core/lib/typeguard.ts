@@ -56,6 +56,22 @@ export const isRectangleTwoCorners = (shape: any): shape is Rectangle => {
   )
 }
 
+export const isRectangleCenterCorner = (shape: any): shape is RectangleCenterCorner => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'center-corner'
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.center) &&
+    isCoordinate(shape?.constraints?.cornerPoint) &&
+    isCoordinate(shape?.computed?.upperLeftPoint) &&
+    isCoordinate(shape?.computed?.upperRightPoint) &&
+    isCoordinate(shape?.computed?.lowerLeftPoint) &&
+    isCoordinate(shape?.computed?.lowerRightPoint)
+  )
+}
+
 export const isCircle = (shape: any): shape is Circle => {
   const expectedType: ShapeType = 'circle'
   const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
@@ -141,6 +157,21 @@ export const isRectangleTwoCornersSeed2 = (shape: any): shape is RectangleTwoCor
     shape?.drawStep === expectedDrawStep &&
     isCoordinate(shape?.corner1Point) &&
     isCoordinate(shape?.corner2Point)
+  )
+}
+
+export const isRectangleCenterCornerSeed2 = (shape: any): shape is RectangleCenterCornerSeed2 => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'center-corner'
+  const expectedDrawStep: DrawCommandSteps<'rectangle', 'center-corner'> = 'corner'
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    shape?.drawStep === expectedDrawStep &&
+    isCoordinate(shape?.center) &&
+    isCoordinate(shape?.cornerPoint) &&
+    isCoordinate(shape?.upperLeftPoint)
   )
 }
 

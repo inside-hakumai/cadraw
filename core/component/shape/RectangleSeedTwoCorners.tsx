@@ -4,7 +4,7 @@ interface Props {
   shape: RectangleTwoCornersSeed2
 }
 
-const RectangleSeed: React.FC<Props> = ({ shape }) => {
+const RectangleSeedTwoCorners: React.FC<Props> = ({ shape }) => {
   const { corner1Point, corner2Point, upperLeftPoint } = shape
 
   return (
@@ -34,4 +34,4 @@ const RectangleSeed: React.FC<Props> = ({ shape }) => {
   )
 }
 
-export default RectangleSeed
+export default RectangleSeedTwoCorners

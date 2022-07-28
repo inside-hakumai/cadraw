@@ -115,6 +115,20 @@ const App: React.FC<Props> = ({ onExport }) => {
           }
         }
 
+        if (mode === 'rectangle') {
+          const rectangleCommand = command as DrawCommandMap['rectangle']
+
+          if (rectangleCommand === 'two-corners') {
+            set(drawStepState, 'corner-1')
+            reset(shapeSeedConstraintsState)
+          }
+
+          if (rectangleCommand === 'center-corner') {
+            set(drawStepState, 'center')
+            reset(shapeSeedConstraintsState)
+          }
+        }
+
         if (mode === 'circle') {
           const circleCommand = command as DrawCommandMap['circle']
 
@@ -354,6 +368,127 @@ const App: React.FC<Props> = ({ onExport }) => {
             constraints: {
               corner1Point,
               corner2Point,
+            },
+            computed: {
+              upperLeftPoint,
+              upperRightPoint,
+              lowerLeftPoint,
+              lowerRightPoint,
+            },
+          }
+
+          await addShape(newRectangle)
+          setShapeSeedConstraints(null)
+          await goToFirstStep()
+        }
+      }
+
+      if (rectangleDrawCommand === 'center-corner') {
+        const rectangleDrawStep = drawStep as DrawCommandSteps<'rectangle', 'center-corner'>
+
+        if (rectangleDrawStep === 'center') {
+          const newRectangleSeed: RectangleCenterCornerSeed2 = {
+            isSeed: true,
+            shape: 'rectangle',
+            drawCommand: 'center-corner',
+            drawStep: 'corner',
+            center: activeCoord,
+            cornerPoint: activeCoord,
+            upperLeftPoint: activeCoord,
+          }
+
+          setShapeSeedConstraints(newRectangleSeed)
+          await goToNextStep()
+        }
+
+        if (rectangleDrawStep === 'corner') {
+          const newRectangleSeed = shapeSeed as RectangleCenterCornerSeed2
+          const { center, cornerPoint } = newRectangleSeed
+
+          if (cornerPoint.x === center.x || cornerPoint.y === center.y) {
+            return
+          }
+
+          const diagonalSlope = (cornerPoint.y - center.y) / (cornerPoint.x - center.x)
+
+          let upperLeftPoint: Coordinate
+          let upperRightPoint: Coordinate
+          let lowerLeftPoint: Coordinate
+          let lowerRightPoint: Coordinate
+          if (diagonalSlope > 0) {
+            // 対角線が右下に向かって引かれている場合
+
+            if (center.x < cornerPoint.x) {
+              upperLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              upperRightPoint = {
+                x: cornerPoint.x,
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              lowerLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: cornerPoint.y,
+              }
+              lowerRightPoint = cornerPoint
+            } else {
+              upperLeftPoint = cornerPoint
+              upperRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: cornerPoint.y,
+              }
+              lowerLeftPoint = {
+                x: cornerPoint.x,
+                y: center.y + (center.y - cornerPoint.y),
+              }
+              lowerRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: center.y + (center.y - cornerPoint.y),
+              }
+            }
+          } else {
+            // 対角線が右上に向かって引かれている場合
+
+            if (center.x < cornerPoint.x) {
+              upperLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: cornerPoint.y,
+              }
+              upperRightPoint = cornerPoint
+              lowerLeftPoint = {
+                x: center.x - (cornerPoint.x - center.x),
+                y: center.y + (center.y - cornerPoint.y),
+              }
+              lowerRightPoint = {
+                x: cornerPoint.x,
+                y: center.y + (center.y - cornerPoint.y),
+              }
+            } else {
+              upperLeftPoint = {
+                x: cornerPoint.x,
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              upperRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: center.y - (cornerPoint.y - center.y),
+              }
+              lowerLeftPoint = cornerPoint
+              lowerRightPoint = {
+                x: center.x + (center.x - cornerPoint.x),
+                y: cornerPoint.y,
+              }
+            }
+          }
+
+          const newRectangle: RectangleCenterCorner = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'rectangle',
+            drawCommand: 'center-corner',
+            constraints: {
+              center,
+              cornerPoint,
             },
             computed: {
               upperLeftPoint,
