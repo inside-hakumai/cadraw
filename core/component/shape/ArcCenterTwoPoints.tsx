@@ -6,6 +6,7 @@ import {
   shapeSelectorFamily,
 } from '../../container/states'
 import { isArcWithCenterTwoPointsConstraints } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
@@ -20,11 +21,6 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
 
   const isFocused = indicatingShapeId === shape.id
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
-
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
 
   useEffect(() => {
     if (!isArcWithCenterTwoPointsConstraints(shape)) {
@@ -59,7 +55,7 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
       key={'temporaryArc'}
       d={pathNodeAttribute.join(' ')}
       fill='none'
-      stroke={strokeColor}
+      stroke={getStrokeColor(isSelected, isFocused)}
       strokeWidth='1'
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />

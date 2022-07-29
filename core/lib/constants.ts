@@ -24,3 +24,9 @@ export const drawStepList = {
     'three-points': ['startPoint', 'endPoint', 'onLinePoint'],
   },
 } as const
+
+export const color = {
+  strokeColor: '#000000',
+  strokeColorOnSelected: '#FF0000',
+  strokeColorOnFocused: '#ff9797',
+}

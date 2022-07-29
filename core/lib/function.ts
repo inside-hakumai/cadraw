@@ -1,3 +1,5 @@
+import { color } from './constants'
+
 /**
  * 2つの座標間の距離を返します。
  * @param coord1 座標1
@@ -517,4 +519,16 @@ export const isPointInTriangle = (point: Coordinate, triangleVertexes: Coordinat
     (crossProductA >= 0 && crossProductB >= 0 && crossProductC >= 0) ||
     (crossProductA <= 0 && crossProductB <= 0 && crossProductC <= 0)
   )
+}
+
+/**
+ * 図形の描画に使用するカラーコードを返します。
+ * @param isSelected その図形が選択状態にあるかどうか
+ * @param isFocused その図形にフォーカスが当たっているかどうか
+ * @returns カラーコード
+ */
+export const getStrokeColor = (isSelected: boolean, isFocused: boolean) => {
+  if (isSelected) return color.strokeColorOnSelected
+  else if (isFocused) return color.strokeColorOnFocused
+  else return color.strokeColor
 }

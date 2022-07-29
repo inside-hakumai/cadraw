@@ -6,6 +6,7 @@ import {
   shapeSelectorFamily,
 } from '../../container/states'
 import { isRectangleWithCenterCornerConstraints } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
@@ -17,11 +18,6 @@ const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
   const isFocused = indicatingShapeId === shape.id
-
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
 
   useEffect(() => {
     if (!isRectangleWithCenterCornerConstraints(shape)) {
@@ -38,7 +34,7 @@ const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
         y={upperLeftPoint.y}
         width={Math.abs(upperRightPoint.x - upperLeftPoint.x)}
         height={Math.abs(lowerLeftPoint.y - upperLeftPoint.y)}
-        stroke={strokeColor}
+        stroke={getStrokeColor(isSelected, isFocused)}
         strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
         fill={'none'}
       />

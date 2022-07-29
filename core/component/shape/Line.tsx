@@ -6,6 +6,7 @@ import {
   shapeSelectorFamily,
 } from '../../container/states'
 import { isLine } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
@@ -17,11 +18,6 @@ const Line: React.FC<Props> = ({ shapeId }) => {
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
   const isFocused = indicatingShapeId === shape.id
-
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
 
   useEffect(() => {
     if (!isLine(shape)) {
@@ -38,7 +34,7 @@ const Line: React.FC<Props> = ({ shapeId }) => {
       x2={endPoint.x}
       y2={endPoint.y}
       strokeWidth={1}
-      stroke={strokeColor}
+      stroke={getStrokeColor(isSelected, isFocused)}
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
