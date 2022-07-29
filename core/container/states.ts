@@ -14,10 +14,10 @@ import {
 } from '../lib/function'
 import {
   isArc,
-  isArcWithCenterTwoPointsConstraints,
+  isArcConstrainedByCenterTwoPoints,
   isArcCenterTwoPointsSeed2,
   isArcCenterTwoPointsSeed3,
-  isArcWithThreePointsConstraints,
+  isArcConstrainedByThreePoints,
   isArcThreePointsSeed2,
   isArcThreePointsSeed3,
   isCircle,
@@ -182,7 +182,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
         }
 
         if (isArc(shape)) {
-          if (isArcWithCenterTwoPointsConstraints(shape)) {
+          if (isArcConstrainedByCenterTwoPoints(shape)) {
             const { center, radius, startPointAngle, endPointAngle } = shape.computed
 
             return [
@@ -535,7 +535,7 @@ export const indicatingShapeIdState = selector<number | null>({
           minimumDistance = nearest.distance
           nearestIndex = i
         }
-      } else if (isArcWithCenterTwoPointsConstraints(shape)) {
+      } else if (isArcConstrainedByCenterTwoPoints(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape)
         if (nearest !== null && nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
@@ -679,10 +679,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.shape === 'arc') {
-        if (
-          !isArcWithCenterTwoPointsConstraints(shape) &&
-          !isArcWithThreePointsConstraints(shape)
-        ) {
+        if (!isArcConstrainedByCenterTwoPoints(shape) && !isArcConstrainedByThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
           return null
         }
@@ -739,10 +736,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (shape.shape === 'arc') {
-        if (
-          !isArcWithCenterTwoPointsConstraints(shape) &&
-          !isArcWithThreePointsConstraints(shape)
-        ) {
+        if (!isArcConstrainedByCenterTwoPoints(shape) && !isArcConstrainedByThreePoints(shape)) {
           console.warn('shape is not ArcCenterTwoPoints')
           return null
         }

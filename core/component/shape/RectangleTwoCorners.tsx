@@ -5,7 +5,7 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isRectangleWithTwoCornersConstraints } from '../../lib/typeguard'
+import { isRectangleConstrainedByTwoCorners } from '../../lib/typeguard'
 import { getStrokeColor } from '../../lib/function'
 
 interface Props {
@@ -20,7 +20,7 @@ const RectangleTwoCorners: React.FC<Props> = ({ shapeId }) => {
   const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
-    if (!isRectangleWithTwoCornersConstraints(shape)) {
+    if (!isRectangleConstrainedByTwoCorners(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
     }
   }, [shapeId, shape])

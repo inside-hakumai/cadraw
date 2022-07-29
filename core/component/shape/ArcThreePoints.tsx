@@ -5,7 +5,7 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isArcWithThreePointsConstraints } from '../../lib/typeguard'
+import { isArcConstrainedByThreePoints } from '../../lib/typeguard'
 import { getStrokeColor } from '../../lib/function'
 
 interface Props {
@@ -21,7 +21,7 @@ const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
 
   useEffect(() => {
     console.debug(shape)
-    if (!isArcWithThreePointsConstraints(shape)) {
+    if (!isArcConstrainedByThreePoints(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
     }
   }, [shapeId, shape])

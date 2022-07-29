@@ -44,12 +44,10 @@ export const isLine = (shape: any): shape is Line => {
 }
 
 export const isRectangle = (shape: any): shape is Rectangle => {
-  return (
-    isRectangleWithCenterCornerConstraints(shape) || isRectangleWithTwoCornersConstraints(shape)
-  )
+  return isRectangleConstrainedByCenterCorner(shape) || isRectangleConstrainedByTwoCorners(shape)
 }
 
-export const isRectangleWithCenterCornerConstraints = (
+export const isRectangleConstrainedByCenterCorner = (
   shape: any
 ): shape is Rectangle<CenterCornerConstraints> => {
   const expectedType: ShapeType = 'rectangle'
@@ -68,7 +66,7 @@ export const isRectangleWithCenterCornerConstraints = (
   )
 }
 
-export const isRectangleWithTwoCornersConstraints = (
+export const isRectangleConstrainedByTwoCorners = (
   shape: any
 ): shape is Rectangle<TwoCornersConstraints> => {
   const expectedType: ShapeType = 'rectangle'
@@ -100,10 +98,10 @@ export const isCircle = (shape: any): shape is Circle => {
 }
 
 export const isArc = (shape: any): shape is Arc => {
-  return isArcWithCenterTwoPointsConstraints(shape) || isArcWithThreePointsConstraints(shape)
+  return isArcConstrainedByCenterTwoPoints(shape) || isArcConstrainedByThreePoints(shape)
 }
 
-export const isArcWithCenterTwoPointsConstraints = (
+export const isArcConstrainedByCenterTwoPoints = (
   shape: any
 ): shape is Arc<CenterAndTwoPointsConstraints> => {
   const expectedType: ShapeType = 'arc'
@@ -127,9 +125,7 @@ export const isArcWithCenterTwoPointsConstraints = (
   )
 }
 
-export const isArcWithThreePointsConstraints = (
-  shape: any
-): shape is Arc<ThreePointsConstraints> => {
+export const isArcConstrainedByThreePoints = (shape: any): shape is Arc<ThreePointsConstraints> => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
 

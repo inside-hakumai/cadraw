@@ -4,8 +4,8 @@ import { shapeSelectorFamily } from '../../container/states'
 import ArcThreePoints from './ArcThreePoints'
 import ArcWithCenterTwoPoints from './ArcCenterTwoPoints'
 import {
-  isArcWithCenterTwoPointsConstraints,
-  isArcWithThreePointsConstraints,
+  isArcConstrainedByCenterTwoPoints,
+  isArcConstrainedByThreePoints,
 } from '../../lib/typeguard'
 
 interface Props {
@@ -15,9 +15,9 @@ interface Props {
 const Arc: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
-  if (isArcWithCenterTwoPointsConstraints(shape)) {
+  if (isArcConstrainedByCenterTwoPoints(shape)) {
     return <ArcWithCenterTwoPoints shapeId={shapeId} />
-  } else if (isArcWithThreePointsConstraints(shape)) {
+  } else if (isArcConstrainedByThreePoints(shape)) {
     return <ArcThreePoints shapeId={shapeId} />
   } else {
     throw new Error(`Shape(ID = ${shapeId}) is not a arc`)

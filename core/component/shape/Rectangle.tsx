@@ -4,8 +4,8 @@ import { shapeSelectorFamily } from '../../container/states'
 import RectangleTwoCorners from './RectangleTwoCorners'
 import RectangleCenterCorner from './RectangleCenterCorner'
 import {
-  isRectangleWithCenterCornerConstraints,
-  isRectangleWithTwoCornersConstraints,
+  isRectangleConstrainedByCenterCorner,
+  isRectangleConstrainedByTwoCorners,
 } from '../../lib/typeguard'
 
 interface Props {
@@ -15,9 +15,9 @@ interface Props {
 const Rectangle: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
-  if (isRectangleWithTwoCornersConstraints(shape)) {
+  if (isRectangleConstrainedByTwoCorners(shape)) {
     return <RectangleTwoCorners shapeId={shapeId} />
-  } else if (isRectangleWithCenterCornerConstraints(shape)) {
+  } else if (isRectangleConstrainedByCenterCorner(shape)) {
     return <RectangleCenterCorner shapeId={shapeId} />
   } else {
     throw new Error(`Shape(ID = ${shapeId}) is not a rectangle`)

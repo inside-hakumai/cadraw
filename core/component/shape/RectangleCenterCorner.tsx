@@ -5,7 +5,7 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isRectangleWithCenterCornerConstraints } from '../../lib/typeguard'
+import { isRectangleConstrainedByCenterCorner } from '../../lib/typeguard'
 import { getStrokeColor } from '../../lib/function'
 
 interface Props {
@@ -20,7 +20,7 @@ const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
   const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
-    if (!isRectangleWithCenterCornerConstraints(shape)) {
+    if (!isRectangleConstrainedByCenterCorner(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
     }
   }, [shapeId, shape])
