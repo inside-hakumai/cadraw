@@ -441,7 +441,7 @@ const App: React.FC<Props> = ({ onExport }) => {
             }
           }
 
-          const newRectangle: RectangleCenterCorner = {
+          const newRectangle: Rectangle<CenterCornerConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'rectangle',
@@ -554,19 +554,39 @@ const App: React.FC<Props> = ({ onExport }) => {
             return
           }
 
-          const newArcSeed: Arc<ArcConstraintsWithCenterAndTwoPoints> = {
+          const {
+            center,
+            startPoint,
+            endPoint,
+            startPointAngle,
+            endPointAngle,
+            angleDeltaFromStart,
+            radius,
+          } = shapeSeed
+
+          const newArc: Arc<CenterAndTwoPointsConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'arc',
             drawCommand: 'center-two-points',
             constraints: {
-              ...shapeSeed,
-              constrainShape: 'arc',
-              constraintType: 'center-two-points',
+              center,
+              startPoint,
+              endPoint,
+              angleDeltaFromStart,
+            },
+            computed: {
+              center,
+              startPoint,
+              endPoint,
+              startPointAngle,
+              endPointAngle,
+              radius,
+              angleDeltaFromStart,
             },
           }
 
-          await addShape(newArcSeed)
+          await addShape(newArc)
           setShapeSeedConstraints(null)
           await goToFirstStep()
         }
@@ -604,6 +624,13 @@ const App: React.FC<Props> = ({ onExport }) => {
             const arcStartAngle = calcCentralAngleFromHorizontalLine(oldValue.startPoint, arcCenter)
             const arcEndAngle = calcCentralAngleFromHorizontalLine(activeCoord, arcCenter)
 
+            const angleDeltaFromStart =
+              arcStartAngle && arcEndAngle
+                ? arcEndAngle > arcStartAngle
+                  ? arcEndAngle - arcStartAngle
+                  : 360 - (arcStartAngle - arcEndAngle)
+                : 0
+
             const newValue: ArcThreePointsSeed3 = {
               ...oldValue,
               drawStep: 'onLinePoint',
@@ -613,6 +640,7 @@ const App: React.FC<Props> = ({ onExport }) => {
               startPointAngle: arcStartAngle ?? 0,
               endPointAngle: arcEndAngle ?? 0,
               radius: calcDistance(arcCenter, oldValue.startPoint),
+              angleDeltaFromStart,
             }
 
             return newValue
@@ -626,23 +654,39 @@ const App: React.FC<Props> = ({ onExport }) => {
             return
           }
 
-          const { startPointAngle, endPointAngle } = shapeSeed
+          const {
+            startPoint,
+            endPoint,
+            onLinePoint,
+            startPointAngle,
+            endPointAngle,
+            center,
+            radius,
+          } = shapeSeed
 
-          const counterClockWiseAngle =
+          const angleDeltaFromStart =
             endPointAngle > startPointAngle
               ? endPointAngle - startPointAngle
               : 360 - (startPointAngle - endPointAngle)
 
-          const newArcSeed: Arc<ArcConstraintsWithThreePoints> = {
+          const newArcSeed: Arc<ThreePointsConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'arc',
             drawCommand: 'three-points',
             constraints: {
-              ...shapeSeed,
-              constrainShape: 'arc',
-              constraintType: 'three-points',
-              angleDeltaFromStart: counterClockWiseAngle,
+              startPoint,
+              endPoint,
+              onLinePoint,
+            },
+            computed: {
+              center,
+              radius,
+              startPointAngle,
+              endPointAngle,
+              startPoint,
+              endPoint,
+              angleDeltaFromStart,
             },
           }
 

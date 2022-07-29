@@ -5,19 +5,18 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isArcCenterTwoPoints } from '../../lib/typeguard'
+import { isArcWithCenterTwoPointsConstraints } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
 }
 
 const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(
-    shapeSelectorFamily(shapeId)
-  ) as Arc<ArcConstraintsWithCenterAndTwoPoints>
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<CenterAndTwoPointsConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
-  const { center, radius, startPointAngle, endPointAngle } = shape.constraints
+  const { center } = shape.constraints
+  const { radius, startPointAngle, endPointAngle } = shape.computed
 
   const isFocused = indicatingShapeId === shape.id
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
@@ -28,7 +27,7 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
   else strokeColor = '#000000'
 
   useEffect(() => {
-    if (!isArcCenterTwoPoints(shape)) {
+    if (!isArcWithCenterTwoPointsConstraints(shape)) {
       throw new Error(`Shape(ID = ${shapeId} is not a arc`)
     }
   }, [shapeId, shape])

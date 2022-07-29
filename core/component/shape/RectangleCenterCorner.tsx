@@ -5,14 +5,14 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isRectangleCenterCorner } from '../../lib/typeguard'
+import { isRectangleWithCenterCornerConstraints } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
 }
 
 const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as RectangleCenterCorner
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Rectangle<CenterCornerConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
@@ -24,7 +24,7 @@ const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
   else strokeColor = '#000000'
 
   useEffect(() => {
-    if (!isRectangleCenterCorner(shape)) {
+    if (!isRectangleWithCenterCornerConstraints(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
     }
   }, [shapeId, shape])

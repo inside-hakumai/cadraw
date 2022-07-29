@@ -5,14 +5,14 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isArcThreePoints } from '../../lib/typeguard'
+import { isArcWithThreePointsConstraints } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
 }
 
 const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ArcConstraintsWithThreePoints>
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ThreePointsConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isFocused = indicatingShapeId === shape.id
@@ -25,12 +25,13 @@ const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
 
   useEffect(() => {
     console.debug(shape)
-    if (!isArcThreePoints(shape)) {
+    if (!isArcWithThreePointsConstraints(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
     }
   }, [shapeId, shape])
 
-  const { startPoint, endPoint, onLinePoint, center, radius } = shape.constraints
+  const { startPoint, endPoint, onLinePoint } = shape.constraints
+  const { center, radius } = shape.computed
 
   const vectorStartToOnLinePoint = {
     x: onLinePoint.x - startPoint.x,

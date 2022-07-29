@@ -5,7 +5,7 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isRectangleTwoCorners } from '../../lib/typeguard'
+import { isRectangleWithTwoCornersConstraints } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
@@ -24,7 +24,7 @@ const RectangleTwoCorners: React.FC<Props> = ({ shapeId }) => {
   else strokeColor = '#000000'
 
   useEffect(() => {
-    if (!isRectangleTwoCorners(shape)) {
+    if (!isRectangleWithTwoCornersConstraints(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
     }
   }, [shapeId, shape])

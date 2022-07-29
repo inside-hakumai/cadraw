@@ -170,7 +170,7 @@ export const findNearestPointOnLine = (
  */
 export const findNearestPointOnArc = (
   point: Coordinate,
-  arc: ArcConstraintsWithCenterAndTwoPoints | ArcConstraintsWithThreePoints
+  arc: Arc
 ): { nearestCoord: Coordinate; distance: number; isArcTerminal: boolean } | null => {
   const {
     center,
@@ -180,7 +180,7 @@ export const findNearestPointOnArc = (
     startPointAngle,
     endPointAngle,
     angleDeltaFromStart,
-  } = arc
+  } = arc.computed
 
   // 水平方向からの点までの角度
   const pointAngle = calcCentralAngleFromHorizontalLine(point, center)

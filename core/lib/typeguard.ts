@@ -43,32 +43,47 @@ export const isLine = (shape: any): shape is Line => {
   )
 }
 
-export const isRectangleTwoCorners = (shape: any): shape is Rectangle => {
-  const expectedType: ShapeType = 'rectangle'
-  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'two-corners'
+export const isRectangle = (shape: any): shape is Rectangle => {
   return (
-    typeof shape?.id === 'number' &&
-    shape?.shape === expectedType &&
-    shape?.drawCommand === expectedDrawCommand &&
-    isCoordinate(shape?.constraints?.corner1Point) &&
-    isCoordinate(shape?.constraints?.corner2Point) &&
-    isCoordinate(shape?.computed?.upperLeftPoint)
+    isRectangleWithCenterCornerConstraints(shape) || isRectangleWithTwoCornersConstraints(shape)
   )
 }
 
-export const isRectangleCenterCorner = (shape: any): shape is RectangleCenterCorner => {
+export const isRectangleWithCenterCornerConstraints = (
+  shape: any
+): shape is Rectangle<CenterCornerConstraints> => {
   const expectedType: ShapeType = 'rectangle'
   const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'center-corner'
+
   return (
     typeof shape?.id === 'number' &&
     shape?.shape === expectedType &&
     shape?.drawCommand === expectedDrawCommand &&
-    isCoordinate(shape?.constraints?.center) &&
-    isCoordinate(shape?.constraints?.cornerPoint) &&
     isCoordinate(shape?.computed?.upperLeftPoint) &&
     isCoordinate(shape?.computed?.upperRightPoint) &&
     isCoordinate(shape?.computed?.lowerLeftPoint) &&
-    isCoordinate(shape?.computed?.lowerRightPoint)
+    isCoordinate(shape?.computed?.lowerRightPoint) &&
+    isCoordinate(shape.constraints?.center) &&
+    isCoordinate(shape.constraints?.cornerPoint)
+  )
+}
+
+export const isRectangleWithTwoCornersConstraints = (
+  shape: any
+): shape is Rectangle<TwoCornersConstraints> => {
+  const expectedType: ShapeType = 'rectangle'
+  const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'two-corners'
+
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.computed?.upperLeftPoint) &&
+    isCoordinate(shape?.computed?.upperRightPoint) &&
+    isCoordinate(shape?.computed?.lowerLeftPoint) &&
+    isCoordinate(shape?.computed?.lowerRightPoint) &&
+    isCoordinate(shape.constraints?.corner1Point) &&
+    isCoordinate(shape.constraints?.corner2Point)
   )
 }
 
@@ -84,38 +99,54 @@ export const isCircle = (shape: any): shape is Circle => {
   )
 }
 
-export const isArcCenterTwoPoints = (
+export const isArc = (shape: any): shape is Arc => {
+  return isArcWithCenterTwoPointsConstraints(shape) || isArcWithThreePointsConstraints(shape)
+}
+
+export const isArcWithCenterTwoPointsConstraints = (
   shape: any
-): shape is Arc<ArcConstraintsWithCenterAndTwoPoints> => {
+): shape is Arc<CenterAndTwoPointsConstraints> => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'center-two-points'
+
   return (
     typeof shape?.id === 'number' &&
     shape?.shape === expectedType &&
     shape?.drawCommand === expectedDrawCommand &&
     isCoordinate(shape?.constraints?.center) &&
-    typeof shape?.constraints?.radius === 'number' &&
     isCoordinate(shape?.constraints?.startPoint) &&
     isCoordinate(shape?.constraints?.endPoint) &&
-    typeof shape?.constraints?.startPointAngle === 'number' &&
-    typeof shape?.constraints?.endPointAngle === 'number' &&
-    typeof shape?.constraints?.angleDeltaFromStart === 'number'
+    typeof shape?.constraints?.angleDeltaFromStart === 'number' &&
+    isCoordinate(shape?.computed?.center) &&
+    isCoordinate(shape?.computed?.startPoint) &&
+    isCoordinate(shape?.computed?.endPoint) &&
+    typeof shape?.computed?.startPointAngle === 'number' &&
+    typeof shape?.computed?.endPointAngle === 'number' &&
+    typeof shape?.computed?.radius === 'number' &&
+    typeof shape?.computed?.angleDeltaFromStart === 'number'
   )
 }
 
-export const isArcThreePoints = (shape: any): shape is Arc<ArcConstraintsWithThreePoints> => {
+export const isArcWithThreePointsConstraints = (
+  shape: any
+): shape is Arc<ThreePointsConstraints> => {
   const expectedType: ShapeType = 'arc'
   const expectedDrawCommand: ShapeDrawCommand<'arc'> = 'three-points'
+
   return (
     typeof shape?.id === 'number' &&
     shape?.shape === expectedType &&
     shape?.drawCommand === expectedDrawCommand &&
     isCoordinate(shape?.constraints?.startPoint) &&
     isCoordinate(shape?.constraints?.endPoint) &&
-    isCoordinate(shape?.constraints?.center) &&
-    typeof shape?.constraints?.startPointAngle === 'number' &&
-    typeof shape?.constraints?.endPointAngle === 'number' &&
-    typeof shape?.constraints?.radius === 'number'
+    isCoordinate(shape?.constraints?.onLinePoint) &&
+    isCoordinate(shape?.computed?.center) &&
+    isCoordinate(shape?.computed?.startPoint) &&
+    isCoordinate(shape?.computed?.endPoint) &&
+    typeof shape?.computed?.startPointAngle === 'number' &&
+    typeof shape?.computed?.endPointAngle === 'number' &&
+    typeof shape?.computed?.radius === 'number' &&
+    typeof shape?.computed?.angleDeltaFromStart === 'number'
   )
 }
 
