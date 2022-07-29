@@ -5,7 +5,7 @@ interface Props {
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const CircleSeed: React.FC<Props> = ({ shape, centerRef }) => {
+const CirclePreview: React.FC<Props> = ({ shape, centerRef }) => {
   return (
     <>
       <line
@@ -39,4 +39,4 @@ const CircleSeed: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default CircleSeed
+export default CirclePreview

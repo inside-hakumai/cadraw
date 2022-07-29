@@ -6,7 +6,7 @@ interface Props {
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const ArcSeedCenterTwoPoints: React.FC<Props> = ({ shape, centerRef }) => {
+const ArcConstrainedByCenterTwoPointsPreview: React.FC<Props> = ({ shape, centerRef }) => {
   const { center, startPoint, startPointAngle, radius } = shape
   let endPoint = null
   let endAngle = null
@@ -84,4 +84,4 @@ const ArcSeedCenterTwoPoints: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default ArcSeedCenterTwoPoints
+export default ArcConstrainedByCenterTwoPointsPreview

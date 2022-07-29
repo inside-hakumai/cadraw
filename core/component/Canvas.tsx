@@ -21,18 +21,18 @@ import {
   cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
-import CircleSeed from './shape/CircleSeed'
-import LineSeed from './shape/LineSeed'
+import CirclePreview from './shapePreview/CirclePreview'
+import LinePreview from './shapePreview/LinePreview'
 import Circle from './shape/Circle'
 import Line from './shape/Line'
-import SnapCircle from './shape/SnapCircle'
-import ArcSeedCenterTwoPoints from './shape/ArcSeedCenterTwoPoints'
+import SnapCircle from './SnapCircle'
+import ArcConstrainedByCenterTwoPointsPreview from './shapePreview/ArcConstrainedByCenterTwoPointsPreview'
 import Arc from './shape/Arc'
-import ArcSeedThreePoints from './shape/ArcSeedThreePoints'
-import GuidingLine from './shape/GuidingLine'
-import RectangleSeedTwoCorners from './shape/RectangleSeedTwoCorners'
+import ArcConstrainedByThreePointsPreview from './shapePreview/ArcConstrainedByThreePointsPreview'
+import GuidingLine from './GuidingLine'
+import RectangleConstrainedByTwoCornersPreview from './shapePreview/RectangleConstrainedByTwoCornersPreview'
 import { useTranslation } from 'react-i18next'
-import RectangleSeedCenterCorner from './shape/RectangleSeedCenterCorner'
+import RectangleConstrainedByCenterCornerPreview from './shapePreview/RectangleConstrainedByCenterCornerPreview'
 import Rectangle from './shape/Rectangle'
 
 const style = css`
@@ -183,27 +183,35 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {shapeSeed && (
           <>
             {/* 作成中（確定前）の図形（長方形） */}
-            {isRectangleTwoCornersSeed2(shapeSeed) && <RectangleSeedTwoCorners shape={shapeSeed} />}
+            {isRectangleTwoCornersSeed2(shapeSeed) && (
+              <RectangleConstrainedByTwoCornersPreview shape={shapeSeed} />
+            )}
             {isRectangleCenterCornerSeed2(shapeSeed) && (
-              <RectangleSeedCenterCorner shape={shapeSeed} />
+              <RectangleConstrainedByCenterCornerPreview shape={shapeSeed} />
             )}
 
             {/* 作成中（確定前）の図形（円） */}
             {isCircleCenterDiameterSeed2(shapeSeed) && (
-              <CircleSeed shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+              <CirclePreview shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
             )}
 
             {/* 作成中（確定前）の図形（円弧） */}
             {(isArcCenterTwoPointsSeed2(shapeSeed) || isArcCenterTwoPointsSeed3(shapeSeed)) && (
-              <ArcSeedCenterTwoPoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+              <ArcConstrainedByCenterTwoPointsPreview
+                shape={shapeSeed}
+                centerRef={temporaryCircleCenterRef}
+              />
             )}
             {(isArcThreePointsSeed2(shapeSeed) || isArcThreePointsSeed3(shapeSeed)) && (
-              <ArcSeedThreePoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+              <ArcConstrainedByThreePointsPreview
+                shape={shapeSeed}
+                centerRef={temporaryCircleCenterRef}
+              />
             )}
 
             {/* 作成中（確定前）の図形（線） */}
             {isLineStartEndSeed2(shapeSeed) && (
-              <LineSeed shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
+              <LinePreview shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
             )}
           </>
         )}

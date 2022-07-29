@@ -12,7 +12,12 @@ interface Props {
   shapeId: number
 }
 
-const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
+/**
+ * 弧の両端の位置および弧上の1点を指定して形成する弧
+ * @param shapeId 図形のID
+ * @constructor
+ */
+const ArcConstrainedByThreePoints: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ThreePointsConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
@@ -90,4 +95,4 @@ const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
   )
 }
 
-export default ArcThreePoints
+export default ArcConstrainedByThreePoints

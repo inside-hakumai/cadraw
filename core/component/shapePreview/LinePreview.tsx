@@ -6,7 +6,7 @@ interface Props {
   isSupplementalLine?: boolean
 }
 
-const LineSeed: React.FC<Props> = ({ shape, startCircleRef, isSupplementalLine = false }) => {
+const LinePreview: React.FC<Props> = ({ shape, startCircleRef, isSupplementalLine = false }) => {
   const { startPoint, endPoint } = shape
 
   return (
@@ -33,4 +33,4 @@ const LineSeed: React.FC<Props> = ({ shape, startCircleRef, isSupplementalLine =
   )
 }
 
-export default LineSeed
+export default LinePreview

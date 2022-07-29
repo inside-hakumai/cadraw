@@ -12,7 +12,12 @@ interface Props {
   shapeId: number
 }
 
-const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
+/**
+ * 弧を含む円周の中心点と、弧の両端の位置を指定して形成する弧
+ * @param shapeId 図形のID
+ * @constructor
+ */
+const ArcConstrainedByCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<CenterAndTwoPointsConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
@@ -62,4 +67,4 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
   )
 }
 
-export default ArcCenterTwoPoints
+export default ArcConstrainedByCenterTwoPoints

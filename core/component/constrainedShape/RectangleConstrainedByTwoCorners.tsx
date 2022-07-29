@@ -5,22 +5,27 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isRectangleConstrainedByCenterCorner } from '../../lib/typeguard'
+import { isRectangleConstrainedByTwoCorners } from '../../lib/typeguard'
 import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
 }
 
-const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Rectangle<CenterCornerConstraints>
+/**
+ * 四隅のうち同じ対角線上に位置する2点を位置を指定して形成される長方形
+ * @param shapeId 図形のID
+ * @constructor
+ */
+const RectangleConstrainedByTwoCorners: React.FC<Props> = ({ shapeId }) => {
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Rectangle
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
   const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
-    if (!isRectangleConstrainedByCenterCorner(shape)) {
+    if (!isRectangleConstrainedByTwoCorners(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
     }
   }, [shapeId, shape])
@@ -42,4 +47,4 @@ const RectangleCenterCorner: React.FC<Props> = ({ shapeId }) => {
   )
 }
 
-export default RectangleCenterCorner
+export default RectangleConstrainedByTwoCorners

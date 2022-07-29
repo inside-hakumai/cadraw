@@ -6,7 +6,7 @@ interface Props {
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const ArcSeedThreePoints: React.FC<Props> = ({ shape, centerRef }) => {
+const ArcConstrainedByThreePointsPreview: React.FC<Props> = ({ shape, centerRef }) => {
   const { startPoint, endPoint } = shape
   let onLinePoint = null
   let center = null
@@ -111,4 +111,4 @@ const ArcSeedThreePoints: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default ArcSeedThreePoints
+export default ArcConstrainedByThreePointsPreview
