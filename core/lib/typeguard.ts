@@ -90,7 +90,11 @@ export const isRectangleConstrainedByTwoCorners = (
 }
 
 export const isCircle = (shape: any): shape is Circle => {
-  return isCircleConstrainedByCenterRadius(shape) || isCircleConstrainedByTwoPointsRadius(shape)
+  return (
+    isCircleConstrainedByCenterRadius(shape) ||
+    isCircleConstrainedByTwoPoints(shape) ||
+    isCircleConstrainedByTwoPointsRadius(shape)
+  )
 }
 
 export const isCircleConstrainedByCenterRadius = (
@@ -105,6 +109,23 @@ export const isCircleConstrainedByCenterRadius = (
     shape?.drawCommand === expectedDrawCommand &&
     isCoordinate(shape?.constraints?.center) &&
     typeof shape?.constraints?.radius === 'number' &&
+    isCoordinate(shape?.computed?.center) &&
+    typeof shape?.computed?.radius === 'number'
+  )
+}
+
+export const isCircleConstrainedByTwoPoints = (
+  shape: any
+): shape is Circle<TwoPointsConstraints> => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'two-points'
+
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.point1) &&
+    isCoordinate(shape?.constraints?.point2) &&
     isCoordinate(shape?.computed?.center) &&
     typeof shape?.computed?.radius === 'number'
   )
@@ -237,6 +258,23 @@ export const isCircleSeedConstrainedByCenterDiameter = (
     isCoordinate(shape?.diameterStart) &&
     isCoordinate(shape?.diameterEnd) &&
     typeof shape?.radius === 'number'
+  )
+}
+
+export const isCircleSeedConstrainedByTwoPoints = (
+  shape: any
+): shape is CircleSeedConstrainedByTwoPoints => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'two-points'
+
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.point1) &&
+    isCoordinate(shape?.point2) &&
+    typeof shape?.diameter === 'number' &&
+    isCoordinate(shape?.center)
   )
 }
 

@@ -84,13 +84,21 @@ declare global {
     radius: number
   }
 
+  interface TwoPointsConstraints {
+    point1: Coordinate
+    point2: Coordinate
+  }
+
   interface TwoPointsRadiusConstraints {
     point1: Coordinate
     point2: Coordinate
     radius: number
   }
 
-  type CircleConstraints = CenterRadiusConstraints | TwoPointsRadiusConstraints
+  type CircleConstraints =
+    | CenterRadiusConstraints
+    | TwoPointsConstraints
+    | TwoPointsRadiusConstraints
 
   interface Circle<C extends CircleConstraints = Void> extends Shape {
     shape: 'circle'
@@ -202,6 +210,15 @@ declare global {
     diameterStart: Coordinate
     diameterEnd: Coordinate
     radius: number
+  }
+
+  interface CircleSeedConstrainedByTwoPoints extends ShapeSeed {
+    shape: 'circle'
+    drawCommand: 'two-points'
+    point1: Coordinate
+    point2: Coordinate
+    diameter: number
+    center: Coordinate
   }
 
   interface CircleSeed1ConstrainedByTwoPointsRadius extends ShapeSeed {

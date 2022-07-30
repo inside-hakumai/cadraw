@@ -69,6 +69,14 @@ const useDrawStep = () => {
             goIfValidIndex(stepList, currentStepIndex)
           }
 
+          if (drawCommand === 'two-points') {
+            const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points'>
+            const stepList = drawStepList[operationMode][drawCommand]
+
+            const currentStepIndex = stepList.indexOf(circleDrawStep)
+            goIfValidIndex(stepList, currentStepIndex)
+          }
+
           if (drawCommand === 'two-points-radius') {
             const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points-radius'>
             const stepList = drawStepList[operationMode][drawCommand]
