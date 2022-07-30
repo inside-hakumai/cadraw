@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface Props {
-  shape: RectangleTwoCornersSeed2
+  shape: RectangleSeedConstrainedByTwoCorners
 }
 
 const RectangleConstrainedByTwoCornersPreview: React.FC<Props> = ({ shape }) => {
