@@ -1,18 +1,18 @@
 import React from 'react'
-import { isArcCenterTwoPointsSeed3 } from '../../lib/typeguard'
+import { isArcSeed2ConstrainedByCenterTwoPoints } from '../../lib/typeguard'
 
 interface Props {
-  shape: ArcCenterTwoPointsSeed2 | ArcCenterTwoPointsSeed3
+  shape: ArcSeed1ConstrainedByCenterTwoPoints | ArcSeed2ConstrainedByCenterTwoPoints
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const ArcSeedCenterTwoPoints: React.FC<Props> = ({ shape, centerRef }) => {
+const ArcConstrainedByCenterTwoPointsPreview: React.FC<Props> = ({ shape, centerRef }) => {
   const { center, startPoint, startPointAngle, radius } = shape
   let endPoint = null
   let endAngle = null
 
   let pathNodeAttribute: string[] | null = null
-  if (isArcCenterTwoPointsSeed3(shape)) {
+  if (isArcSeed2ConstrainedByCenterTwoPoints(shape)) {
     endPoint = shape.endPoint
     endAngle = shape.endPointAngle
 
@@ -84,4 +84,4 @@ const ArcSeedCenterTwoPoints: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default ArcSeedCenterTwoPoints
+export default ArcConstrainedByCenterTwoPointsPreview

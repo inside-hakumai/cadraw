@@ -1,14 +1,16 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import {
-  isArcCenterTwoPointsSeed2,
-  isArcCenterTwoPointsSeed3,
-  isArcThreePointsSeed2,
-  isArcThreePointsSeed3,
-  isCircleCenterDiameterSeed2,
-  isLineStartEndSeed2,
-  isRectangleCenterCornerSeed2,
-  isRectangleTwoCornersSeed2,
+  isArcSeed1ConstrainedByCenterTwoPoints,
+  isArcSeed2ConstrainedByCenterTwoPoints,
+  isArcSeed1ConstrainedByThreePoints,
+  isArcSeed2ConstrainedByThreePoints,
+  isCircleSeedConstrainedByCenterDiameter,
+  isLineSeedConstrainedByStartEnd,
+  isRectangleSeedConstrainedByCenterCorner,
+  isRectangleSeedConstrainedByTwoCorners,
+  isCircleSeed1ConstrainedByTwoPointsRadius,
+  isCircleSeed2ConstrainedByTwoPointsRadius,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
@@ -16,24 +18,24 @@ import {
   snappingCoordState,
   guidingLinesState,
   shapeSeedState,
-  tooltipContentState,
+  tooltipState,
   indicatingShapeIdState,
-  cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
-import CircleSeed from './shape/CircleSeed'
-import LineSeed from './shape/LineSeed'
+import CircleConstrainedByCenterDiameterPreview from './shapePreview/CircleConstrainedByCenterDiameterPreview'
+import LinePreview from './shapePreview/LinePreview'
 import Circle from './shape/Circle'
 import Line from './shape/Line'
-import SnapCircle from './shape/SnapCircle'
-import ArcSeedCenterTwoPoints from './shape/ArcSeedCenterTwoPoints'
+import SnapCircle from './SnapCircle'
+import ArcConstrainedByCenterTwoPointsPreview from './shapePreview/ArcConstrainedByCenterTwoPointsPreview'
 import Arc from './shape/Arc'
-import ArcSeedThreePoints from './shape/ArcSeedThreePoints'
-import GuidingLine from './shape/GuidingLine'
-import RectangleSeedTwoCorners from './shape/RectangleSeedTwoCorners'
+import ArcConstrainedByThreePointsPreview from './shapePreview/ArcConstrainedByThreePointsPreview'
+import GuidingLine from './GuidingLine'
+import RectangleConstrainedByTwoCornersPreview from './shapePreview/RectangleConstrainedByTwoCornersPreview'
 import { useTranslation } from 'react-i18next'
-import RectangleSeedCenterCorner from './shape/RectangleSeedCenterCorner'
+import RectangleConstrainedByCenterCornerPreview from './shapePreview/RectangleConstrainedByCenterCornerPreview'
 import Rectangle from './shape/Rectangle'
+import CircleConstrainedByTwoPointsRadiusPreview from './shapePreview/CircleConstrainedByTwoPointsRadiusPreview'
 
 const style = css`
   width: 100%;
@@ -104,8 +106,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const shapeSeed = useRecoilValue(shapeSeedState)
   const guidingLines = useRecoilValue(guidingLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
-  const tooltipContent = useRecoilValue(tooltipContentState)
-  const cursorClientPosition = useRecoilValue(cursorClientPositionState)
+  const tooltip = useRecoilValue(tooltipState)
 
   // デバッグ用
   // const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
@@ -183,27 +184,44 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {shapeSeed && (
           <>
             {/* 作成中（確定前）の図形（長方形） */}
-            {isRectangleTwoCornersSeed2(shapeSeed) && <RectangleSeedTwoCorners shape={shapeSeed} />}
-            {isRectangleCenterCornerSeed2(shapeSeed) && (
-              <RectangleSeedCenterCorner shape={shapeSeed} />
+            {isRectangleSeedConstrainedByTwoCorners(shapeSeed) && (
+              <RectangleConstrainedByTwoCornersPreview shape={shapeSeed} />
+            )}
+            {isRectangleSeedConstrainedByCenterCorner(shapeSeed) && (
+              <RectangleConstrainedByCenterCornerPreview shape={shapeSeed} />
             )}
 
             {/* 作成中（確定前）の図形（円） */}
-            {isCircleCenterDiameterSeed2(shapeSeed) && (
-              <CircleSeed shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            {isCircleSeedConstrainedByCenterDiameter(shapeSeed) && (
+              <CircleConstrainedByCenterDiameterPreview
+                shape={shapeSeed}
+                centerRef={temporaryCircleCenterRef}
+              />
+            )}
+            {(isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed) ||
+              isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) && (
+              <CircleConstrainedByTwoPointsRadiusPreview shape={shapeSeed} />
             )}
 
             {/* 作成中（確定前）の図形（円弧） */}
-            {(isArcCenterTwoPointsSeed2(shapeSeed) || isArcCenterTwoPointsSeed3(shapeSeed)) && (
-              <ArcSeedCenterTwoPoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            {(isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed) ||
+              isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) && (
+              <ArcConstrainedByCenterTwoPointsPreview
+                shape={shapeSeed}
+                centerRef={temporaryCircleCenterRef}
+              />
             )}
-            {(isArcThreePointsSeed2(shapeSeed) || isArcThreePointsSeed3(shapeSeed)) && (
-              <ArcSeedThreePoints shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+            {(isArcSeed1ConstrainedByThreePoints(shapeSeed) ||
+              isArcSeed2ConstrainedByThreePoints(shapeSeed)) && (
+              <ArcConstrainedByThreePointsPreview
+                shape={shapeSeed}
+                centerRef={temporaryCircleCenterRef}
+              />
             )}
 
             {/* 作成中（確定前）の図形（線） */}
-            {isLineStartEndSeed2(shapeSeed) && (
-              <LineSeed shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
+            {isLineSeedConstrainedByStartEnd(shapeSeed) && (
+              <LinePreview shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
             )}
           </>
         )}
@@ -223,15 +241,15 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}
-      {tooltipContent && cursorClientPosition && (
+      {tooltip && (
         <div
           css={tooltipStyle}
           style={{
-            left: cursorClientPosition.x,
-            top: cursorClientPosition.y - 30,
+            left: tooltip.clientPosition.x,
+            top: tooltip.clientPosition.y - 30,
             cursor: 'default',
           }}>
-          {tooltipContent}
+          {tooltip.content}
         </div>
       )}
 

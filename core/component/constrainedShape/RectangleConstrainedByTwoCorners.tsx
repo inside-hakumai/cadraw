@@ -5,26 +5,27 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isRectangleTwoCorners } from '../../lib/typeguard'
+import { isRectangleConstrainedByTwoCorners } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
 }
 
-const RectangleTwoCorners: React.FC<Props> = ({ shapeId }) => {
+/**
+ * 四隅のうち同じ対角線上に位置する2点を位置を指定して形成される長方形
+ * @param shapeId 図形のID
+ * @constructor
+ */
+const RectangleConstrainedByTwoCorners: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Rectangle
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
   const isFocused = indicatingShapeId === shape.id
 
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
-
   useEffect(() => {
-    if (!isRectangleTwoCorners(shape)) {
+    if (!isRectangleConstrainedByTwoCorners(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a Rectangle`)
     }
   }, [shapeId, shape])
@@ -38,7 +39,7 @@ const RectangleTwoCorners: React.FC<Props> = ({ shapeId }) => {
         y={upperLeftPoint.y}
         width={Math.abs(upperRightPoint.x - upperLeftPoint.x)}
         height={Math.abs(lowerLeftPoint.y - upperLeftPoint.y)}
-        stroke={strokeColor}
+        stroke={getStrokeColor(isSelected, isFocused)}
         strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
         fill={'none'}
       />
@@ -46,4 +47,4 @@ const RectangleTwoCorners: React.FC<Props> = ({ shapeId }) => {
   )
 }
 
-export default RectangleTwoCorners
+export default RectangleConstrainedByTwoCorners

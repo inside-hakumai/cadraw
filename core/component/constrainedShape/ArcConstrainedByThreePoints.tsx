@@ -5,32 +5,34 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isArcThreePoints } from '../../lib/typeguard'
+import { isArcConstrainedByThreePoints } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
 }
 
-const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ArcConstraintsWithThreePoints>
+/**
+ * 弧の両端の位置および弧上の1点を指定して形成する弧
+ * @param shapeId 図形のID
+ * @constructor
+ */
+const ArcConstrainedByThreePoints: React.FC<Props> = ({ shapeId }) => {
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ThreePointsConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
   const isFocused = indicatingShapeId === shape.id
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
 
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
-
   useEffect(() => {
     console.debug(shape)
-    if (!isArcThreePoints(shape)) {
+    if (!isArcConstrainedByThreePoints(shape)) {
       throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
     }
   }, [shapeId, shape])
 
-  const { startPoint, endPoint, onLinePoint, center, radius } = shape.constraints
+  const { startPoint, endPoint, onLinePoint } = shape.constraints
+  const { center, radius } = shape.computed
 
   const vectorStartToOnLinePoint = {
     x: onLinePoint.x - startPoint.x,
@@ -86,11 +88,11 @@ const ArcThreePoints: React.FC<Props> = ({ shapeId }) => {
       key={`arc${shapeId}`}
       d={pathNodeAttribute.join(' ')}
       fill='none'
-      stroke={strokeColor}
+      stroke={getStrokeColor(isSelected, isFocused)}
       strokeWidth='1'
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
 }
 
-export default ArcThreePoints
+export default ArcConstrainedByThreePoints

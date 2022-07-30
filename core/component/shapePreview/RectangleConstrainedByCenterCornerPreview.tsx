@@ -1,10 +1,10 @@
 import React from 'react'
 
 interface Props {
-  shape: RectangleCenterCornerSeed2
+  shape: RectangleSeedConstrainedByCenterCorner
 }
 
-const RectangleSeedCenterCorner: React.FC<Props> = ({ shape }) => {
+const RectangleConstrainedByCenterCornerPreview: React.FC<Props> = ({ shape }) => {
   const { center, cornerPoint, upperLeftPoint } = shape
 
   return (
@@ -35,4 +35,4 @@ const RectangleSeedCenterCorner: React.FC<Props> = ({ shape }) => {
   )
 }
 
-export default RectangleSeedCenterCorner
+export default RectangleConstrainedByCenterCornerPreview

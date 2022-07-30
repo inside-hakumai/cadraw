@@ -24,18 +24,26 @@ import {
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import {
-  isArcCenterTwoPointsSeed2,
-  isArcCenterTwoPointsSeed3,
-  isArcThreePointsSeed2,
-  isArcThreePointsSeed3,
+  isArcSeed1ConstrainedByCenterTwoPoints,
+  isArcSeed2ConstrainedByCenterTwoPoints,
+  isArcSeed1ConstrainedByThreePoints,
+  isArcSeed2ConstrainedByThreePoints,
+  isLineSeedConstrainedByStartEnd,
+  isRectangleSeedConstrainedByTwoCorners,
   isShapeType,
   isValidArcCommand,
   isValidCircleCommand,
   isValidLineCommand,
   isValidRectangleCommand,
+  isCircleSeed1ConstrainedByTwoPointsRadius,
+  isCircleSeed2ConstrainedByTwoPointsRadius,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
-import { calcCentralAngleFromHorizontalLine, calcDistance } from '../lib/function'
+import {
+  calcCentralAngleFromHorizontalLine,
+  calcDistance,
+  findLineEquidistantFromTwoPoints,
+} from '../lib/function'
 
 interface Props {
   onExport?: (data: string) => void
@@ -220,11 +228,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
         if (lineDrawStep === 'startPoint') {
-          const newLineSeed: LineStartEndSeed2 = {
+          const newLineSeed: LineSeedConstrainedByStartEnd = {
             isSeed: true,
             shape: 'line',
             drawCommand: 'start-end',
-            drawStep: 'endPoint',
             startPoint: { x: activeCoord.x, y: activeCoord.y },
             endPoint: { x: activeCoord.x, y: activeCoord.y },
           }
@@ -232,8 +239,8 @@ const App: React.FC<Props> = ({ onExport }) => {
           await goToNextStep()
         }
 
-        if (lineDrawStep === 'endPoint') {
-          const lineSeed = shapeSeed as LineStartEndSeed2
+        if (lineDrawStep === 'endPoint' && isLineSeedConstrainedByStartEnd(shapeSeed)) {
+          const { startPoint, endPoint } = shapeSeed
 
           const newLine: Line = {
             id: shapes.length,
@@ -241,8 +248,8 @@ const App: React.FC<Props> = ({ onExport }) => {
             shape: 'line',
             drawCommand: 'start-end',
             constraints: {
-              startPoint: { x: lineSeed.startPoint.x, y: lineSeed.startPoint.y },
-              endPoint: { x: lineSeed.endPoint.x, y: lineSeed.endPoint.y },
+              startPoint: { x: startPoint.x, y: startPoint.y },
+              endPoint: { x: endPoint.x, y: endPoint.y },
             },
           }
 
@@ -260,11 +267,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
         if (rectangleDrawStep === 'corner-1') {
-          const newRectangleSeed: RectangleTwoCornersSeed2 = {
+          const newRectangleSeed: RectangleSeedConstrainedByTwoCorners = {
             isSeed: true,
             shape: 'rectangle',
             drawCommand: 'two-corners',
-            drawStep: 'corner-2',
             corner1Point: activeCoord,
             corner2Point: activeCoord,
             upperLeftPoint: activeCoord,
@@ -274,10 +280,8 @@ const App: React.FC<Props> = ({ onExport }) => {
           await goToNextStep()
         }
 
-        if (rectangleDrawStep === 'corner-2') {
-          const newRectangleSeed = shapeSeed as RectangleTwoCornersSeed2
-
-          const { corner1Point, corner2Point } = newRectangleSeed
+        if (rectangleDrawStep === 'corner-2' && isRectangleSeedConstrainedByTwoCorners(shapeSeed)) {
+          const { corner1Point, corner2Point } = shapeSeed
 
           if (corner2Point.x - corner1Point.x === 0 || corner2Point.y - corner1Point.y === 0) {
             return
@@ -347,11 +351,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
 
         if (rectangleDrawStep === 'center') {
-          const newRectangleSeed: RectangleCenterCornerSeed2 = {
+          const newRectangleSeed: RectangleSeedConstrainedByCenterCorner = {
             isSeed: true,
             shape: 'rectangle',
             drawCommand: 'center-corner',
-            drawStep: 'corner',
             center: activeCoord,
             cornerPoint: activeCoord,
             upperLeftPoint: activeCoord,
@@ -362,7 +365,7 @@ const App: React.FC<Props> = ({ onExport }) => {
         }
 
         if (rectangleDrawStep === 'corner') {
-          const newRectangleSeed = shapeSeed as RectangleCenterCornerSeed2
+          const newRectangleSeed = shapeSeed as RectangleSeedConstrainedByCenterCorner
           const { center, cornerPoint } = newRectangleSeed
 
           if (cornerPoint.x === center.x || cornerPoint.y === center.y) {
@@ -441,7 +444,7 @@ const App: React.FC<Props> = ({ onExport }) => {
             }
           }
 
-          const newRectangle: RectangleCenterCorner = {
+          const newRectangle: Rectangle<CenterCornerConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'rectangle',
@@ -472,11 +475,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
         if (circleDrawStep === 'center') {
-          const newCircleSeed: CircleCenterDiameterSeed2 = {
+          const newCircleSeed: CircleSeedConstrainedByCenterDiameter = {
             isSeed: true,
             shape: 'circle',
             drawCommand: 'center-diameter',
-            drawStep: 'diameter',
             center: activeCoord,
             diameterStart: activeCoord,
             diameterEnd: activeCoord,
@@ -487,16 +489,80 @@ const App: React.FC<Props> = ({ onExport }) => {
         }
 
         if (circleDrawStep === 'diameter') {
-          const circleSeed = shapeSeed as CircleCenterDiameterSeed2
+          const circleSeed = shapeSeed as CircleSeedConstrainedByCenterDiameter
 
           const { center, radius } = circleSeed
 
-          const newCircle: Circle = {
+          const newCircle: Circle<CenterRadiusConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'circle',
             drawCommand: 'center-diameter',
             constraints: {
+              center,
+              radius,
+            },
+            computed: {
+              center,
+              radius,
+            },
+          }
+
+          await addShape(newCircle)
+          setShapeSeedConstraints(null)
+          await goToFirstStep()
+        }
+      }
+
+      if (circleDrawCommand === 'two-points-radius') {
+        const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points-radius'>
+
+        if (circleDrawStep === 'point1') {
+          const newCircleSeed: CircleSeed1ConstrainedByTwoPointsRadius = {
+            isSeed: true,
+            shape: 'circle',
+            drawCommand: 'two-points-radius',
+            point1: activeCoord,
+            point2: activeCoord,
+            distanceBetweenPoints: 0,
+            radius: undefined,
+            center: undefined,
+          }
+          setShapeSeedConstraints(newCircleSeed)
+          await goToNextStep()
+        }
+
+        if (circleDrawStep === 'point2' && isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed)) {
+          const newCircleSeed: CircleSeed2ConstrainedByTwoPointsRadius = {
+            ...shapeSeed,
+            lineEquidistantFromTwoPoints: findLineEquidistantFromTwoPoints(
+              shapeSeed.point1,
+              shapeSeed.point2
+            ),
+            radius: calcDistance(shapeSeed.point1, activeCoord) / 2,
+            center: {
+              x: (shapeSeed.point1.x + activeCoord.x) / 2,
+              y: (shapeSeed.point1.y + activeCoord.y) / 2,
+            },
+          }
+          setShapeSeedConstraints(newCircleSeed)
+          await goToNextStep()
+        }
+
+        if (circleDrawStep === 'radius' && isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) {
+          const { point1, point2, radius, center } = shapeSeed
+
+          const newCircle: Circle<TwoPointsRadiusConstraints> = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'circle',
+            drawCommand: 'two-points-radius',
+            constraints: {
+              point1,
+              point2,
+              radius,
+            },
+            computed: {
               center,
               radius,
             },
@@ -516,11 +582,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
         if (arcDrawStep === 'center') {
-          const newArcSeed: ArcCenterTwoPointsSeed2 = {
+          const newArcSeed: ArcSeed1ConstrainedByCenterTwoPoints = {
             isSeed: true,
             shape: 'arc',
             drawCommand: 'center-two-points',
-            drawStep: 'startPoint',
             center: activeCoord,
             startPoint: activeCoord,
             startPointAngle: 0,
@@ -531,14 +596,13 @@ const App: React.FC<Props> = ({ onExport }) => {
         }
 
         if (arcDrawStep === 'startPoint') {
-          if (!isArcCenterTwoPointsSeed2(shapeSeed)) {
+          if (!isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed)) {
             console.warn('shapeSeed is not ArcCenterTwoPointsSeed2')
             return null
           }
 
-          const newValue: ArcCenterTwoPointsSeed3 = {
+          const newValue: ArcSeed2ConstrainedByCenterTwoPoints = {
             ...shapeSeed,
-            drawStep: 'endPoint',
             endPoint: activeCoord,
             endPointAngle: shapeSeed.startPointAngle,
             angleDeltaFromStart: 0,
@@ -549,24 +613,44 @@ const App: React.FC<Props> = ({ onExport }) => {
         }
 
         if (arcDrawStep === 'endPoint') {
-          if (!isArcCenterTwoPointsSeed3(shapeSeed)) {
+          if (!isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) {
             console.warn('shapeSeed is not ArcCenterTwoPointsSeed3')
             return
           }
 
-          const newArcSeed: Arc<ArcConstraintsWithCenterAndTwoPoints> = {
+          const {
+            center,
+            startPoint,
+            endPoint,
+            startPointAngle,
+            endPointAngle,
+            angleDeltaFromStart,
+            radius,
+          } = shapeSeed
+
+          const newArc: Arc<CenterAndTwoPointsConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'arc',
             drawCommand: 'center-two-points',
             constraints: {
-              ...shapeSeed,
-              constrainShape: 'arc',
-              constraintType: 'center-two-points',
+              center,
+              startPoint,
+              endPoint,
+              angleDeltaFromStart,
+            },
+            computed: {
+              center,
+              startPoint,
+              endPoint,
+              startPointAngle,
+              endPointAngle,
+              radius,
+              angleDeltaFromStart,
             },
           }
 
-          await addShape(newArcSeed)
+          await addShape(newArc)
           setShapeSeedConstraints(null)
           await goToFirstStep()
         }
@@ -576,11 +660,10 @@ const App: React.FC<Props> = ({ onExport }) => {
         const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
         if (arcDrawStep === 'startPoint') {
-          const newArcSeed: ArcThreePointsSeed2 = {
+          const newArcSeed: ArcSeed1ConstrainedThreePoints = {
             isSeed: true,
             shape: 'arc',
             drawCommand: 'three-points',
-            drawStep: 'endPoint',
             startPoint: activeCoord,
             endPoint: activeCoord,
             distance: 0,
@@ -591,7 +674,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
         if (arcDrawStep === 'endPoint') {
           setShapeSeedConstraints(oldValue => {
-            if (!isArcThreePointsSeed2(oldValue)) {
+            if (!isArcSeed1ConstrainedByThreePoints(oldValue)) {
               console.warn('shapeSeed is not ArcThreePointsSeed2')
               return null
             }
@@ -604,15 +687,22 @@ const App: React.FC<Props> = ({ onExport }) => {
             const arcStartAngle = calcCentralAngleFromHorizontalLine(oldValue.startPoint, arcCenter)
             const arcEndAngle = calcCentralAngleFromHorizontalLine(activeCoord, arcCenter)
 
-            const newValue: ArcThreePointsSeed3 = {
+            const angleDeltaFromStart =
+              arcStartAngle && arcEndAngle
+                ? arcEndAngle > arcStartAngle
+                  ? arcEndAngle - arcStartAngle
+                  : 360 - (arcStartAngle - arcEndAngle)
+                : 0
+
+            const newValue: ArcSeed2ConstrainedByThreePoints = {
               ...oldValue,
-              drawStep: 'onLinePoint',
               endPoint: activeCoord,
               onLinePoint: activeCoord,
               center: arcCenter,
               startPointAngle: arcStartAngle ?? 0,
               endPointAngle: arcEndAngle ?? 0,
               radius: calcDistance(arcCenter, oldValue.startPoint),
+              angleDeltaFromStart,
             }
 
             return newValue
@@ -621,28 +711,44 @@ const App: React.FC<Props> = ({ onExport }) => {
         }
 
         if (arcDrawStep === 'onLinePoint') {
-          if (!isArcThreePointsSeed3(shapeSeed)) {
+          if (!isArcSeed2ConstrainedByThreePoints(shapeSeed)) {
             console.warn('shapeSeed is not ArcThreePointsSeed3')
             return
           }
 
-          const { startPointAngle, endPointAngle } = shapeSeed
+          const {
+            startPoint,
+            endPoint,
+            onLinePoint,
+            startPointAngle,
+            endPointAngle,
+            center,
+            radius,
+          } = shapeSeed
 
-          const counterClockWiseAngle =
+          const angleDeltaFromStart =
             endPointAngle > startPointAngle
               ? endPointAngle - startPointAngle
               : 360 - (startPointAngle - endPointAngle)
 
-          const newArcSeed: Arc<ArcConstraintsWithThreePoints> = {
+          const newArcSeed: Arc<ThreePointsConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'arc',
             drawCommand: 'three-points',
             constraints: {
-              ...shapeSeed,
-              constrainShape: 'arc',
-              constraintType: 'three-points',
-              angleDeltaFromStart: counterClockWiseAngle,
+              startPoint,
+              endPoint,
+              onLinePoint,
+            },
+            computed: {
+              center,
+              radius,
+              startPointAngle,
+              endPointAngle,
+              startPoint,
+              endPoint,
+              angleDeltaFromStart,
             },
           }
 

@@ -1,11 +1,11 @@
 import React from 'react'
 
 interface Props {
-  shape: CircleCenterDiameterSeed2
+  shape: CircleSeedConstrainedByCenterDiameter
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const CircleSeed: React.FC<Props> = ({ shape, centerRef }) => {
+const CircleConstrainedByCenterDiameterPreview: React.FC<Props> = ({ shape, centerRef }) => {
   return (
     <>
       <line
@@ -39,4 +39,4 @@ const CircleSeed: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default CircleSeed
+export default CircleConstrainedByCenterDiameterPreview

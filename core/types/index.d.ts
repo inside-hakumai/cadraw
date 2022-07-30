@@ -64,6 +64,13 @@ declare global {
     constraintType: ConstraintType
   }
 
+  interface Shape {
+    type: DrawType
+    shape: ShapeType
+    drawCommand: DrawCommand
+    id: number
+  }
+
   interface Line extends Shape {
     shape: 'line'
     constraints: {
@@ -72,72 +79,26 @@ declare global {
     }
   }
 
-  interface Rectangle extends Shape {
-    shape: 'rectangle'
-    constraints: {
-      corner1Point: Coordinate
-      corner2Point: Coordinate
-    }
-    computed: {
-      upperLeftPoint: Coordinate
-      upperRightPoint: Coordinate
-      lowerLeftPoint: Coordinate
-      lowerRightPoint: Coordinate
-    }
+  interface CenterRadiusConstraints {
+    center: Coordinate
+    radius: number
   }
 
-  interface RectangleCenterCorner extends Shape {
-    shape: 'rectangle'
-    constraints: {
-      center: Coordinate
-      cornerPoint: Coordinate
-    }
-    computed: {
-      upperLeftPoint: Coordinate
-      upperRightPoint: Coordinate
-      lowerLeftPoint: Coordinate
-      lowerRightPoint: Coordinate
-    }
+  interface TwoPointsRadiusConstraints {
+    point1: Coordinate
+    point2: Coordinate
+    radius: number
   }
 
-  interface Circle extends Shape {
+  type CircleConstraints = CenterRadiusConstraints | TwoPointsRadiusConstraints
+
+  interface Circle<C extends CircleConstraints = Void> extends Shape {
     shape: 'circle'
-    constraints: {
+    constraints: C
+    computed: {
       center: Coordinate
       radius: number
     }
-  }
-
-  interface ArcConstraints {
-    constrainShape: 'arc'
-  }
-
-  interface ArcConstraintsWithCenterAndTwoPoints extends ArcConstraints {
-    constraintType: 'center-two-points'
-    center: Coordinate
-    radius: number
-    startPoint: Coordinate
-    endPoint: Coordinate
-    startPointAngle: number
-    endPointAngle: number
-    angleDeltaFromStart: number
-  }
-
-  interface ArcConstraintsWithThreePoints extends ArcConstraints {
-    constraintType: 'three-points'
-    startPoint: Coordinate
-    endPoint: Coordinate
-    onLinePoint: Coordinate
-    center: Coordinate
-    startPointAngle: number
-    endPointAngle: number
-    angleDeltaFromStart: number
-    radius: number
-  }
-
-  interface Arc<C extends ArcConstraints> extends Shape {
-    shape: 'arc'
-    constraints: C
   }
 
   interface SnappingCoordCandidate extends Coordinate {
@@ -149,248 +110,152 @@ declare global {
     snapInfoList: SnapInfo[]
   }
 
-  // interface ShapeSeed {
-  //   type: ShapeType
-  // }
-
-  // interface LineShapeSeed extends ShapeSeed {
-  //   type: 'line'
-  //   startPoint: Coordinate
-  //   endPoint: Coordinate
-  // }
-
-  // interface CircleShapeSeed extends ShapeSeed {
-  //   type: 'circle'
-  //   center: Coordinate
-  //   radius: number
-  // }
-
-  // interface ArcShapeSeed extends ShapeSeed {
-  //   type: 'arc'
-  //   center: Coordinate
-  //   radius: number
-  //   startCoord: Coordinate
-  //   endCoord: Coordinate
-  //   startAngle: number
-  //   endAngle: number
-  //   angleDeltaFromStart: number
-  // }
-
-  // interface ArcWithThreePointsShapeSeed extends ShapeSeed {
-  //   type: 'arc'
-  //   startPoint: Coordinate
-  //   endPoint: Coordinate
-  //   onLinePoint: Coordinate
-  //   center: Coordinate
-  //   startPointAngle: number
-  //   endPointAngle: number
-  //   radius: number
-  // }
-
-  // interface SupplementalShapeSeed extends ShapeSeed {
-  //   type: 'supplementalLine'
-  //   startPoint: Coordinate
-  //   endPoint: Coordinate
-  // }
-
-  interface Shape {
-    type: DrawType
-    shape: ShapeType
-    drawCommand: DrawCommand
-    id: number
+  interface RectangleParameters {
+    upperLeftPoint: Coordinate
+    upperRightPoint: Coordinate
+    lowerLeftPoint: Coordinate
+    lowerRightPoint: Coordinate
   }
 
-  // interface LineShape extends Shape, LineShapeSeed {
-  //   type: 'line'
-  // }
-  //
-  // interface CircleShape extends Shape, CircleShapeSeed {
-  //   type: 'circle'
-  // }
-  //
-  // interface ArcShape extends Shape, ArcShapeSeed {
-  //   type: 'arc'
-  // }
-  //
-  // interface ArcWithThreePointsShape extends Shape, ArcWithThreePointsShapeSeed {
-  //   type: 'arc'
-  // }
-  //
-  // interface SupplementalLineShape extends Shape, SupplementalShapeSeed {
-  //   type: 'supplementalLine'
-  // }
+  interface CenterCornerConstraints {
+    center: Coordinate
+    cornerPoint: Coordinate
+  }
 
-  // interface TemporaryShape extends ShapeSeed {
-  //   type: TemporaryShapeType
-  // }
-  //
-  // interface TemporaryLineShapeBase extends TemporaryShape {
-  //   type: 'tmp-line'
-  //   startPoint: Coordinate
-  // }
-  //
-  // interface TemporaryLineShape extends TemporaryLineShapeBase, TemporaryShape {
-  //   endPoint: Coordinate
-  // }
-  //
-  // interface TemporaryCircleShapeBase extends TemporaryShape {
-  //   type: 'tmp-circle'
-  //   center: Coordinate
-  // }
-  //
-  // interface TemporaryCircleShape extends TemporaryCircleShapeBase, TemporaryShape {
-  //   radius: number
-  //   diameterStart: Coordinate
-  //   diameterEnd: Coordinate
-  // }
+  interface TwoCornersConstraints {
+    corner1Point: Coordinate
+    corner2Point: Coordinate
+  }
+
+  type RectangleConstraints = CenterCornerConstraints | TwoCornersConstraints
+
+  interface Rectangle<C extends RectangleConstraints = Void> extends Shape {
+    shape: 'rectangle'
+    constraints: C
+    computed: RectangleParameters
+  }
+
+  interface ArcParameters {
+    center: Coordinate
+    startPoint: Coordinate
+    endPoint: Coordinate
+    startPointAngle: number
+    endPointAngle: number
+    radius: number
+    angleDeltaFromStart: number
+  }
+
+  interface CenterAndTwoPointsConstraints {
+    center: Coordinate
+    startPoint: Coordinate
+    endPoint: Coordinate
+    angleDeltaFromStart: number
+  }
+
+  interface ThreePointsConstraints {
+    startPoint: Coordinate
+    endPoint: Coordinate
+    onLinePoint: Coordinate
+  }
+
+  type ArcConstraints = CenterAndTwoPointsConstraints | ThreePointsConstraints
+
+  interface Arc<C extends ArcConstraints = Void> extends Shape {
+    shape: 'arc'
+    constraints: C
+    computed: ArcParameters
+  }
 
   interface ShapeSeed {
     isSeed: true
     shape: ShapeType
     drawCommand: DrawCommand
-    drawStep: DrawStep
   }
 
-  interface LineStartEndSeed1 extends ShapeSeed {
+  interface LineSeedConstrainedByStartEnd extends ShapeSeed {
     shape: 'line'
     drawCommand: 'start-end'
-    drawStep: 'startPoint'
     startPoint: Coordinate
-  }
-
-  interface LineStartEndSeed2 extends LineStartEndSeed1 {
-    drawStep: 'endPoint'
     endPoint: Coordinate
   }
 
-  interface RectangleTwoCornersSeed1 extends ShapeSeed {
+  interface RectangleSeedConstrainedByTwoCorners extends ShapeSeed {
     shape: 'rectangle'
-    drawStep: 'corner-1'
+    drawCommand: 'two-corners'
     corner1Point: Coordinate
-  }
-
-  interface RectangleTwoCornersSeed2 extends RectangleTwoCornersSeed1 {
-    drawStep: 'corner-2'
     corner2Point: Coordinate
     upperLeftPoint: Coordinate
   }
 
-  interface RectangleCenterCornerSeed1 extends ShapeSeed {
+  interface RectangleSeedConstrainedByCenterCorner extends ShapeSeed {
     shape: 'rectangle'
-    drawStep: 'center'
+    drawCommand: 'center-corner'
     center: Coordinate
-  }
-
-  interface RectangleCenterCornerSeed2 extends RectangleCenterCornerSeed1 {
-    drawStep: 'corner'
     cornerPoint: Coordinate
     upperLeftPoint: Coordinate
   }
 
-  interface CircleCenterDiameterSeed1 extends ShapeSeed {
+  interface CircleSeedConstrainedByCenterDiameter extends ShapeSeed {
     shape: 'circle'
     drawCommand: 'center-diameter'
-    drawStep: 'center'
     center: Coordinate
-  }
-
-  interface CircleCenterDiameterSeed2 extends CircleCenterDiameterSeed1 {
-    drawStep: 'diameter'
-    radius: number
     diameterStart: Coordinate
     diameterEnd: Coordinate
+    radius: number
   }
 
-  interface ArcCenterTwoPointsSeed1 extends ShapeSeed {
-    shape: 'arc'
-    drawCommand: 'center-two-points'
-    drawStep: 'center'
+  interface CircleSeed1ConstrainedByTwoPointsRadius extends ShapeSeed {
+    shape: 'circle'
+    drawCommand: 'two-points-radius'
+    point1: Coordinate
+    point2: Coordinate
+    distanceBetweenPoints: number
+    radius: undefined
+    center: undefined
+  }
+
+  interface CircleSeed2ConstrainedByTwoPointsRadius extends ShapeSeed {
+    shape: 'circle'
+    drawCommand: 'two-points-radius'
+    point1: Coordinate
+    point2: Coordinate
+    lineEquidistantFromTwoPoints: { point: Coordinate; unitVector: Vec }
+    distanceBetweenPoints: number
+    radius: number
     center: Coordinate
   }
 
-  interface ArcCenterTwoPointsSeed2 extends ArcCenterTwoPointsSeed1 {
-    drawStep: 'startPoint'
-    radius: number
+  interface ArcSeed1ConstrainedByCenterTwoPoints extends ShapeSeed {
+    shape: 'arc'
+    drawCommand: 'center-two-points'
+    center: Coordinate
     startPoint: Coordinate
     startPointAngle: number
+    radius: number
   }
 
-  interface ArcCenterTwoPointsSeed3 extends ArcCenterTwoPointsSeed2 {
-    drawStep: 'endPoint'
+  interface ArcSeed2ConstrainedByCenterTwoPoints extends ArcSeed1ConstrainedByCenterTwoPoints {
     endPoint: Coordinate
     endPointAngle: number
     angleDeltaFromStart: number
   }
 
-  // interface TemporaryArcCenter extends TemporaryShape {
-  //   type: 'tmp-arc'
-  //   center: Coordinate
-  // }
-  //
-  // interface TemporaryArcRadius extends TemporaryArcCenter {
-  //   radius: number
-  //   startCoord: Coordinate
-  //   startAngle: number
-  // }
-  //
-  // interface TemporaryArcShape extends TemporaryArcRadius {
-  //   endCoord: Coordinate
-  //   endAngle: number
-  //   angleDeltaFromStart: number
-  // }
-
-  interface ArcThreePointsSeed1 extends ShapeSeed {
+  interface ArcSeed1ConstrainedThreePoints extends ShapeSeed {
     shape: 'arc'
     drawCommand: 'three-points'
-    drawStep: 'startPoint'
     startPoint: Coordinate
-  }
-
-  interface ArcThreePointsSeed2 extends ArcThreePointsSeed1 {
-    drawStep: 'endPoint'
     endPoint: Coordinate
     distance: number
   }
 
-  interface ArcThreePointsSeed3 extends ArcThreePointsSeed2 {
-    drawStep: 'onLinePoint'
+  interface ArcSeed2ConstrainedByThreePoints extends ArcSeed1ConstrainedThreePoints {
     onLinePoint: Coordinate
     center: Coordinate
     startPointAngle: number
     endPointAngle: number
     radius: number
+    angleDeltaFromStart: number
   }
-
-  // interface TemporaryArcStartPoint extends TemporaryShape {
-  //   type: 'tmp-three-points-arc'
-  //   startPoint: Coordinate
-  // }
-  //
-  // interface TemporaryArcStartPointAndEndPoint extends TemporaryArcStartPoint {
-  //   type: 'tmp-three-points-arc'
-  //   endPoint: Coordinate
-  //   distance: number
-  // }
-  //
-  // interface TemporaryArcThreePoint extends TemporaryArcStartPointAndEndPoint {
-  //   type: 'tmp-three-points-arc'
-  //   onLinePoint: Coordinate
-  //   center: Coordinate
-  //   startPointAngle: number
-  //   endPointAngle: number
-  //   radius: number
-  // }
-
-  // interface TemporarySupplementalLineShapeBase extends TemporaryShape {
-  //   type: 'tmp-supplementalLine'
-  //   startPoint: Coordinate
-  // }
-  //
-  // interface TemporarySupplementalLineShape
-  //   extends TemporarySupplementalLineShapeBase,
-  //     TemporaryShape {
-  //   endPoint: Coordinate
-  // }
 
   interface SnapInfo {
     type: SnapType

@@ -21,6 +21,7 @@ const ja: TranslationSchema = {
     },
     circle: {
       'center-diameter': '中心・直径指定',
+      'two-points-radius': '2点・半径指定',
     },
     arc: {
       'center-two-points': '中心・両端指定',

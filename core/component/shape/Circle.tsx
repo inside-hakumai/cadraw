@@ -6,6 +6,7 @@ import {
   shapeSelectorFamily,
 } from '../../container/states'
 import { isCircle } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
@@ -18,11 +19,6 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
   const isFocused = indicatingShapeId === shape.id
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
 
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
-
   useEffect(() => {
     console.debug(shape)
     if (!isCircle(shape)) {
@@ -30,7 +26,7 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
     }
   }, [shapeId, shape])
 
-  const { center, radius } = shape.constraints
+  const { center, radius } = shape.computed
 
   return (
     <circle
@@ -39,7 +35,7 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
       r={radius}
       strokeWidth={1}
       fill={'none'}
-      stroke={strokeColor}
+      stroke={getStrokeColor(isSelected, isFocused)}
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )

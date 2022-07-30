@@ -5,30 +5,30 @@ import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
-import { isArcCenterTwoPoints } from '../../lib/typeguard'
+import { isArcConstrainedByCenterTwoPoints } from '../../lib/typeguard'
+import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
 }
 
-const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(
-    shapeSelectorFamily(shapeId)
-  ) as Arc<ArcConstraintsWithCenterAndTwoPoints>
+/**
+ * 弧を含む円周の中心点と、弧の両端の位置を指定して形成する弧
+ * @param shapeId 図形のID
+ * @constructor
+ */
+const ArcConstrainedByCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
+  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<CenterAndTwoPointsConstraints>
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
-  const { center, radius, startPointAngle, endPointAngle } = shape.constraints
+  const { center } = shape.constraints
+  const { radius, startPointAngle, endPointAngle } = shape.computed
 
   const isFocused = indicatingShapeId === shape.id
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
 
-  let strokeColor
-  if (isSelected) strokeColor = '#FF0000'
-  else if (isFocused) strokeColor = '#ff9797'
-  else strokeColor = '#000000'
-
   useEffect(() => {
-    if (!isArcCenterTwoPoints(shape)) {
+    if (!isArcConstrainedByCenterTwoPoints(shape)) {
       throw new Error(`Shape(ID = ${shapeId} is not a arc`)
     }
   }, [shapeId, shape])
@@ -60,11 +60,11 @@ const ArcCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
       key={'temporaryArc'}
       d={pathNodeAttribute.join(' ')}
       fill='none'
-      stroke={strokeColor}
+      stroke={getStrokeColor(isSelected, isFocused)}
       strokeWidth='1'
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
 }
 
-export default ArcCenterTwoPoints
+export default ArcConstrainedByCenterTwoPoints
