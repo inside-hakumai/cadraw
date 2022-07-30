@@ -11,6 +11,7 @@ import {
   isRectangleSeedConstrainedByTwoCorners,
   isCircleSeed1ConstrainedByTwoPointsRadius,
   isCircleSeed2ConstrainedByTwoPointsRadius,
+  isCircleSeedConstrainedByTwoPoints,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
@@ -36,6 +37,7 @@ import { useTranslation } from 'react-i18next'
 import RectangleConstrainedByCenterCornerPreview from './shapePreview/RectangleConstrainedByCenterCornerPreview'
 import Rectangle from './shape/Rectangle'
 import CircleConstrainedByTwoPointsRadiusPreview from './shapePreview/CircleConstrainedByTwoPointsRadiusPreview'
+import CircleConstrainedByTwoPointsPreview from './shapePreview/CircleConstrainedByTwoPointsPreview'
 
 const style = css`
   width: 100%;
@@ -197,6 +199,9 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
                 shape={shapeSeed}
                 centerRef={temporaryCircleCenterRef}
               />
+            )}
+            {isCircleSeedConstrainedByTwoPoints(shapeSeed) && (
+              <CircleConstrainedByTwoPointsPreview shape={shapeSeed} />
             )}
             {(isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed) ||
               isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) && (

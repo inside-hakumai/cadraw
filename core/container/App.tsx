@@ -37,6 +37,7 @@ import {
   isValidRectangleCommand,
   isCircleSeed1ConstrainedByTwoPointsRadius,
   isCircleSeed2ConstrainedByTwoPointsRadius,
+  isCircleSeedConstrainedByTwoPoints,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
 import {
@@ -508,6 +509,46 @@ const App: React.FC<Props> = ({ onExport }) => {
             },
           }
 
+          await addShape(newCircle)
+          setShapeSeedConstraints(null)
+          await goToFirstStep()
+        }
+      }
+
+      if (circleDrawCommand === 'two-points') {
+        const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points'>
+
+        if (circleDrawStep === 'point1') {
+          const newCircleSeed: CircleSeedConstrainedByTwoPoints = {
+            isSeed: true,
+            shape: 'circle',
+            drawCommand: 'two-points',
+            point1: activeCoord,
+            point2: activeCoord,
+            diameter: 0,
+            center: activeCoord,
+          }
+          setShapeSeedConstraints(newCircleSeed)
+          await goToNextStep()
+        }
+
+        if (circleDrawStep === 'point2' && isCircleSeedConstrainedByTwoPoints(shapeSeed)) {
+          const { point1, point2, center, diameter } = shapeSeed
+
+          const newCircle: Circle<TwoPointsConstraints> = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'circle',
+            drawCommand: 'two-points',
+            constraints: {
+              point1,
+              point2,
+            },
+            computed: {
+              center,
+              radius: diameter / 2,
+            },
+          }
           await addShape(newCircle)
           setShapeSeedConstraints(null)
           await goToFirstStep()

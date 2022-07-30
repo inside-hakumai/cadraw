@@ -31,6 +31,7 @@ import {
   isCircle,
   isCircleSeed1ConstrainedByTwoPointsRadius,
   isCircleSeed2ConstrainedByTwoPointsRadius,
+  isCircleSeedConstrainedByTwoPoints,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
@@ -351,6 +352,22 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       }
     }
 
+    if (operationMode === 'circle' && drawCommand === 'two-points') {
+      const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points'>
+
+      if (circleDrawStep === 'point2' && isCircleSeedConstrainedByTwoPoints(shapeSeed)) {
+        return {
+          ...shapeSeed,
+          point2: coord,
+          center: {
+            x: (shapeSeed.point1.x + coord.x) / 2,
+            y: (shapeSeed.point1.y + coord.y) / 2,
+          },
+          diameter: calcDistance(shapeSeed.point1, coord),
+        } as CircleSeedConstrainedByTwoPoints
+      }
+    }
+
     if (operationMode === 'circle' && drawCommand === 'two-points-radius') {
       const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points-radius'>
 
@@ -646,7 +663,7 @@ export const guidingLinesState = selector<Line['constraints'][]>({
         const circle = shapes.find(
           shape => shape.id === circleCenterCoordInfo.targetShapeId
         ) as Circle
-        const { center, radius } = circle.constraints
+        const { center, radius } = circle.computed
         return {
           type: 'line' as const,
           startPoint: { x: center.x - radius, y: center.y },
@@ -911,6 +928,13 @@ export const tooltipState = selector<{ content: string; clientPosition: Coordina
       return {
         content: (shapeSeed.radius * 2).toFixed(2) + 'px',
         clientPosition: cursorClientPosition,
+      }
+    }
+
+    if (shapeSeed.shape === 'circle' && isCircleSeedConstrainedByTwoPoints(shapeSeed)) {
+      return {
+        content: shapeSeed.diameter.toFixed(2) + 'px',
+        clientPosition: shapeSeed.center,
       }
     }
 
