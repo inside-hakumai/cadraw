@@ -5,7 +5,7 @@ interface Props {
   centerRef: React.Ref<SVGCircleElement>
 }
 
-const CirclePreview: React.FC<Props> = ({ shape, centerRef }) => {
+const CircleConstrainedByCenterDiameterPreview: React.FC<Props> = ({ shape, centerRef }) => {
   return (
     <>
       <line
@@ -39,4 +39,4 @@ const CirclePreview: React.FC<Props> = ({ shape, centerRef }) => {
   )
 }
 
-export default CirclePreview
+export default CircleConstrainedByCenterDiameterPreview

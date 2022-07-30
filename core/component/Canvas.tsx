@@ -21,7 +21,7 @@ import {
   cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
-import CirclePreview from './shapePreview/CirclePreview'
+import CircleConstrainedByCenterDiameterPreview from './shapePreview/CircleConstrainedByCenterDiameterPreview'
 import LinePreview from './shapePreview/LinePreview'
 import Circle from './shape/Circle'
 import Line from './shape/Line'
@@ -192,7 +192,10 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
 
             {/* 作成中（確定前）の図形（円） */}
             {isCircleSeedConstrainedByCenterDiameter(shapeSeed) && (
-              <CirclePreview shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
+              <CircleConstrainedByCenterDiameterPreview
+                shape={shapeSeed}
+                centerRef={temporaryCircleCenterRef}
+              />
             )}
 
             {/* 作成中（確定前）の図形（円弧） */}
