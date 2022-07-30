@@ -64,6 +64,13 @@ declare global {
     constraintType: ConstraintType
   }
 
+  interface Shape {
+    type: DrawType
+    shape: ShapeType
+    drawCommand: DrawCommand
+    id: number
+  }
+
   interface Line extends Shape {
     shape: 'line'
     constraints: {
@@ -87,13 +94,6 @@ declare global {
 
   interface SnappingCoordinate extends Coordinate {
     snapInfoList: SnapInfo[]
-  }
-
-  interface Shape {
-    type: DrawType
-    shape: ShapeType
-    drawCommand: DrawCommand
-    id: number
   }
 
   interface RectangleParameters {
@@ -156,95 +156,64 @@ declare global {
     isSeed: true
     shape: ShapeType
     drawCommand: DrawCommand
-    drawStep: DrawStep
   }
 
-  interface LineStartEndSeed1 extends ShapeSeed {
+  interface LineSeedConstrainedByStartEnd extends ShapeSeed {
     shape: 'line'
     drawCommand: 'start-end'
-    drawStep: 'startPoint'
     startPoint: Coordinate
-  }
-
-  interface LineStartEndSeed2 extends LineStartEndSeed1 {
-    drawStep: 'endPoint'
     endPoint: Coordinate
   }
 
-  interface RectangleTwoCornersSeed1 extends ShapeSeed {
+  interface RectangleSeedConstrainedByTwoCorners extends ShapeSeed {
     shape: 'rectangle'
-    drawStep: 'corner-1'
+    drawCommand: 'two-corners'
     corner1Point: Coordinate
-  }
-
-  interface RectangleTwoCornersSeed2 extends RectangleTwoCornersSeed1 {
-    drawStep: 'corner-2'
     corner2Point: Coordinate
     upperLeftPoint: Coordinate
   }
 
-  interface RectangleCenterCornerSeed1 extends ShapeSeed {
+  interface RectangleSeedConstrainedByCenterCorner extends ShapeSeed {
     shape: 'rectangle'
-    drawStep: 'center'
+    drawCommand: 'center-corner'
     center: Coordinate
-  }
-
-  interface RectangleCenterCornerSeed2 extends RectangleCenterCornerSeed1 {
-    drawStep: 'corner'
     cornerPoint: Coordinate
     upperLeftPoint: Coordinate
   }
 
-  interface CircleCenterDiameterSeed1 extends ShapeSeed {
+  interface CircleSeedConstrainedByCenterDiameter extends ShapeSeed {
     shape: 'circle'
     drawCommand: 'center-diameter'
-    drawStep: 'center'
     center: Coordinate
-  }
-
-  interface CircleCenterDiameterSeed2 extends CircleCenterDiameterSeed1 {
-    drawStep: 'diameter'
-    radius: number
     diameterStart: Coordinate
     diameterEnd: Coordinate
+    radius: number
   }
 
-  interface ArcCenterTwoPointsSeed1 extends ShapeSeed {
+  interface ArcSeed1ConstrainedByCenterTwoPoints extends ShapeSeed {
     shape: 'arc'
     drawCommand: 'center-two-points'
-    drawStep: 'center'
     center: Coordinate
-  }
-
-  interface ArcCenterTwoPointsSeed2 extends ArcCenterTwoPointsSeed1 {
-    drawStep: 'startPoint'
-    radius: number
     startPoint: Coordinate
     startPointAngle: number
+    radius: number
   }
 
-  interface ArcCenterTwoPointsSeed3 extends ArcCenterTwoPointsSeed2 {
-    drawStep: 'endPoint'
+  interface ArcSeed2ConstrainedByCenterTwoPoints extends ArcSeed1ConstrainedByCenterTwoPoints {
     endPoint: Coordinate
     endPointAngle: number
     angleDeltaFromStart: number
   }
 
-  interface ArcThreePointsSeed1 extends ShapeSeed {
+  interface ArcSeed1ConstrainedThreePoints extends ShapeSeed {
     shape: 'arc'
     drawCommand: 'three-points'
-    drawStep: 'startPoint'
     startPoint: Coordinate
-  }
-
-  interface ArcThreePointsSeed2 extends ArcThreePointsSeed1 {
-    drawStep: 'endPoint'
     endPoint: Coordinate
     distance: number
   }
 
-  interface ArcThreePointsSeed3 extends ArcThreePointsSeed2 {
-    drawStep: 'onLinePoint'
+  interface ArcSeed2ConstrainedByThreePoints extends ArcSeed1ConstrainedThreePoints {
     onLinePoint: Coordinate
     center: Coordinate
     startPointAngle: number

@@ -1,14 +1,14 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import {
-  isArcCenterTwoPointsSeed2,
-  isArcCenterTwoPointsSeed3,
-  isArcThreePointsSeed2,
-  isArcThreePointsSeed3,
-  isCircleCenterDiameterSeed2,
-  isLineStartEndSeed2,
-  isRectangleCenterCornerSeed2,
-  isRectangleTwoCornersSeed2,
+  isArcSeed1ConstrainedByCenterTwoPoints,
+  isArcSeed2ConstrainedByCenterTwoPoints,
+  isArcSeed1ConstrainedByThreePoints,
+  isArcSeed2ConstrainedByThreePoints,
+  isCircleSeedConstrainedByCenterDiameter,
+  isLineSeedConstrainedByStartEnd,
+  isRectangleSeedConstrainedByCenterCorner,
+  isRectangleSeedConstrainedByTwoCorners,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
@@ -183,26 +183,28 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
         {shapeSeed && (
           <>
             {/* 作成中（確定前）の図形（長方形） */}
-            {isRectangleTwoCornersSeed2(shapeSeed) && (
+            {isRectangleSeedConstrainedByTwoCorners(shapeSeed) && (
               <RectangleConstrainedByTwoCornersPreview shape={shapeSeed} />
             )}
-            {isRectangleCenterCornerSeed2(shapeSeed) && (
+            {isRectangleSeedConstrainedByCenterCorner(shapeSeed) && (
               <RectangleConstrainedByCenterCornerPreview shape={shapeSeed} />
             )}
 
             {/* 作成中（確定前）の図形（円） */}
-            {isCircleCenterDiameterSeed2(shapeSeed) && (
+            {isCircleSeedConstrainedByCenterDiameter(shapeSeed) && (
               <CirclePreview shape={shapeSeed} centerRef={temporaryCircleCenterRef} />
             )}
 
             {/* 作成中（確定前）の図形（円弧） */}
-            {(isArcCenterTwoPointsSeed2(shapeSeed) || isArcCenterTwoPointsSeed3(shapeSeed)) && (
+            {(isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed) ||
+              isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) && (
               <ArcConstrainedByCenterTwoPointsPreview
                 shape={shapeSeed}
                 centerRef={temporaryCircleCenterRef}
               />
             )}
-            {(isArcThreePointsSeed2(shapeSeed) || isArcThreePointsSeed3(shapeSeed)) && (
+            {(isArcSeed1ConstrainedByThreePoints(shapeSeed) ||
+              isArcSeed2ConstrainedByThreePoints(shapeSeed)) && (
               <ArcConstrainedByThreePointsPreview
                 shape={shapeSeed}
                 centerRef={temporaryCircleCenterRef}
@@ -210,7 +212,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
             )}
 
             {/* 作成中（確定前）の図形（線） */}
-            {isLineStartEndSeed2(shapeSeed) && (
+            {isLineSeedConstrainedByStartEnd(shapeSeed) && (
               <LinePreview shape={shapeSeed} startCircleRef={temporaryLineStartRef} />
             )}
           </>

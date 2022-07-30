@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface Props {
-  shape: CircleCenterDiameterSeed2
+  shape: CircleSeedConstrainedByCenterDiameter
   centerRef: React.Ref<SVGCircleElement>
 }
 

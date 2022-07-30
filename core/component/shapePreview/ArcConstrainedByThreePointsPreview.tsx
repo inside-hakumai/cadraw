@@ -1,8 +1,8 @@
 import React from 'react'
-import { isArcThreePointsSeed3 } from '../../lib/typeguard'
+import { isArcSeed2ConstrainedByThreePoints } from '../../lib/typeguard'
 
 interface Props {
-  shape: ArcThreePointsSeed2 | ArcThreePointsSeed3
+  shape: ArcSeed1ConstrainedThreePoints | ArcSeed2ConstrainedByThreePoints
   centerRef: React.Ref<SVGCircleElement>
 }
 
@@ -12,7 +12,7 @@ const ArcConstrainedByThreePointsPreview: React.FC<Props> = ({ shape, centerRef 
   let center = null
 
   let pathNodeAttribute: string[] | null = null
-  if (isArcThreePointsSeed3(shape)) {
+  if (isArcSeed2ConstrainedByThreePoints(shape)) {
     onLinePoint = shape.onLinePoint
     center = shape.center
 

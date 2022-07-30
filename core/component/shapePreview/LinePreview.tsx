@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface Props {
-  shape: LineStartEndSeed2
+  shape: LineSeedConstrainedByStartEnd
   startCircleRef: React.Ref<SVGCircleElement>
   isSupplementalLine?: boolean
 }

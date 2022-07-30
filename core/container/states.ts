@@ -15,15 +15,19 @@ import {
 import {
   isArc,
   isArcConstrainedByCenterTwoPoints,
-  isArcCenterTwoPointsSeed2,
-  isArcCenterTwoPointsSeed3,
+  isArcSeed1ConstrainedByCenterTwoPoints,
+  isArcSeed2ConstrainedByCenterTwoPoints,
   isArcConstrainedByThreePoints,
-  isArcThreePointsSeed2,
-  isArcThreePointsSeed3,
+  isArcSeed1ConstrainedByThreePoints,
+  isArcSeed2ConstrainedByThreePoints,
   isCircle,
   isLine,
   isRectangle,
   isShapeType,
+  isRectangleSeedConstrainedByCenterCorner,
+  isRectangleSeedConstrainedByTwoCorners,
+  isCircleSeedConstrainedByCenterDiameter,
+  isLineSeedConstrainedByStartEnd,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
@@ -242,14 +246,12 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     if (operationMode === 'rectangle' && drawCommand === 'two-corners') {
       const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'two-corners'>
 
-      if (rectangleDrawStep === 'corner-2') {
-        const rectangleSeed = shapeSeed as RectangleTwoCornersSeed2
-
+      if (rectangleDrawStep === 'corner-2' && isRectangleSeedConstrainedByTwoCorners(shapeSeed)) {
         const corner2Point = coord
-        const { corner1Point } = rectangleSeed
+        const { corner1Point } = shapeSeed
 
         if (corner2Point.x - corner1Point.x === 0) {
-          return rectangleSeed
+          return shapeSeed
         }
 
         const diagonalSlope = (corner2Point.y - corner1Point.y) / (corner2Point.x - corner1Point.x)
@@ -268,24 +270,22 @@ export const shapeSeedState = selector<ShapeSeed | null>({
         }
 
         return {
-          ...rectangleSeed,
+          ...shapeSeed,
           corner2Point,
           upperLeftPoint,
-        } as RectangleTwoCornersSeed2
+        } as RectangleSeedConstrainedByTwoCorners
       }
     }
 
     if (operationMode === 'rectangle' && drawCommand === 'center-corner') {
       const rectangleDrawStep = drawStep as CommandDrawStep<'rectangle', 'center-corner'>
 
-      if (rectangleDrawStep === 'corner') {
-        const rectangleSeed = shapeSeed as RectangleCenterCornerSeed2
-
+      if (rectangleDrawStep === 'corner' && isRectangleSeedConstrainedByCenterCorner(shapeSeed)) {
         const cornerPoint = coord
-        const { center } = rectangleSeed
+        const { center } = shapeSeed
 
         if (center.x === cornerPoint.x && center.y === cornerPoint.y) {
-          return rectangleSeed
+          return shapeSeed
         }
 
         const diagonalSlope = (cornerPoint.y - center.y) / (cornerPoint.x - center.x)
@@ -319,26 +319,24 @@ export const shapeSeedState = selector<ShapeSeed | null>({
         }
 
         return {
-          ...rectangleSeed,
+          ...shapeSeed,
           cornerPoint,
           upperLeftPoint,
-        } as RectangleCenterCornerSeed2
+        } as RectangleSeedConstrainedByCenterCorner
       }
     }
 
     if (operationMode === 'circle' && drawCommand === 'center-diameter') {
       const circleDrawStep = drawStep as CommandDrawStep<'circle', 'center-diameter'>
 
-      if (circleDrawStep === 'diameter') {
-        const CircleSeed = shapeSeed as CircleCenterDiameterSeed2
-
+      if (circleDrawStep === 'diameter' && isCircleSeedConstrainedByCenterDiameter(shapeSeed)) {
         const temporaryCircleRadius = Math.sqrt(
-          Math.pow(CircleSeed.center.x - coord.x, 2) + Math.pow(CircleSeed.center.y - coord.y, 2)
+          Math.pow(shapeSeed.center.x - coord.x, 2) + Math.pow(shapeSeed.center.y - coord.y, 2)
         )
         const temporaryCircleDiameterStart = coord
         const temporaryCircleDiameterEnd = {
-          x: coord.x + (CircleSeed.center.x - coord.x) * 2,
-          y: coord.y + (CircleSeed.center.y - coord.y) * 2,
+          x: coord.x + (shapeSeed.center.x - coord.x) * 2,
+          y: coord.y + (shapeSeed.center.y - coord.y) * 2,
         }
 
         return {
@@ -346,7 +344,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
           radius: temporaryCircleRadius,
           diameterStart: temporaryCircleDiameterStart,
           diameterEnd: temporaryCircleDiameterEnd,
-        } as CircleCenterDiameterSeed2
+        } as CircleSeedConstrainedByCenterDiameter
       }
     }
 
@@ -354,7 +352,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       const arcDrawStep = drawStep as CommandDrawStep<'arc', 'center-two-points'>
 
       if (arcDrawStep === 'startPoint') {
-        if (!isArcCenterTwoPointsSeed2(shapeSeed)) {
+        if (!isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed)) {
           console.warn('shapeSeed is not ArcCenterTwoPointsSeed2')
           return shapeSeed
         }
@@ -365,7 +363,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
         if (temporaryStartAngle === null) {
           return shapeSeed
         } else {
-          const newValue: ArcCenterTwoPointsSeed2 = {
+          const newValue: ArcSeed1ConstrainedByCenterTwoPoints = {
             ...shapeSeed,
             startPoint: coord,
             startPointAngle: temporaryStartAngle,
@@ -376,7 +374,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       }
 
       if (arcDrawStep === 'endPoint') {
-        if (!isArcCenterTwoPointsSeed3(shapeSeed)) {
+        if (!isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) {
           console.warn('shapeSeed is not temporaryArcRadius')
           return shapeSeed
         }
@@ -397,7 +395,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
               ? temporaryEndAngle - startPointAngle
               : 360 - (startPointAngle - temporaryEndAngle)
 
-          const newValue: ArcCenterTwoPointsSeed3 = {
+          const newValue: ArcSeed2ConstrainedByCenterTwoPoints = {
             ...shapeSeed,
             endPoint: endCoord,
             endPointAngle: temporaryEndAngle,
@@ -412,14 +410,14 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       const arcDrawStep = drawStep as CommandDrawStep<'arc', 'three-points'>
 
       if (arcDrawStep === 'endPoint') {
-        if (!isArcThreePointsSeed2(shapeSeed)) {
+        if (!isArcSeed1ConstrainedByThreePoints(shapeSeed)) {
           console.warn('shapeSeed is not ArcThreePointsSeed2')
           return shapeSeed
         }
 
         const temporaryDistance = calcDistance(shapeSeed.startPoint, coord)
 
-        const newValue: ArcThreePointsSeed2 = {
+        const newValue: ArcSeed1ConstrainedThreePoints = {
           ...shapeSeed,
           endPoint: coord,
           distance: temporaryDistance,
@@ -428,7 +426,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
       }
 
       if (arcDrawStep === 'onLinePoint') {
-        if (!isArcThreePointsSeed3(shapeSeed)) {
+        if (!isArcSeed2ConstrainedByThreePoints(shapeSeed)) {
           console.warn('shapeSeed is not ArcThreePointsSeed3')
           return shapeSeed
         }
@@ -449,7 +447,7 @@ export const shapeSeedState = selector<ShapeSeed | null>({
               ? endPointAngle - startPointAngle
               : 360 - (startPointAngle - endPointAngle)
 
-          const newValue: ArcThreePointsSeed3 = {
+          const newValue: ArcSeed2ConstrainedByThreePoints = {
             ...shapeSeed,
             onLinePoint: coord,
             startPointAngle,
@@ -466,11 +464,9 @@ export const shapeSeedState = selector<ShapeSeed | null>({
     if (operationMode === 'line' && drawCommand === 'start-end') {
       const lineDrawStep = drawStep as CommandDrawStep<'line', 'start-end'>
 
-      if (lineDrawStep === 'endPoint') {
-        const temporaryLineShapeBase = shapeSeed as LineStartEndSeed2
-
-        const newValue: LineStartEndSeed2 = {
-          ...temporaryLineShapeBase,
+      if (lineDrawStep === 'endPoint' && isLineSeedConstrainedByStartEnd(shapeSeed)) {
+        const newValue: LineSeedConstrainedByStartEnd = {
+          ...shapeSeed,
           endPoint: coord,
         }
         return newValue
@@ -883,12 +879,12 @@ export const tooltipContentState = selector<string | null>({
     }
 
     if (shapeSeed.shape === 'circle') {
-      const circleSeed = shapeSeed as CircleCenterDiameterSeed2
+      const circleSeed = shapeSeed as CircleSeedConstrainedByCenterDiameter
       return (circleSeed.radius * 2).toFixed(2) + 'px'
     }
 
     if (shapeSeed.shape === 'line') {
-      const lineSeed = shapeSeed as LineStartEndSeed2
+      const lineSeed = shapeSeed as LineSeedConstrainedByStartEnd
 
       return (
         Math.sqrt(
@@ -899,11 +895,11 @@ export const tooltipContentState = selector<string | null>({
     }
 
     if (shapeSeed.shape === 'arc') {
-      if (isArcCenterTwoPointsSeed2(shapeSeed)) {
+      if (isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed)) {
         return (shapeSeed.radius * 2).toFixed(2) + 'px'
       }
 
-      if (isArcCenterTwoPointsSeed3(shapeSeed)) {
+      if (isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) {
         const { startPointAngle, endPointAngle } = shapeSeed
 
         let counterClockWiseAngle
