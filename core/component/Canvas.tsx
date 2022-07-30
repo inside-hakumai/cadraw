@@ -9,6 +9,8 @@ import {
   isLineSeedConstrainedByStartEnd,
   isRectangleSeedConstrainedByCenterCorner,
   isRectangleSeedConstrainedByTwoCorners,
+  isCircleSeed1ConstrainedByTwoPointsRadius,
+  isCircleSeed2ConstrainedByTwoPointsRadius,
 } from '../lib/typeguard'
 import { useRecoilValue } from 'recoil'
 import {
@@ -16,9 +18,8 @@ import {
   snappingCoordState,
   guidingLinesState,
   shapeSeedState,
-  tooltipContentState,
+  tooltipState,
   indicatingShapeIdState,
-  cursorClientPositionState,
 } from '../container/states'
 import Grid from './Grid'
 import CircleConstrainedByCenterDiameterPreview from './shapePreview/CircleConstrainedByCenterDiameterPreview'
@@ -34,6 +35,7 @@ import RectangleConstrainedByTwoCornersPreview from './shapePreview/RectangleCon
 import { useTranslation } from 'react-i18next'
 import RectangleConstrainedByCenterCornerPreview from './shapePreview/RectangleConstrainedByCenterCornerPreview'
 import Rectangle from './shape/Rectangle'
+import CircleConstrainedByTwoPointsRadiusPreview from './shapePreview/CircleConstrainedByTwoPointsRadiusPreview'
 
 const style = css`
   width: 100%;
@@ -104,8 +106,7 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
   const shapeSeed = useRecoilValue(shapeSeedState)
   const guidingLines = useRecoilValue(guidingLinesState)
   const snappingCoord = useRecoilValue(snappingCoordState)
-  const tooltipContent = useRecoilValue(tooltipContentState)
-  const cursorClientPosition = useRecoilValue(cursorClientPositionState)
+  const tooltip = useRecoilValue(tooltipState)
 
   // デバッグ用
   // const debugCoord = debugCoordState ? useRecoilValue(debugCoordState) : undefined
@@ -197,6 +198,10 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
                 centerRef={temporaryCircleCenterRef}
               />
             )}
+            {(isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed) ||
+              isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) && (
+              <CircleConstrainedByTwoPointsRadiusPreview shape={shapeSeed} />
+            )}
 
             {/* 作成中（確定前）の図形（円弧） */}
             {(isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed) ||
@@ -236,15 +241,15 @@ const Canvas: React.FC<Props> = ({ stageRef, onMouseDown, onMouseMove, onMouseup
       </svg>
 
       {/* 図形作成中に長さなどを表示するためのツールチップ */}
-      {tooltipContent && cursorClientPosition && (
+      {tooltip && (
         <div
           css={tooltipStyle}
           style={{
-            left: cursorClientPosition.x,
-            top: cursorClientPosition.y - 30,
+            left: tooltip.clientPosition.x,
+            top: tooltip.clientPosition.y - 30,
             cursor: 'default',
           }}>
-          {tooltipContent}
+          {tooltip.content}
         </div>
       )}
 

@@ -35,9 +35,15 @@ import {
   isValidCircleCommand,
   isValidLineCommand,
   isValidRectangleCommand,
+  isCircleSeed1ConstrainedByTwoPointsRadius,
+  isCircleSeed2ConstrainedByTwoPointsRadius,
 } from '../lib/typeguard'
 import useDrawStep from './hooks/useDrawStep'
-import { calcCentralAngleFromHorizontalLine, calcDistance } from '../lib/function'
+import {
+  calcCentralAngleFromHorizontalLine,
+  calcDistance,
+  findLineEquidistantFromTwoPoints,
+} from '../lib/function'
 
 interface Props {
   onExport?: (data: string) => void
@@ -494,6 +500,66 @@ const App: React.FC<Props> = ({ onExport }) => {
             drawCommand: 'center-diameter',
             constraints: {
               center,
+              radius,
+            },
+            computed: {
+              center,
+              radius,
+            },
+          }
+
+          await addShape(newCircle)
+          setShapeSeedConstraints(null)
+          await goToFirstStep()
+        }
+      }
+
+      if (circleDrawCommand === 'two-points-radius') {
+        const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points-radius'>
+
+        if (circleDrawStep === 'point1') {
+          const newCircleSeed: CircleSeed1ConstrainedByTwoPointsRadius = {
+            isSeed: true,
+            shape: 'circle',
+            drawCommand: 'two-points-radius',
+            point1: activeCoord,
+            point2: activeCoord,
+            distanceBetweenPoints: 0,
+            radius: undefined,
+            center: undefined,
+          }
+          setShapeSeedConstraints(newCircleSeed)
+          await goToNextStep()
+        }
+
+        if (circleDrawStep === 'point2' && isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed)) {
+          const newCircleSeed: CircleSeed2ConstrainedByTwoPointsRadius = {
+            ...shapeSeed,
+            lineEquidistantFromTwoPoints: findLineEquidistantFromTwoPoints(
+              shapeSeed.point1,
+              shapeSeed.point2
+            ),
+            radius: calcDistance(shapeSeed.point1, activeCoord) / 2,
+            center: {
+              x: (shapeSeed.point1.x + activeCoord.x) / 2,
+              y: (shapeSeed.point1.y + activeCoord.y) / 2,
+            },
+          }
+          setShapeSeedConstraints(newCircleSeed)
+          await goToNextStep()
+        }
+
+        if (circleDrawStep === 'radius' && isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) {
+          const { point1, point2, radius, center } = shapeSeed
+
+          const newCircle: Circle<TwoPointsRadiusConstraints> = {
+            id: shapes.length,
+            type: drawType,
+            shape: 'circle',
+            drawCommand: 'two-points-radius',
+            constraints: {
+              point1,
+              point2,
               radius,
             },
             computed: {

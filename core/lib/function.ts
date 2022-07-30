@@ -51,22 +51,22 @@ export const findNearestPointOnRectangle = (
   distance: number
   isRectangleCorner: boolean
 } => {
-  const nearestPointOnLineUpperLeftToUpperRight = findNearestPointOnLine(point, {
+  const nearestPointOnLineUpperLeftToUpperRight = findNearestPointOnLineSegment(point, {
     startPoint: rectangle.upperLeftPoint,
     endPoint: rectangle.upperRightPoint,
   })
 
-  const nearestPointOnLineUpperRightToLowerRight = findNearestPointOnLine(point, {
+  const nearestPointOnLineUpperRightToLowerRight = findNearestPointOnLineSegment(point, {
     startPoint: rectangle.upperRightPoint,
     endPoint: rectangle.lowerRightPoint,
   })
 
-  const nearestPointOnLineLowerRightToLowerLeft = findNearestPointOnLine(point, {
+  const nearestPointOnLineLowerRightToLowerLeft = findNearestPointOnLineSegment(point, {
     startPoint: rectangle.lowerRightPoint,
     endPoint: rectangle.lowerLeftPoint,
   })
 
-  const nearestPointOnLineLowerLeftToUpperLeft = findNearestPointOnLine(point, {
+  const nearestPointOnLineLowerLeftToUpperLeft = findNearestPointOnLineSegment(point, {
     startPoint: rectangle.lowerLeftPoint,
     endPoint: rectangle.upperLeftPoint,
   })
@@ -90,12 +90,48 @@ export const findNearestPointOnRectangle = (
 }
 
 /**
+ * 点からの直線上の最近傍点とその距離を返します。
+ * @param point 点の座標
+ * @param line 直線。線上の1点の座標と単位ベクトルの情報を持ちます。
+ */
+export const findNearestPointOnLine = (
+  point: Coordinate,
+  line: {
+    point: Coordinate
+    unitVector: Vec
+  }
+): {
+  nearestCoord: Coordinate
+  distance: number
+} => {
+  // 線上の点からpointに向かうベクトルb
+  const b: Vec = {
+    vx: point.x - line.point.x,
+    vy: point.y - line.point.y,
+  }
+
+  // 線の単位ベクトルとベクトルbの内積
+  const nbDot = line.unitVector.vx * b.vx + line.unitVector.vy * b.vy
+
+  // 直線上のpointの最近傍点
+  const nearestCoord = {
+    x: line.point.x + line.unitVector.vx * nbDot,
+    y: line.point.y + line.unitVector.vy * nbDot,
+  }
+
+  return {
+    nearestCoord,
+    distance: calcDistance(point, nearestCoord),
+  }
+}
+
+/**
  * 点からの線分上の最近傍点とその距離を返します。
  * @param point 点の座標
  * @param line 線分。両端座標の情報を持ちます。
  * @returns 最近傍点の情報
  */
-export const findNearestPointOnLine = (
+export const findNearestPointOnLineSegment = (
   point: Coordinate,
   line: { startPoint: Coordinate; endPoint: Coordinate }
 ): {

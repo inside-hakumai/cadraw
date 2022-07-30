@@ -30,6 +30,10 @@ export const isCoordinate = (value: any): value is Coordinate => {
   return isObject(value) && typeof value?.x === 'number' && typeof value?.y === 'number'
 }
 
+export const isVector = (value: any): value is Coordinate => {
+  return isObject(value) && typeof value?.vx === 'number' && typeof value?.vy === 'number'
+}
+
 export const isLine = (shape: any): shape is Line => {
   const expectedType: ShapeType = 'line'
   const expectedDrawCommand: ShapeDrawCommand<'line'> = 'start-end'
@@ -86,7 +90,7 @@ export const isRectangleConstrainedByTwoCorners = (
 }
 
 export const isCircle = (shape: any): shape is Circle => {
-  return isCircleConstrainedByCenterRadius(shape)
+  return isCircleConstrainedByCenterRadius(shape) || isCircleConstrainedByTwoPointsRadius(shape)
 }
 
 export const isCircleConstrainedByCenterRadius = (
@@ -100,6 +104,24 @@ export const isCircleConstrainedByCenterRadius = (
     shape?.shape === expectedType &&
     shape?.drawCommand === expectedDrawCommand &&
     isCoordinate(shape?.constraints?.center) &&
+    typeof shape?.constraints?.radius === 'number' &&
+    isCoordinate(shape?.computed?.center) &&
+    typeof shape?.computed?.radius === 'number'
+  )
+}
+
+export const isCircleConstrainedByTwoPointsRadius = (
+  shape: any
+): shape is Circle<TwoPointsRadiusConstraints> => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'two-points-radius'
+
+  return (
+    typeof shape?.id === 'number' &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.constraints?.point1) &&
+    isCoordinate(shape?.constraints?.point2) &&
     typeof shape?.constraints?.radius === 'number' &&
     isCoordinate(shape?.computed?.center) &&
     typeof shape?.computed?.radius === 'number'
@@ -215,6 +237,44 @@ export const isCircleSeedConstrainedByCenterDiameter = (
     isCoordinate(shape?.diameterStart) &&
     isCoordinate(shape?.diameterEnd) &&
     typeof shape?.radius === 'number'
+  )
+}
+
+export const isCircleSeed1ConstrainedByTwoPointsRadius = (
+  shape: any
+): shape is CircleSeed1ConstrainedByTwoPointsRadius => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'two-points-radius'
+
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.point1) &&
+    isCoordinate(shape?.point2) &&
+    typeof shape?.distanceBetweenPoints === 'number' &&
+    shape?.radius === undefined &&
+    shape?.center === undefined
+  )
+}
+
+export const isCircleSeed2ConstrainedByTwoPointsRadius = (
+  shape: any
+): shape is CircleSeed2ConstrainedByTwoPointsRadius => {
+  const expectedType: ShapeType = 'circle'
+  const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'two-points-radius'
+
+  return (
+    shape?.isSeed === true &&
+    shape?.shape === expectedType &&
+    shape?.drawCommand === expectedDrawCommand &&
+    isCoordinate(shape?.point1) &&
+    isCoordinate(shape?.point2) &&
+    isCoordinate(shape?.lineEquidistantFromTwoPoints?.point) &&
+    isVector(shape?.lineEquidistantFromTwoPoints?.unitVector) &&
+    typeof shape?.distanceBetweenPoints === 'number' &&
+    typeof shape?.radius === 'number' &&
+    isCoordinate(shape?.center)
   )
 }
 

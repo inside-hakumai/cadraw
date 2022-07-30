@@ -6,11 +6,12 @@ import {
   calcDistance,
   calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
-  findNearestPointOnLine,
+  findNearestPointOnLineSegment,
   findNearestPointOnArc,
   getSnapDestinationCoordDefaultValue,
   findPointEquidistantFromThreePoints,
   findNearestPointOnRectangle,
+  findNearestPointOnLine,
 } from '../lib/function'
 import {
   isArc,
@@ -28,6 +29,8 @@ import {
   isCircleSeedConstrainedByCenterDiameter,
   isLineSeedConstrainedByStartEnd,
   isCircle,
+  isCircleSeed1ConstrainedByTwoPointsRadius,
+  isCircleSeed2ConstrainedByTwoPointsRadius,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
@@ -174,7 +177,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
 
         if (shape.shape === 'circle') {
           const circleShape = shape as Circle
-          const { center } = circleShape.constraints
+          const { center } = circleShape.computed
 
           return [
             {
@@ -345,6 +348,31 @@ export const shapeSeedState = selector<ShapeSeed | null>({
           diameterStart: temporaryCircleDiameterStart,
           diameterEnd: temporaryCircleDiameterEnd,
         } as CircleSeedConstrainedByCenterDiameter
+      }
+    }
+
+    if (operationMode === 'circle' && drawCommand === 'two-points-radius') {
+      const circleDrawStep = drawStep as CommandDrawStep<'circle', 'two-points-radius'>
+
+      if (circleDrawStep === 'point2' && isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed)) {
+        return {
+          ...shapeSeed,
+          point2: coord,
+          distanceBetweenPoints: calcDistance(shapeSeed.point1, coord),
+        } as CircleSeed1ConstrainedByTwoPointsRadius
+      }
+
+      if (circleDrawStep === 'radius' && isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) {
+        const { nearestCoord: center } = findNearestPointOnLine(
+          coord,
+          shapeSeed.lineEquidistantFromTwoPoints
+        )
+
+        return {
+          ...shapeSeed,
+          radius: calcDistance(center, shapeSeed.point1),
+          center,
+        }
       }
     }
 
@@ -526,7 +554,7 @@ export const indicatingShapeIdState = selector<number | null>({
           nearestIndex = i
         }
       } else if (isLine(shape)) {
-        const nearest = findNearestPointOnLine(pointingCoord, shape.constraints)
+        const nearest = findNearestPointOnLineSegment(pointingCoord, shape.constraints)
         if (nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance
           nearestIndex = i
@@ -644,7 +672,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     for (const shape of shapes) {
       if (shape.shape === 'circle') {
         const circle = shape as Circle
-        const { center, radius } = circle.constraints
+        const { center, radius } = circle.computed
 
         const distance = Math.abs(calcDistance(pointingCoord, center) - radius)
         if (distance < 10) {
@@ -653,7 +681,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       }
 
       if (isLine(shape)) {
-        const { distance, isLineTerminal } = findNearestPointOnLine(
+        const { distance, isLineTerminal } = findNearestPointOnLineSegment(
           pointingCoord,
           shape.constraints
         )
@@ -697,7 +725,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     // カーソル座標と図形の最近傍点間の距離が1以下の場合は、スナップ先となる図形上の一点を特定する
     for (const shape of closeShapes) {
       if (isLine(shape)) {
-        const { nearestCoord } = findNearestPointOnLine(pointingCoord, shape.constraints)
+        const { nearestCoord } = findNearestPointOnLineSegment(pointingCoord, shape.constraints)
 
         snapDestinationCoordOnShape = [
           ...snapDestinationCoordOnShape,
@@ -868,35 +896,57 @@ export const canUndoSelector = selector<boolean>({
  */
 
 // 図形作成中に表示されるツールチップの中身テキストを返すSelector
-export const tooltipContentState = selector<string | null>({
+export const tooltipState = selector<{ content: string; clientPosition: Coordinate } | null>({
   key: 'tooltipContent',
   get: ({ get }) => {
     const shapeSeed = get(shapeSeedState)
     const coord = get(activeCoordState)
+    const cursorClientPosition = get(cursorClientPositionState)
 
-    if (shapeSeed === null || coord === null) {
+    if (shapeSeed === null || coord === null || cursorClientPosition === null) {
       return null
     }
 
-    if (shapeSeed.shape === 'circle') {
-      const circleSeed = shapeSeed as CircleSeedConstrainedByCenterDiameter
-      return (circleSeed.radius * 2).toFixed(2) + 'px'
+    if (shapeSeed.shape === 'circle' && isCircleSeedConstrainedByCenterDiameter(shapeSeed)) {
+      return {
+        content: (shapeSeed.radius * 2).toFixed(2) + 'px',
+        clientPosition: cursorClientPosition,
+      }
+    }
+
+    if (shapeSeed.shape === 'circle' && isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed)) {
+      return {
+        content: shapeSeed.distanceBetweenPoints.toFixed(2) + 'px',
+        clientPosition: cursorClientPosition,
+      }
+    }
+
+    if (shapeSeed.shape === 'circle' && isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) {
+      return {
+        content: shapeSeed.radius.toFixed(2) + 'px',
+        clientPosition: shapeSeed.center,
+      }
     }
 
     if (shapeSeed.shape === 'line') {
       const lineSeed = shapeSeed as LineSeedConstrainedByStartEnd
 
-      return (
-        Math.sqrt(
-          Math.pow(lineSeed.startPoint.x - coord.x, 2) +
-            Math.pow(lineSeed.startPoint.y - coord.y, 2)
-        ).toFixed(2) + 'px'
-      )
+      return {
+        content:
+          Math.sqrt(
+            Math.pow(lineSeed.startPoint.x - coord.x, 2) +
+              Math.pow(lineSeed.startPoint.y - coord.y, 2)
+          ).toFixed(2) + 'px',
+        clientPosition: cursorClientPosition,
+      }
     }
 
     if (shapeSeed.shape === 'arc') {
       if (isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed)) {
-        return (shapeSeed.radius * 2).toFixed(2) + 'px'
+        return {
+          content: (shapeSeed.radius * 2).toFixed(2) + 'px',
+          clientPosition: cursorClientPosition,
+        }
       }
 
       if (isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) {
@@ -910,7 +960,11 @@ export const tooltipContentState = selector<string | null>({
         } else {
           counterClockWiseAngle = 360 - (shapeSeed.startPointAngle - shapeSeed.endPointAngle)
         }
-        return counterClockWiseAngle.toFixed(2) + '°'
+
+        return {
+          content: counterClockWiseAngle.toFixed(2) + '°',
+          clientPosition: cursorClientPosition,
+        }
       }
     }
 
