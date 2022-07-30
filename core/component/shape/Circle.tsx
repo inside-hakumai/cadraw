@@ -26,7 +26,7 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
     }
   }, [shapeId, shape])
 
-  const { center, radius } = shape.constraints
+  const { center, radius } = shape.computed
 
   return (
     <circle

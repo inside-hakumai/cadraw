@@ -20,7 +20,6 @@ import {
   isArcConstrainedByThreePoints,
   isArcSeed1ConstrainedByThreePoints,
   isArcSeed2ConstrainedByThreePoints,
-  isCircle,
   isLine,
   isRectangle,
   isShapeType,
@@ -28,6 +27,7 @@ import {
   isRectangleSeedConstrainedByTwoCorners,
   isCircleSeedConstrainedByCenterDiameter,
   isLineSeedConstrainedByStartEnd,
+  isCircle,
 } from '../lib/typeguard'
 import { drawCommandList } from '../lib/constants'
 
@@ -514,7 +514,7 @@ export const indicatingShapeIdState = selector<number | null>({
     for (let i = 0; i < shapes.length; i++) {
       const shape = shapes[i]
       if (isCircle(shape)) {
-        const distance = calcDistanceFromCircumference(pointingCoord, shape.constraints)
+        const distance = calcDistanceFromCircumference(pointingCoord, shape.computed)
         if (distance < minimumDistance) {
           minimumDistance = distance
           nearestIndex = i
@@ -716,8 +716,8 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
 
       if (isCircle(shape)) {
         // 円の中心点とカーソル座標を含む直線と円の交点を求める
-        const intersections = findIntersectionOfCircleAndLine(shape.constraints, {
-          start: shape.constraints.center,
+        const intersections = findIntersectionOfCircleAndLine(shape.computed, {
+          start: shape.computed.center,
           end: pointingCoord,
         })
 

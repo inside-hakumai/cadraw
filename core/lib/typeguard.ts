@@ -86,14 +86,23 @@ export const isRectangleConstrainedByTwoCorners = (
 }
 
 export const isCircle = (shape: any): shape is Circle => {
+  return isCircleConstrainedByCenterRadius(shape)
+}
+
+export const isCircleConstrainedByCenterRadius = (
+  shape: any
+): shape is Circle<CenterRadiusConstraints> => {
   const expectedType: ShapeType = 'circle'
   const expectedDrawCommand: ShapeDrawCommand<'circle'> = 'center-diameter'
+
   return (
     typeof shape?.id === 'number' &&
     shape?.shape === expectedType &&
     shape?.drawCommand === expectedDrawCommand &&
     isCoordinate(shape?.constraints?.center) &&
-    typeof shape?.constraints?.radius === 'number'
+    typeof shape?.constraints?.radius === 'number' &&
+    isCoordinate(shape?.computed?.center) &&
+    typeof shape?.computed?.radius === 'number'
   )
 }
 

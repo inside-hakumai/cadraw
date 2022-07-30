@@ -487,12 +487,16 @@ const App: React.FC<Props> = ({ onExport }) => {
 
           const { center, radius } = circleSeed
 
-          const newCircle: Circle = {
+          const newCircle: Circle<CenterRadiusConstraints> = {
             id: shapes.length,
             type: drawType,
             shape: 'circle',
             drawCommand: 'center-diameter',
             constraints: {
+              center,
+              radius,
+            },
+            computed: {
               center,
               radius,
             },

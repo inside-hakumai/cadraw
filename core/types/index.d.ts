@@ -79,9 +79,17 @@ declare global {
     }
   }
 
-  interface Circle extends Shape {
+  interface CenterRadiusConstraints {
+    center: Coordinate
+    radius: number
+  }
+
+  type CircleConstraints = CenterRadiusConstraints
+
+  interface Circle<C extends CircleConstraints = Void> extends Shape {
     shape: 'circle'
-    constraints: {
+    constraints: C
+    computed: {
       center: Coordinate
       radius: number
     }
