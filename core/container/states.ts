@@ -646,7 +646,7 @@ export const guidingLinesState = selector<Line['constraints'][]>({
         const circle = shapes.find(
           shape => shape.id === circleCenterCoordInfo.targetShapeId
         ) as Circle
-        const { center, radius } = circle.constraints
+        const { center, radius } = circle.computed
         return {
           type: 'line' as const,
           startPoint: { x: center.x - radius, y: center.y },
