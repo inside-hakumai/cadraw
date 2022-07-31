@@ -232,7 +232,7 @@ const ToolWindow: React.FC<Props> = ({
         )}
         <div css={toolGroupStyle}>
           {shapeList.map(shape => (
-            <ShapeSelector shape={shape} />
+            <ShapeSelector key={`shapeSelector-${shape}`} shape={shape} />
           ))}
         </div>
         <div css={toolGroupStyle}>
