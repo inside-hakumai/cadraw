@@ -232,12 +232,10 @@ export const isRectangleSeedConstrainedByCenterCorner = (
 ): shape is RectangleSeedConstrainedByCenterCorner => {
   const expectedType: ShapeType = 'rectangle'
   const expectedDrawCommand: ShapeDrawCommand<'rectangle'> = 'center-corner'
-  const expectedDrawStep: CommandDrawStep<'rectangle', 'center-corner'> = 'corner'
   return (
     shape?.isSeed === true &&
     shape?.shape === expectedType &&
     shape?.drawCommand === expectedDrawCommand &&
-    shape?.drawStep === expectedDrawStep &&
     isCoordinate(shape?.center) &&
     isCoordinate(shape?.cornerPoint) &&
     isCoordinate(shape?.upperLeftPoint)
