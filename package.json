@@ -5,7 +5,8 @@
   "workspaces": [
     "app/web",
     "app/figma",
-    "core"
+    "core",
+    "e2e"
   ],
   "scripts": {
     "postinstall": "husky install",
@@ -15,20 +16,15 @@
     "web:lint": "yarn workspace cadraw-web run lint",
     "figma:dev": "yarn workspace cadraw-figma run dev",
     "figma:build": "yarn workspace cadraw-figma run build",
+    "e2e:test": "yarn workspace e2e run codeceptjs",
     "all:build": "run-s --print-name web:build figma:build",
     "all:eslint": "npx eslint --fix . --ext .ts --ext .tsx",
     "test": "jest",
-    "test:e2e": "run-p web:start codeceptjs",
+    "test:e2e": "run-p web:start e2e:test",
     "prepare": "husky install",
     "versionup:major": "npm version major --no-git-tag-version && npm version major --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",
     "versionup:minor": "npm version minor --no-git-tag-version && npm version minor --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",
-    "versionup:patch": "npm version patch --no-git-tag-version && npm version patch --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",
-    "codeceptjs": "codeceptjs run --steps",
-    "codeceptjs:headless": "HEADLESS=true codeceptjs run --steps",
-    "codeceptjs:ui": "codecept-ui --app",
-    "codeceptjs:demo": "codeceptjs run --steps -c node_modules/@codeceptjs/examples",
-    "codeceptjs:demo:headless": "HEADLESS=true codeceptjs run --steps -c node_modules/@codeceptjs/examples",
-    "codeceptjs:demo:ui": "codecept-ui --app  -c node_modules/@codeceptjs/examples"
+    "versionup:patch": "npm version patch --no-git-tag-version && npm version patch --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.16.7",
