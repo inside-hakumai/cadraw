@@ -7,7 +7,14 @@ declare namespace CodeceptJS {
     current: any
   }
   interface Methods extends Playwright {}
-  interface I extends WithTranslation<Methods> {}
+  interface I extends WithTranslation<Methods> {
+    clickCoord: (x: number, y: number) => Promise<void>
+    moveTo: (x: number, y: number) => Promise<void>
+    seeAttributesOnSvgElements: (
+      selector: string,
+      attributes: { [key: string]: string }
+    ) => Promise<void>
+  }
   namespace Translation {
     interface Actions {
       amOutsideAngularApp: 'Angularの外に出る'

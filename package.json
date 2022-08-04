@@ -21,6 +21,7 @@
     "all:eslint": "npx eslint --fix . --ext .ts --ext .tsx",
     "test": "jest",
     "test:e2e": "run-p web:start e2e:test",
+    "test:all": "run-s test test:e2e",
     "prepare": "husky install",
     "versionup:major": "npm version major --no-git-tag-version && npm version major --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",
     "versionup:minor": "npm version minor --no-git-tag-version && npm version minor --no-git-tag-version --workspaces && rm package-lock.json && git restore yarn.lock",

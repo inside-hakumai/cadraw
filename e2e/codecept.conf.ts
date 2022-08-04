@@ -18,6 +18,9 @@ export const config: CodeceptJS.MainConfig = {
       show: true,
       browser: 'chromium',
     },
+    Svg: {
+      require: './helpers/SvgHelper.ts',
+    },
   },
   include: {},
   name: 'cadraw',
