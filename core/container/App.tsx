@@ -45,6 +45,7 @@ import {
   calcDistance,
   findLineEquidistantFromTwoPoints,
 } from '../lib/function'
+import useSelectOperation from './hooks/useSelectOperation'
 
 interface Props {
   onExport?: (data: string) => void
@@ -53,6 +54,8 @@ interface Props {
 const App: React.FC<Props> = ({ onExport }) => {
   const { addKeyListener } = useKeyboardEvent()
   const { goToNextStep, goToFirstStep } = useDrawStep()
+
+  const { triggerSelectOperation } = useSelectOperation()
 
   const [shapes, setShapes] = useRecoilState(shapesState)
   const [snapshotVersion, setSnapshotVersion] = useRecoilState(currentSnapshotVersionState)
@@ -801,15 +804,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     }
 
     if (operationMode === 'select') {
-      if (indicatingShapeId !== null) {
-        setSelectedShapeIds(oldValue => {
-          if (oldValue.includes(indicatingShapeId)) {
-            return oldValue.filter(id => id !== indicatingShapeId)
-          } else {
-            return [...oldValue, indicatingShapeId]
-          }
-        })
-      }
+      await triggerSelectOperation()
     }
   }
 

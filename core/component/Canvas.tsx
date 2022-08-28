@@ -40,8 +40,8 @@ import CircleConstrainedByTwoPointsRadiusPreview from './shapePreview/CircleCons
 import CircleConstrainedByTwoPointsPreview from './shapePreview/CircleConstrainedByTwoPointsPreview'
 
 const style = css`
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
 `
 
 const svgStyle = css`
