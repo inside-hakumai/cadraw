@@ -171,25 +171,29 @@ const App: React.FC<Props> = ({ onExport }) => {
     []
   )
 
-  const undo = useRecoilCallback(({ snapshot, set }) => async () => {
-    const canUndo = await snapshot.getPromise(canUndoSelector)
-    const currentSnapshotVersion = await snapshot.getPromise(currentSnapshotVersionState)
+  const undo = useRecoilCallback(
+    ({ snapshot, set }) =>
+      async () => {
+        const canUndo = await snapshot.getPromise(canUndoSelector)
+        const currentSnapshotVersion = await snapshot.getPromise(currentSnapshotVersionState)
 
-    if (!canUndo) {
-      console.warn('Few snapshots. Cannot undo.')
-    } else if (currentSnapshotVersion === null) {
-      console.warn('currentSnapshotVersion is null. Cannot undo.')
-    } else if (currentSnapshotVersion === 0) {
-      console.warn('currentSnapshotVersion is 0. Cannot undo.')
-    } else {
-      const rollbackTargetSnapshot = (await snapshot.getPromise(snapshotsState))[
-        currentSnapshotVersion - 1
-      ]
+        if (!canUndo) {
+          console.warn('Few snapshots. Cannot undo.')
+        } else if (currentSnapshotVersion === null) {
+          console.warn('currentSnapshotVersion is null. Cannot undo.')
+        } else if (currentSnapshotVersion === 0) {
+          console.warn('currentSnapshotVersion is 0. Cannot undo.')
+        } else {
+          const rollbackTargetSnapshot = (await snapshot.getPromise(snapshotsState))[
+            currentSnapshotVersion - 1
+          ]
 
-      set(shapesState, Array.from(rollbackTargetSnapshot))
-      set(currentSnapshotVersionState, currentSnapshotVersion - 1)
-    }
-  })
+          set(shapesState, Array.from(rollbackTargetSnapshot))
+          set(currentSnapshotVersionState, currentSnapshotVersion - 1)
+        }
+      },
+    []
+  )
 
   useEffect(() => {
     if (didMountRef.current) {
@@ -833,7 +837,7 @@ const App: React.FC<Props> = ({ onExport }) => {
     return { x, y }
   }
 
-  const exportAsSvg = () => {
+  const exportAsSvg = useCallback(() => {
     if (!stageRef.current) {
       return
     }
@@ -852,7 +856,7 @@ const App: React.FC<Props> = ({ onExport }) => {
       anchor.click()
       anchor.remove()
     }
-  }
+  }, [onExport])
 
   const changeOperationMode = useRecoilCallback(
     ({ set }) =>
