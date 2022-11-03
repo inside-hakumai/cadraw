@@ -12,7 +12,7 @@ interface Props {
   shapeId: number
 }
 
-const Arc: React.FC<Props> = ({ shapeId }) => {
+const Arc: React.FC<Props> = React.memo(function Arc({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
   if (isArcConstrainedByCenterTwoPoints(shape)) {
@@ -22,6 +22,6 @@ const Arc: React.FC<Props> = ({ shapeId }) => {
   } else {
     throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
   }
-}
+})
 
 export default Arc

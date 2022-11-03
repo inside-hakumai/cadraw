@@ -12,7 +12,7 @@ interface Props {
   shapeId: number
 }
 
-const Line: React.FC<Props> = ({ shapeId }) => {
+const Line: React.FC<Props> = React.memo(function Line({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Line
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
@@ -38,6 +38,6 @@ const Line: React.FC<Props> = ({ shapeId }) => {
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
-}
+})
 
 export default Line

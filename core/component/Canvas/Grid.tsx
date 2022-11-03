@@ -1,6 +1,15 @@
 import React from 'react'
+import { css } from '@emotion/react'
 
-const Grid = () => {
+const svgStyle = css`
+  position: absolute;
+  top: 0;
+  left: 0;
+`
+
+interface Props {}
+
+const Grid: React.FC<Props> = React.memo(function Grid() {
   // グリッドを描画するためのline要素
   const gridLines: React.ReactElement[] = []
   for (let i = 0; i < window.innerWidth; i += 50) {
@@ -33,10 +42,11 @@ const Grid = () => {
   return (
     <svg
       viewBox={`0, 0, ${window.innerWidth}, ${window.innerHeight}`}
-      xmlns='http://www.w3.org/2000/svg'>
+      xmlns='http://www.w3.org/2000/svg'
+      css={svgStyle}>
       {gridLines}
     </svg>
   )
-}
+})
 
 export default Grid

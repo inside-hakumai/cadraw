@@ -12,7 +12,7 @@ interface Props {
   shapeId: number
 }
 
-const Circle: React.FC<Props> = ({ shapeId }) => {
+const Circle: React.FC<Props> = React.memo(function Circle({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Circle
   const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
 
@@ -39,6 +39,6 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
-}
+})
 
 export default Circle
