@@ -55,6 +55,21 @@ export const drawStepState = atom<DrawStep | null>({
   default: null,
 })
 
+export const isClickingState = atom<{
+  isClicking: boolean
+  activeCoordWhenMouseDown: Coordinate | null
+  pointingCoordWhenMouseDown: Coordinate | null
+  draggingShapeOriginalData: Map<number, Shape> | null
+}>({
+  key: 'isClicking',
+  default: {
+    isClicking: false,
+    activeCoordWhenMouseDown: null,
+    pointingCoordWhenMouseDown: null,
+    draggingShapeOriginalData: null,
+  },
+})
+
 export const currentAvailableCommandSelector = selector<DrawCommand[] | null>({
   key: 'currentAvailableCommand',
   get: ({ get }) => {
@@ -134,10 +149,26 @@ export const filteredShapesSelector = selectorFamily<
     },
 })
 
-// クリックして選択状態になっている図形のIDを管理するAtom
+export const idToShapeMapSelector = selector<Map<number, Shape>>({
+  key: 'idToShapeMap',
+  get: ({ get }) => {
+    const shapes = get(shapesState)
+    return new Map(shapes.map(shape => [shape.id, shape]))
+  },
+})
+
+// クリックして選択状態になっている図形のIDを管理するAtom、および図形を返すSelector
 export const selectedShapeIdsState = atom<number[]>({
   key: 'selectedShapeIds',
   default: [],
+})
+export const selectedShapesSelector = selector<Shape[]>({
+  key: 'selectedShapes',
+  get: ({ get }) => {
+    const selectedShapeIds = get(selectedShapeIdsState)
+    const idToShapeMap = get(idToShapeMapSelector)
+    return selectedShapeIds.map(id => idToShapeMap.get(id) as Shape)
+  },
 })
 
 // 図形が選択されているかどうかを返すSelectorFamily
@@ -683,10 +714,17 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     }
 
     const shapes = get(shapesState)
+    const indicatingShapeId = get(indicatingShapeIdState)
+    const { isClicking } = get(isClickingState)
 
     // 現在指している座標と図形の最近傍点との距離が近い図形を探す
     let closeShapes: Shape[] = []
     for (const shape of shapes) {
+      // ドラッグ中はカーソルが当たっている図形（＝ドラッグ中の図形そのもの）へのスナップは無効にする
+      if (isClicking && indicatingShapeId === shape.id) {
+        continue
+      }
+
       if (shape.shape === 'circle') {
         const circle = shape as Circle
         const { center, radius } = circle.computed

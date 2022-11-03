@@ -1,4 +1,5 @@
 import { color } from './constants'
+import { isLine } from './typeguard'
 
 /**
  * 2つの座標間の距離を返します。
@@ -567,4 +568,37 @@ export const getStrokeColor = (isSelected: boolean, isFocused: boolean) => {
   if (isSelected) return color.strokeColorOnSelected
   else if (isFocused) return color.strokeColorOnFocused
   else return color.strokeColor
+}
+
+export const cloneShape = <S extends Shape>(shape: S): S => {
+  if (isLine(shape)) {
+    return {
+      id: shape.id,
+      type: shape.type,
+      shape: shape.shape,
+      drawCommand: shape.drawCommand,
+      constraints: {
+        startPoint: {
+          x: shape.constraints.startPoint.x,
+          y: shape.constraints.startPoint.y,
+        },
+        endPoint: {
+          x: shape.constraints.endPoint.x,
+          y: shape.constraints.endPoint.y,
+        },
+      },
+      computed: {
+        startPoint: {
+          x: shape.computed.startPoint.x,
+          y: shape.computed.startPoint.y,
+        },
+        endPoint: {
+          x: shape.computed.endPoint.x,
+          y: shape.computed.endPoint.y,
+        },
+      },
+    } as typeof shape
+  } else {
+    return shape
+  }
 }

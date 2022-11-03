@@ -20,6 +20,8 @@ import {
   shapeSeedConstraintsState,
   shapeSeedState,
   drawTypeState,
+  isClickingState,
+  indicatingShapeIdState,
 } from './states'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import {
@@ -45,6 +47,7 @@ import {
   findLineEquidistantFromTwoPoints,
 } from '../lib/function'
 import useSelectOperation from './hooks/useSelectOperation'
+import useDrag from './hooks/useDrag'
 
 interface Props {
   onExport?: (data: string) => void
@@ -53,8 +56,8 @@ interface Props {
 const App: React.FC<Props> = ({ onExport }) => {
   const { addKeyListener } = useKeyboardEvent()
   const { goToNextStep, goToFirstStep } = useDrawStep()
-
   const { triggerSelectOperation } = useSelectOperation()
+  const { dragShape } = useDrag()
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
@@ -241,6 +244,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const handleMouseDown = useRecoilCallback(
     ({ snapshot, set }) =>
       async () => {
+        const pointingCoord = await snapshot.getPromise(pointingCoordState)
         const activeCoord = await snapshot.getPromise(activeCoordState)
         const operationMode = await snapshot.getPromise(operationModeState)
         const drawCommand = await snapshot.getPromise(drawCommandState)
@@ -248,6 +252,13 @@ const App: React.FC<Props> = ({ onExport }) => {
         const drawType = await snapshot.getPromise(drawTypeState)
         const shapeSeed = await snapshot.getPromise(shapeSeedState)
         const shapes = await snapshot.getPromise(shapesState)
+
+        set(isClickingState, {
+          isClicking: true,
+          activeCoordWhenMouseDown: activeCoord,
+          pointingCoordWhenMouseDown: pointingCoord,
+          draggingShapeOriginalData: null,
+        })
 
         if (activeCoord === null) {
           return
@@ -282,6 +293,10 @@ const App: React.FC<Props> = ({ onExport }) => {
                 constraints: {
                   startPoint: { x: startPoint.x, y: startPoint.y },
                   endPoint: { x: endPoint.x, y: endPoint.y },
+                },
+                computed: {
+                  startPoint,
+                  endPoint,
                 },
               }
 
@@ -850,6 +865,37 @@ const App: React.FC<Props> = ({ onExport }) => {
     [addShape, goToNextStep, goToFirstStep, triggerSelectOperation]
   )
 
+  const handleMouseUp = useRecoilCallback(
+    ({ snapshot, set }) =>
+      async (event: React.MouseEvent) => {
+        const indicatingShapeId = await snapshot.getPromise(indicatingShapeIdState)
+        const pointingCoord = await snapshot.getPromise(pointingCoordState)
+        const { pointingCoordWhenMouseDown, draggingShapeOriginalData } = await snapshot.getPromise(
+          isClickingState
+        )
+
+        if (pointingCoord !== null && pointingCoordWhenMouseDown !== null) {
+          // mouseDownした図形をドラッグ移動した上でmouseUpした場合は
+          // 選択ではなくドラッグを意図した操作であるとしてselectedShapeから削除する
+          if (
+            pointingCoord.x !== pointingCoordWhenMouseDown.x ||
+            pointingCoord.y !== pointingCoordWhenMouseDown.y
+          ) {
+            set(selectedShapeIdsState, selectedShapeIds =>
+              selectedShapeIds.filter(id => id !== indicatingShapeId)
+            )
+          }
+        }
+
+        set(isClickingState, {
+          isClicking: false,
+          activeCoordWhenMouseDown: null,
+          pointingCoordWhenMouseDown: null,
+          draggingShapeOriginalData: null,
+        })
+      }
+  )
+
   const convertDomCoordToSvgCoord = useCallback((domCoord: Coordinate): Coordinate | null => {
     const stage = stageRef.current
     if (stage === null) {
@@ -875,8 +921,14 @@ const App: React.FC<Props> = ({ onExport }) => {
         const clientPosition = { x: event.clientX, y: event.clientY }
         set(cursorClientPositionState, clientPosition)
         set(pointingCoordState, convertDomCoordToSvgCoord(clientPosition))
+
+        const { isClicking } = await snapshot.getPromise(isClickingState)
+        const selectedShapeIds = await snapshot.getPromise(selectedShapeIdsState)
+        if (isClicking && selectedShapeIds.length > 0) {
+          await dragShape()
+        }
       },
-    [convertDomCoordToSvgCoord]
+    [convertDomCoordToSvgCoord, dragShape]
   )
 
   const exportAsSvg = useCallback(() => {
@@ -932,7 +984,12 @@ const App: React.FC<Props> = ({ onExport }) => {
 
   return (
     <>
-      <Canvas stageRef={stageRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} />
+      <Canvas
+        stageRef={stageRef}
+        onMouseDown={handleMouseDown}
+        onMouseup={handleMouseUp}
+        onMouseMove={handleMouseMove}
+      />
       <ToolWindow
         changeDrawType={useCallback(changeDrawCommand, [changeDrawCommand])}
         changeCommand={changeCommand}

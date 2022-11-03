@@ -77,6 +77,10 @@ declare global {
       startPoint: Coordinate
       endPoint: Coordinate
     }
+    computed: {
+      startPoint: Coordinate
+      endPoint: Coordinate
+    }
   }
 
   interface CenterRadiusConstraints {

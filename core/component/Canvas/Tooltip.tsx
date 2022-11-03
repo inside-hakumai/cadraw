@@ -7,6 +7,7 @@ const tooltipStyle = css`
   position: absolute;
   font-size: 10px;
   transform: translate(-40%);
+  user-select: none;
 `
 
 interface Props {}
