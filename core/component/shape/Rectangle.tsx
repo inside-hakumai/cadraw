@@ -12,7 +12,7 @@ interface Props {
   shapeId: number
 }
 
-const Rectangle: React.FC<Props> = ({ shapeId }) => {
+const Rectangle: React.FC<Props> = React.memo(function Rectangle({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
   if (isRectangleConstrainedByTwoCorners(shape)) {
@@ -22,6 +22,6 @@ const Rectangle: React.FC<Props> = ({ shapeId }) => {
   } else {
     throw new Error(`Shape(ID = ${shapeId}) is not a rectangle`)
   }
-}
+})
 
 export default Rectangle

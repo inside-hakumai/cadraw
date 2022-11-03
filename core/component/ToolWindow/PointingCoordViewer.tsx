@@ -18,7 +18,7 @@ const coordViewerStyle = css`
 
 interface Props {}
 
-const PointingCoordIndicator: React.FC<Props> = React.memo(function PointingCoordIndicator() {
+const PointingCoordViewer: React.FC<Props> = React.memo(function PointingCoordViewer() {
   const pointingCoord = useRecoilValue(pointingCoordState)
   const snappingCoord = useRecoilValue(snappingCoordState)
 
@@ -40,4 +40,4 @@ const PointingCoordIndicator: React.FC<Props> = React.memo(function PointingCoor
   }
 })
 
-export default PointingCoordIndicator
+export default PointingCoordViewer

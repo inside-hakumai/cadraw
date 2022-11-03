@@ -1,5 +1,5 @@
 import React from 'react'
-import PointingCoordIndicator from './PointingCoordIndicator'
+import PointingCoordViewer from './PointingCoordViewer'
 import ButtonGroup from './ButtonGroup'
 
 interface Props {
@@ -17,7 +17,7 @@ const ToolWindow: React.FC<Props> = React.memo(function ToolWindow(props) {
   return (
     <div>
       <ButtonGroup {...props} />
-      <PointingCoordIndicator />
+      <PointingCoordViewer />
     </div>
   )
 })
