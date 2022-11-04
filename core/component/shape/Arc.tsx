@@ -1,12 +1,12 @@
 import React from 'react'
 import { useRecoilValue } from 'recoil'
-import { shapeSelectorFamily } from '../../container/states'
 import ArcConstrainedByThreePoints from '../constrainedShape/ArcConstrainedByThreePoints'
 import {
   isArcConstrainedByCenterTwoPoints,
   isArcConstrainedByThreePoints,
 } from '../../lib/typeguard'
 import ArcConstrainedByCenterTwoPoints from '../constrainedShape/ArcConstrainedByCenterTwoPoints'
+import { shapeSelectorFamily } from '../../container/state/shapeState'
 
 interface Props {
   shapeId: number

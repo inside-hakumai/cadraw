@@ -1,11 +1,8 @@
 import { useRecoilCallback } from 'recoil'
-import {
-  indicatingShapeIdState,
-  isClickingState,
-  selectedShapeIdsState,
-  shapeSelectorFamily,
-} from '../states'
+import { isClickingState } from '../state'
 import { cloneShape } from '../../lib/function'
+import { selectedShapeIdsState, shapeSelectorFamily } from '../state/shapeState'
+import { indicatingShapeIdState } from '../state/cursorState'
 
 const useSelectOperation = () => {
   const triggerSelectOperation = useRecoilCallback(

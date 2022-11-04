@@ -1,7 +1,7 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
-import { snappingCoordState } from '../../container/states'
+import { snappingCoordState } from '../../container/state'
 import Grid from './Grid'
 import { useTranslation } from 'react-i18next'
 import SupplementalRenderer from './SupplementalRenderer'

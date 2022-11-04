@@ -5,24 +5,10 @@ import Canvas from '../component/Canvas'
 import { useRecoilCallback } from 'recoil'
 import {
   activeCoordState,
-  canUndoSelector,
-  currentOperatingShapeSelector,
-  currentSnapshotVersionState,
-  cursorClientPositionState,
-  drawCommandState,
-  drawStepState,
-  isShowingShortcutKeyHintState,
-  operationModeState,
-  pointingCoordState,
-  selectedShapeIdsState,
-  shapesState,
-  snapshotsState,
   shapeSeedConstraintsState,
   shapeSeedState,
-  drawTypeState,
   isClickingState,
-  indicatingShapeIdState,
-} from './states'
+} from './state'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import {
   isArcSeed1ConstrainedByCenterTwoPoints,
@@ -48,6 +34,25 @@ import {
 } from '../lib/function'
 import useSelectOperation from './hooks/useSelectOperation'
 import useDrag from './hooks/useDrag'
+import {
+  currentOperatingShapeSelector,
+  drawCommandState,
+  drawStepState,
+  drawTypeState,
+  operationModeState,
+} from './state/userOperationState'
+import { selectedShapeIdsState, shapesState } from './state/shapeState'
+import {
+  canUndoSelector,
+  currentSnapshotVersionState,
+  snapshotsState,
+} from './state/snapshotsState'
+import { isShowingShortcutKeyHintState } from './state/hintState'
+import {
+  cursorClientPositionState,
+  indicatingShapeIdState,
+  pointingCoordState,
+} from './state/cursorState'
 
 interface Props {
   onExport?: (data: string) => void

@@ -6,12 +6,9 @@ import SnapCircle from '../SnapCircle'
 import React from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
-import {
-  filteredShapeIdsSelector,
-  guidingLinesState,
-  snappingCoordState,
-} from '../../container/states'
+import { guidingLinesState, snappingCoordState } from '../../container/state'
 import GuidingLine from '../GuidingLine'
+import { filteredShapeIdsSelector } from '../../container/state/shapeState'
 
 const svgStyle = css`
   position: absolute;

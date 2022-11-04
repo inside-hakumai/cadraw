@@ -1,7 +1,7 @@
 import React from 'react'
 import { useRecoilValue } from 'recoil'
-import { tooltipState } from '../../container/states'
 import { css } from '@emotion/react'
+import { tooltipState } from '../../container/state/hintState'
 
 const tooltipStyle = css`
   position: absolute;

@@ -8,18 +8,17 @@ import {
 import { shapeList } from '../../lib/constants'
 import React, { MouseEvent, useCallback } from 'react'
 import { useRecoilValue } from 'recoil'
+import { useTranslation } from 'react-i18next'
 import {
-  canUndoSelector,
   currentAvailableCommandSelector,
   currentOperatingShapeSelector,
-  currentSnapshotVersionState,
   drawCommandState,
   drawTypeState,
-  isShowingShortcutKeyHintState,
   operationModeState,
-  selectedShapeIdsState,
-} from '../../container/states'
-import { useTranslation } from 'react-i18next'
+} from '../../container/state/userOperationState'
+import { selectedShapeIdsState } from '../../container/state/shapeState'
+import { canUndoSelector, currentSnapshotVersionState } from '../../container/state/snapshotsState'
+import { isShowingShortcutKeyHintState } from '../../container/state/hintState'
 
 const rootStyle = css`
   display: flex;

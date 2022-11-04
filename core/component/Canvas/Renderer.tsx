@@ -22,15 +22,13 @@ import ArcConstrainedByThreePointsPreview from '../shapePreview/ArcConstrainedBy
 import LinePreview from '../shapePreview/LinePreview'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
-import {
-  filteredShapeIdsSelector,
-  indicatingShapeIdState,
-  shapeSeedState,
-} from '../../container/states'
+import { shapeSeedState } from '../../container/state'
 import Circle from '../shape/Circle'
 import Rectangle from '../shape/Rectangle'
 import Line from '../shape/Line'
 import Arc from '../shape/Arc'
+import { filteredShapeIdsSelector } from '../../container/state/shapeState'
+import { indicatingShapeIdState } from '../../container/state/cursorState'
 
 const svgStyle = css`
   position: absolute;

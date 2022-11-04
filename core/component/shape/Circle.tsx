@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
-import {
-  isIndicatedFamily,
-  isShapeSelectedSelectorFamily,
-  shapeSelectorFamily,
-} from '../../container/states'
 import { isCircle } from '../../lib/typeguard'
 import { getStrokeColor } from '../../lib/function'
+import {
+  isShapeSelectedSelectorFamily,
+  shapeSelectorFamily,
+} from '../../container/state/shapeState'
+import { isIndicatedFamily } from '../../container/state/cursorState'
 
 interface Props {
   shapeId: number

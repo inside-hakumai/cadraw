@@ -1,7 +1,8 @@
 import React from 'react'
 import { css } from '@emotion/react'
 import { useRecoilValue } from 'recoil'
-import { pointingCoordState, snappingCoordState } from '../../container/states'
+import { snappingCoordState } from '../../container/state'
+import { pointingCoordState } from '../../container/state/cursorState'
 
 const coordViewerStyle = css`
   position: absolute;

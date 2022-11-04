@@ -1,12 +1,12 @@
 import React from 'react'
 import { useRecoilValue } from 'recoil'
-import { shapeSelectorFamily } from '../../container/states'
 import RectangleConstrainedByTwoCorners from '../constrainedShape/RectangleConstrainedByTwoCorners'
 import RectangleConstrainedByCenterCorner from '../constrainedShape/RectangleConstrainedByCenterCorner'
 import {
   isRectangleConstrainedByCenterCorner,
   isRectangleConstrainedByTwoCorners,
 } from '../../lib/typeguard'
+import { shapeSelectorFamily } from '../../container/state/shapeState'
 
 interface Props {
   shapeId: number

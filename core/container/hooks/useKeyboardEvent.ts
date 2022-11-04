@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useRecoilValue } from 'recoil'
-import { shapeSeedConstraintsState } from '../states'
+import { shapeSeedConstraintsState } from '../state'
 
 type eventList =
   | 'switchToSelect'

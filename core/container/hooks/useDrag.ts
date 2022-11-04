@@ -1,7 +1,8 @@
 import { useRecoilCallback } from 'recoil'
-import { activeCoordState, isClickingState, selectedShapeIdsState, shapesState } from '../states'
+import { activeCoordState, isClickingState } from '../state'
 import { isLine } from '../../lib/typeguard'
 import { cloneShape } from '../../lib/function'
+import { selectedShapeIdsState, shapesState } from '../state/shapeState'
 
 const useDrag = () => {
   const dragShape = useRecoilCallback(
