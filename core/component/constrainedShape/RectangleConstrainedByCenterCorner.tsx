@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
 import {
-  indicatingShapeIdState,
+  isIndicatedFamily,
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
@@ -19,10 +19,8 @@ interface Props {
  */
 const RectangleConstrainedByCenterCorner: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Rectangle<CenterCornerConstraints>
-  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
-
+  const isFocused = useRecoilValue(isIndicatedFamily(shapeId))
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
-  const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
     if (!isRectangleConstrainedByCenterCorner(shape)) {

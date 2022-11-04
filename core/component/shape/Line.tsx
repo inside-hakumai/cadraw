@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
 import {
-  indicatingShapeIdState,
+  isIndicatedFamily,
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
@@ -14,10 +14,8 @@ interface Props {
 
 const Line: React.FC<Props> = React.memo(function Line({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Line
-  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
-
+  const isFocused = useRecoilValue(isIndicatedFamily(shapeId))
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
-  const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
     if (!isLine(shape)) {

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
 import {
-  indicatingShapeIdState,
+  isIndicatedFamily,
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/states'
@@ -19,13 +19,11 @@ interface Props {
  */
 const ArcConstrainedByCenterTwoPoints: React.FC<Props> = ({ shapeId }) => {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<CenterAndTwoPointsConstraints>
-  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
+  const isFocused = useRecoilValue(isIndicatedFamily(shapeId))
+  const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
 
   const { center } = shape.constraints
   const { radius, startPointAngle, endPointAngle } = shape.computed
-
-  const isFocused = indicatingShapeId === shape.id
-  const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
 
   useEffect(() => {
     if (!isArcConstrainedByCenterTwoPoints(shape)) {

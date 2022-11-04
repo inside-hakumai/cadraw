@@ -626,6 +626,14 @@ export const indicatingShapeIdState = selector<number | null>({
   },
 })
 
+export const isIndicatedFamily = selectorFamily<boolean, number>({
+  key: 'singleShape',
+  get:
+    (shapeId: number) =>
+    ({ get }) =>
+      shapeId === get(indicatingShapeIdState),
+})
+
 /*
  * 座標スナップに必要な情報を管理するAtom、Selector
  */
