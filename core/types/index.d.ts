@@ -1,9 +1,16 @@
-import { drawCommandList, drawType, shapeList, drawStepList } from '../lib/constants'
+import {
+  drawCommandList,
+  drawType,
+  shapeList,
+  drawStepList,
+  drawOperationList,
+} from '../lib/constants'
 
 declare global {
   type DrawType = typeof drawType[number]
   type ShapeType = typeof shapeList[number]
   type DrawStepMap = typeof drawStepList
+  type DrawOperation = typeof drawOperationList[number]
 
   interface DrawCommandMap {
     line: typeof drawCommandList['line'][number]

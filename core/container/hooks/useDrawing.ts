@@ -34,17 +34,40 @@ const useDrawing = () => {
     ({ snapshot, set }) =>
       async (shape: Shape) => {
         const shapes = await snapshot.getPromise(shapesState)
-        const snapshotVersion = await snapshot.getPromise(currentSnapshotVersionState)
+        const currentSnapshotVersion = await snapshot.getPromise(currentSnapshotVersionState)
 
         set(shapesState, oldValue => [...oldValue, shape])
         set(snapshotsState, oldState => {
-          if (oldState.length === snapshotVersion + 1) {
-            return [...oldState, [...shapes, shape]]
-          } else {
-            const newState = [...oldState]
-            newState[snapshotVersion + 1] = [...shapes, shape]
-            return newState
+          let drawOperation: DrawOperation
+          switch (shape.shape) {
+            case 'line':
+              drawOperation = 'add-line'
+              break
+            case 'circle':
+              drawOperation = 'add-circle'
+              break
+            case 'rectangle':
+              drawOperation = 'add-rectangle'
+              break
+            case 'arc':
+              drawOperation = 'add-arc'
+              break
+            default:
+              drawOperation = 'noop'
+              break
           }
+
+          // 新しい図形を追加する時、最新のスナップショットが表示に反映されている場合は
+          // 既存のスナップショットリストの末尾に新規にスナップショットを追加するだけだが、
+          // 元に戻す操作をして古いスナップショットが表示に反映されている場合は
+          // 反映中のスナップショットより新しいスナップショットを削除してから新しいスナップショットを末尾に追加する
+          return [
+            ...oldState.slice(0, currentSnapshotVersion + 1),
+            {
+              lastOperation: drawOperation,
+              shapes: [...shapes, shape],
+            },
+          ]
         })
         set(currentSnapshotVersionState, oldState => oldState + 1)
       },

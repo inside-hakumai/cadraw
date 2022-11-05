@@ -12,6 +12,7 @@ declare global {
     }
     command: { [shape in ShapeType]: { [command in ShapeDrawCommand<shape>]: string } }
     snapInfo: { [key in SnapType]: string }
+    drawOperation: { [key in DrawOperation]: string }
   }
 }
 

@@ -5,9 +5,6 @@ import { snappingCoordState } from '../../container/state'
 import { pointingCoordState } from '../../container/state/cursorState'
 
 const coordViewerStyle = css`
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
   color: #787878;
   font-size: 14px;
 

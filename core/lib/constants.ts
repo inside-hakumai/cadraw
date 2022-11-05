@@ -27,6 +27,19 @@ export const drawStepList = {
   },
 } as const
 
+export const drawOperationList = [
+  'noop',
+  'add-line',
+  'add-circle',
+  'add-rectangle',
+  'add-arc',
+  'delete-line',
+  'delete-circle',
+  'delete-rectangle',
+  'delete-arc',
+  'move-line',
+] as const
+
 export const color = {
   stroke: {
     normal: '#000000',

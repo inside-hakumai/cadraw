@@ -49,34 +49,13 @@ interface Props {
 
 const App: React.FC<Props> = ({ onExport }) => {
   const { addKeyListener } = useKeyboardEvent()
-  const { goToNextStep, goToFirstStep } = useDrawStep()
+  const { goToFirstStep } = useDrawStep()
   const { triggerSelectOperation } = useSelectOperation()
   const { dragShape } = useDrag()
   const { proceedLineDraw, proceedRectangleDraw, proceedCircleDraw, proceedArcDraw } = useDrawing()
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
-
-  const setShape = useRecoilCallback(
-    ({ snapshot, set }) =>
-      async (shape: Shape) => {
-        const shapes = await snapshot.getPromise(shapesState)
-        const snapshotVersion = await snapshot.getPromise(currentSnapshotVersionState)
-
-        set(shapesState, oldValue => [...oldValue, shape])
-        set(snapshotsState, oldState => {
-          if (oldState.length === snapshotVersion + 1) {
-            return [...oldState, [...shapes, shape]]
-          } else {
-            const newState = [...oldState]
-            newState[snapshotVersion + 1] = [...shapes, shape]
-            return newState
-          }
-        })
-        set(currentSnapshotVersionState, oldState => oldState + 1)
-      },
-    []
-  )
 
   const switchToSelect = useRecoilCallback(
     ({ set, reset }) =>
@@ -197,7 +176,7 @@ const App: React.FC<Props> = ({ onExport }) => {
             currentSnapshotVersion - 1
           ]
 
-          set(shapesState, Array.from(rollbackTargetSnapshot))
+          set(shapesState, Array.from(rollbackTargetSnapshot.shapes))
           set(currentSnapshotVersionState, currentSnapshotVersion - 1)
         }
       },
@@ -228,13 +207,6 @@ const App: React.FC<Props> = ({ onExport }) => {
     switchToSelect,
     undo,
   ])
-
-  const addShape = useCallback(
-    async (newShape: Shape) => {
-      await setShape(newShape)
-    },
-    [setShape]
-  )
 
   const handleMouseDown = useRecoilCallback(
     ({ snapshot, set }) =>

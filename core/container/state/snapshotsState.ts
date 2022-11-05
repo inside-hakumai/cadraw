@@ -5,9 +5,19 @@
 import { atom, selector } from 'recoil'
 
 /** スナップショットのリストを管理するAtom */
-export const snapshotsState = atom<Shape[][]>({
+export const snapshotsState = atom<
+  {
+    lastOperation: DrawOperation
+    shapes: Shape[]
+  }[]
+>({
   key: 'snapshots',
-  default: [[]],
+  default: [
+    {
+      lastOperation: 'noop',
+      shapes: [],
+    },
+  ],
   dangerouslyAllowMutability: true,
 })
 
