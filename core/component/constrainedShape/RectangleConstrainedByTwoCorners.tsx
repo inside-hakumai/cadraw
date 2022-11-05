@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
 import { isRectangleConstrainedByTwoCorners } from '../../lib/typeguard'
-import { getStrokeColor } from '../../lib/function'
 import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/state/shapeState'
 import { isIndicatedFamily } from '../../container/state/cursorState'
+import RectangleBase from '../shape/base/RectangleBase'
 
 interface Props {
   shapeId: number
@@ -31,17 +31,14 @@ const RectangleConstrainedByTwoCorners: React.FC<Props> = ({ shapeId }) => {
   const { upperLeftPoint, upperRightPoint, lowerLeftPoint } = shape.computed
 
   return (
-    <>
-      <rect
-        x={upperLeftPoint.x}
-        y={upperLeftPoint.y}
-        width={Math.abs(upperRightPoint.x - upperLeftPoint.x)}
-        height={Math.abs(lowerLeftPoint.y - upperLeftPoint.y)}
-        stroke={getStrokeColor(isSelected, isFocused)}
-        strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
-        fill={'none'}
-      />
-    </>
+    <RectangleBase
+      upperLeftPoint={upperLeftPoint}
+      upperRightPoint={upperRightPoint}
+      lowerLeftPoint={lowerLeftPoint}
+      isFocused={isFocused}
+      isSelected={isSelected}
+      drawType={shape.type}
+    />
   )
 }
 

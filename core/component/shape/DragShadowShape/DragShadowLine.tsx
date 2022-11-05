@@ -1,8 +1,8 @@
-import LineBase from './base/LineBase'
-import { dragShadowShapeSelectorFamily } from '../../container/state/shapeState'
+import LineBase from '../base/LineBase'
+import { dragShadowShapeSelectorFamily } from '../../../container/state/shapeState'
 import { useRecoilValue } from 'recoil'
 import React, { useEffect } from 'react'
-import { isLine } from '../../lib/typeguard'
+import { isLine } from '../../../lib/typeguard'
 
 interface Props {
   shapeId: number

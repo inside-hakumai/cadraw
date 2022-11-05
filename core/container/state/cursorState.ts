@@ -5,12 +5,7 @@
 import { atom, selector, selectorFamily } from 'recoil'
 import { operationModeState } from './userOperationState'
 import { shapesState } from './shapeState'
-import {
-  isArcConstrainedByCenterTwoPoints,
-  isCircle,
-  isLine,
-  isRectangle,
-} from '../../lib/typeguard'
+import { isArc, isCircle, isLine, isRectangle } from '../../lib/typeguard'
 import {
   calcDistanceFromCircumference,
   findNearestPointOnArc,
@@ -68,7 +63,7 @@ export const indicatingShapeIdState = selector<number | null>({
           minimumDistance = nearest.distance
           nearestIndex = i
         }
-      } else if (isArcConstrainedByCenterTwoPoints(shape)) {
+      } else if (isArc(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape)
         if (nearest !== null && nearest.distance < minimumDistance) {
           minimumDistance = nearest.distance

@@ -56,6 +56,9 @@ const ja: TranslationSchema = {
     'delete-rectangle': '長方形を削除',
     'delete-arc': '円弧を削除',
     'move-line': '直線を移動',
+    'move-circle': '円を移動',
+    'move-rectangle': '長方形を移動',
+    'move-arc': '円弧を移動',
   },
 } as const
 

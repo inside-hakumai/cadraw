@@ -41,7 +41,6 @@ import {
   pointingCoordState,
 } from './state/cursorState'
 import useDrawing from './hooks/useDrawing'
-import { cloneShape } from '../lib/function'
 import useSnapshotUpdater from './hooks/useSnapshotUpdater'
 
 interface Props {
@@ -227,7 +226,7 @@ const App: React.FC<Props> = ({ onExport }) => {
 
         if (indicatingShapeId !== null) {
           const indicatingShape = await snapshot.getPromise(shapeSelectorFamily(indicatingShapeId))
-          const shadowShape = cloneShape(indicatingShape)
+          const shadowShape = structuredClone(indicatingShape)
           shadowShape.type = 'dragShadow'
           set(dragShadowShapeState, currVal => [...currVal, shadowShape])
         }
@@ -283,15 +282,15 @@ const App: React.FC<Props> = ({ onExport }) => {
                   case 'line':
                     await addSnapshot(shapes, 'move-line')
                     break
-                  // case 'circle':
-                  //   await addSnapshot(shapes, 'move-circle')
-                  //   break
-                  // case 'rectangle':
-                  //   await addSnapshot(shapes, 'move-rectangle')
-                  //   break
-                  // case 'arc':
-                  //   await addSnapshot(shapes, 'move-arc')
-                  //   break
+                  case 'circle':
+                    await addSnapshot(shapes, 'move-circle')
+                    break
+                  case 'rectangle':
+                    await addSnapshot(shapes, 'move-rectangle')
+                    break
+                  case 'arc':
+                    await addSnapshot(shapes, 'move-arc')
+                    break
                 }
               } else {
                 // await addSnapshot(shapes, '')

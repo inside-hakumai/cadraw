@@ -92,7 +92,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
         }
 
         if (isArc(shape)) {
-          if (isArcConstrainedByCenterTwoPoints(shape)) {
+          if (isArcConstrainedByCenterTwoPoints(shape) || isArcConstrainedByThreePoints(shape)) {
             const { center, radius, startPointAngle, endPointAngle } = shape.computed
 
             return [
@@ -157,7 +157,6 @@ export const shapeSeedState = selector<ShapeSeed | null>({
         }
 
         const diagonalSlope = (corner2Point.y - corner1Point.y) / (corner2Point.x - corner1Point.x)
-        console.debug(diagonalSlope)
 
         let upperLeftPoint: Coordinate
         if (diagonalSlope > 0) {
@@ -551,15 +550,10 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
-      if (shape.shape === 'arc') {
-        if (!isArcConstrainedByCenterTwoPoints(shape) && !isArcConstrainedByThreePoints(shape)) {
-          console.warn('shape is not ArcCenterTwoPoints')
-          return null
-        }
-
+      if (isArc(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape)
 
-        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
+        // 最近傍点が円弧の終点の場合は除外する（拘束点は別途スナップ判定するため）
         if (nearest !== null && nearest.distance < 10 && !nearest.isArcTerminal) {
           closeShapes = [...closeShapes, shape]
         }
@@ -608,12 +602,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         ]
       }
 
-      if (shape.shape === 'arc') {
-        if (!isArcConstrainedByCenterTwoPoints(shape) && !isArcConstrainedByThreePoints(shape)) {
-          console.warn('shape is not ArcCenterTwoPoints')
-          return null
-        }
-
+      if (isArc(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape)
 
         if (nearest !== null) {

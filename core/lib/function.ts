@@ -605,3 +605,10 @@ export const cloneShape = <S extends Shape>(shape: S): S => {
     return shape
   }
 }
+
+export const addCoord = (source: Coordinate, dx: number, dy: number): Coordinate => {
+  return {
+    x: source.x + dx,
+    y: source.y + dy,
+  }
+}

@@ -38,6 +38,9 @@ export const drawOperationList = [
   'delete-rectangle',
   'delete-arc',
   'move-line',
+  'move-circle',
+  'move-rectangle',
+  'move-arc',
 ] as const
 
 export const color = {

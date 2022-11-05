@@ -3,7 +3,7 @@ import { useRecoilValue } from 'recoil'
 import { color } from '../../lib/constants'
 import { activeCoordState, mouseDownState } from '../../container/state'
 import { dragShadowShapeState } from '../../container/state/shapeState'
-import DragShadowLine from '../shape/DragShadowLine'
+import DragShadowShape from '../shape/DragShadowShape'
 
 const DragViewer: React.FC = React.memo(function DragViewer() {
   const { activeCoordWhenMouseDown } = useRecoilValue(mouseDownState)
@@ -32,9 +32,9 @@ const DragViewer: React.FC = React.memo(function DragViewer() {
           </marker>
         </defs>
 
-        {/* TODO: メモ化しているはずなのにカーソルを動かす度にDragShadowLineまで全部再レンダリングされてしまう原因を探す */}
+        {/* TODO: メモ化しているはずなのにカーソルを動かす度にDragShadowShapeまで全部再レンダリングされてしまう原因を探す */}
         {dragShadowShapes.map(shape => (
-          <DragShadowLine key={`shadow-${shape.id}`} shapeId={shape.id} />
+          <DragShadowShape key={`shadow-${shape.id}`} shapeId={shape.id} />
         ))}
         <line
           key={'dragTrail'}
