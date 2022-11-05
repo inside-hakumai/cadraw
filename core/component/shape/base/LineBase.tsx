@@ -9,7 +9,7 @@ interface Props {
   drawType: DrawType
 }
 
-const LineBase: React.FC<Props> = React.memo(function Line({
+const LineBase: React.FC<Props> = React.memo(function LineBase({
   startPoint,
   endPoint,
   isSelected,
@@ -23,7 +23,7 @@ const LineBase: React.FC<Props> = React.memo(function Line({
       x2={endPoint.x}
       y2={endPoint.y}
       strokeWidth={1}
-      stroke={getStrokeColor(isSelected, isFocused)}
+      stroke={getStrokeColor(isSelected, isFocused, drawType)}
       strokeDasharray={drawType === 'supplemental' ? '3 3' : ''}
     />
   )

@@ -3,7 +3,7 @@ import ToolWindow from '../component/ToolWindow'
 
 import Canvas from '../component/Canvas'
 import { useRecoilCallback } from 'recoil'
-import { activeCoordState, shapeSeedConstraintsState, isClickingState } from './state'
+import { activeCoordState, shapeSeedConstraintsState, mouseDownState } from './state'
 import useKeyboardEvent from './hooks/useKeyboardEvent'
 import {
   isShapeType,
@@ -23,7 +23,12 @@ import {
   drawTypeState,
   operationModeState,
 } from './state/userOperationState'
-import { selectedShapeIdsState, shapesState } from './state/shapeState'
+import {
+  dragShadowShapeState,
+  selectedShapeIdsState,
+  shapeSelectorFamily,
+  shapesState,
+} from './state/shapeState'
 import {
   canUndoSelector,
   currentSnapshotVersionState,
@@ -36,6 +41,7 @@ import {
   pointingCoordState,
 } from './state/cursorState'
 import useDrawing from './hooks/useDrawing'
+import { cloneShape } from '../lib/function'
 
 interface Props {
   onExport?: (data: string) => void
@@ -43,7 +49,7 @@ interface Props {
 
 const App: React.FC<Props> = ({ onExport }) => {
   const { addKeyListener } = useKeyboardEvent()
-  const { goToFirstStep } = useDrawStep()
+  const { goToNextStep, goToFirstStep } = useDrawStep()
   const { triggerSelectOperation } = useSelectOperation()
   const { dragShape } = useDrag()
   const { proceedLineDraw, proceedRectangleDraw, proceedCircleDraw, proceedArcDraw } = useDrawing()
@@ -233,75 +239,83 @@ const App: React.FC<Props> = ({ onExport }) => {
   const handleMouseDown = useRecoilCallback(
     ({ snapshot, set }) =>
       async () => {
-        const pointingCoord = await snapshot.getPromise(pointingCoordState)
         const activeCoord = await snapshot.getPromise(activeCoordState)
-        const operationMode = await snapshot.getPromise(operationModeState)
+        const pointingCoord = await snapshot.getPromise(pointingCoordState)
+        const indicatingShapeId = await snapshot.getPromise(indicatingShapeIdState)
 
-        set(isClickingState, {
+        set(mouseDownState, {
           isClicking: true,
           activeCoordWhenMouseDown: activeCoord,
           pointingCoordWhenMouseDown: pointingCoord,
-          draggingShapeOriginalData: null,
+          targetShapeId: indicatingShapeId,
         })
 
-        if (activeCoord === null) {
-          return
-        }
-
-        if (operationMode === 'line') {
-          await proceedLineDraw()
-        }
-        if (operationMode === 'rectangle') {
-          await proceedRectangleDraw()
-        }
-        if (operationMode === 'circle') {
-          await proceedCircleDraw()
-        }
-        if (operationMode === 'arc') {
-          await proceedArcDraw()
-        }
-        if (operationMode === 'select') {
-          await triggerSelectOperation()
+        if (indicatingShapeId !== null) {
+          const indicatingShape = await snapshot.getPromise(shapeSelectorFamily(indicatingShapeId))
+          const shadowShape = cloneShape(indicatingShape)
+          shadowShape.type = 'dragShadow'
+          set(dragShadowShapeState, currVal => [...currVal, shadowShape])
         }
       },
-    [
-      proceedLineDraw,
-      proceedRectangleDraw,
-      proceedCircleDraw,
-      proceedArcDraw,
-      triggerSelectOperation,
-    ]
+    []
   )
 
   const handleMouseUp = useRecoilCallback(
     ({ snapshot, set }) =>
       async (event: React.MouseEvent) => {
-        const indicatingShapeId = await snapshot.getPromise(indicatingShapeIdState)
         const pointingCoord = await snapshot.getPromise(pointingCoordState)
-        const { pointingCoordWhenMouseDown, draggingShapeOriginalData } = await snapshot.getPromise(
-          isClickingState
-        )
+        const operationMode = await snapshot.getPromise(operationModeState)
+        const { pointingCoordWhenMouseDown } = await snapshot.getPromise(mouseDownState)
 
         if (pointingCoord !== null && pointingCoordWhenMouseDown !== null) {
-          // mouseDownした図形をドラッグ移動した上でmouseUpした場合は
-          // 選択ではなくドラッグを意図した操作であるとしてselectedShapeから削除する
           if (
-            pointingCoord.x !== pointingCoordWhenMouseDown.x ||
-            pointingCoord.y !== pointingCoordWhenMouseDown.y
+            pointingCoord.x === pointingCoordWhenMouseDown.x &&
+            pointingCoord.y === pointingCoordWhenMouseDown.y
           ) {
-            set(selectedShapeIdsState, selectedShapeIds =>
-              selectedShapeIds.filter(id => id !== indicatingShapeId)
-            )
+            // マウスを押下した時と離した時の座標が同じ場合、ドラッグではなく通常のクリックであるとみなし
+            // 操作モードに応じた処理を実行する
+
+            switch (operationMode) {
+              case 'line':
+                await proceedLineDraw()
+                break
+              case 'rectangle':
+                await proceedRectangleDraw()
+                break
+              case 'circle':
+                await proceedCircleDraw()
+                break
+              case 'arc':
+                await proceedArcDraw()
+                break
+              case 'select':
+                await triggerSelectOperation()
+                break
+            }
+          } else {
+            // mouseDownした図形をドラッグ移動した上でmouseUpした場合は
+            // 選択ではなくドラッグを意図した操作であるとしてselectedShapeから削除する
+            // if (operationMode === 'select') {
+            //
+            // }
           }
         }
 
-        set(isClickingState, {
+        set(mouseDownState, {
           isClicking: false,
           activeCoordWhenMouseDown: null,
           pointingCoordWhenMouseDown: null,
-          draggingShapeOriginalData: null,
+          targetShapeId: null,
         })
-      }
+        set(dragShadowShapeState, [])
+      },
+    [
+      proceedArcDraw,
+      proceedCircleDraw,
+      proceedLineDraw,
+      proceedRectangleDraw,
+      triggerSelectOperation,
+    ]
   )
 
   const convertDomCoordToSvgCoord = useCallback((domCoord: Coordinate): Coordinate | null => {
@@ -330,9 +344,8 @@ const App: React.FC<Props> = ({ onExport }) => {
         set(cursorClientPositionState, clientPosition)
         set(pointingCoordState, convertDomCoordToSvgCoord(clientPosition))
 
-        const { isClicking } = await snapshot.getPromise(isClickingState)
-        const selectedShapeIds = await snapshot.getPromise(selectedShapeIdsState)
-        if (isClicking && selectedShapeIds.length > 0) {
+        const mouseDown = await snapshot.getPromise(mouseDownState)
+        if (mouseDown.isClicking && mouseDown.targetShapeId !== null) {
           await dragShape()
         }
       },

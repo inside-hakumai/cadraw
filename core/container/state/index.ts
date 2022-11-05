@@ -35,18 +35,19 @@ import { drawCommandState, drawStepState, operationModeState } from './userOpera
 import { shapesState } from './shapeState'
 import { indicatingShapeIdState, pointingCoordState } from './cursorState'
 
-export const isClickingState = atom<{
+/** マウスを押下する際の状態を管理するAtom */
+export const mouseDownState = atom<{
   isClicking: boolean
   activeCoordWhenMouseDown: Coordinate | null
   pointingCoordWhenMouseDown: Coordinate | null
-  draggingShapeOriginalData: Map<number, Shape> | null
+  targetShapeId: number | null
 }>({
-  key: 'isClicking',
+  key: 'mouseDown',
   default: {
     isClicking: false,
     activeCoordWhenMouseDown: null,
     pointingCoordWhenMouseDown: null,
-    draggingShapeOriginalData: null,
+    targetShapeId: null,
   },
 })
 
@@ -506,7 +507,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
 
     const shapes = get(shapesState)
     const indicatingShapeId = get(indicatingShapeIdState)
-    const { isClicking } = get(isClickingState)
+    const { isClicking } = get(mouseDownState)
 
     // 現在指している座標と図形の最近傍点との距離が近い図形を探す
     let closeShapes: Shape[] = []

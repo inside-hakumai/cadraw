@@ -1,32 +1,24 @@
 import { useRecoilCallback } from 'recoil'
-import { activeCoordState, isClickingState } from '../state'
+import { activeCoordState, mouseDownState } from '../state'
 import { isLine } from '../../lib/typeguard'
 import { cloneShape } from '../../lib/function'
-import { selectedShapeIdsState, shapesState } from '../state/shapeState'
+import { dragShadowShapeState, shapesState } from '../state/shapeState'
 
 const useDrag = () => {
   const dragShape = useRecoilCallback(
     ({ snapshot, set }) =>
       async () => {
-        const { isClicking, activeCoordWhenMouseDown, draggingShapeOriginalData } =
-          await snapshot.getPromise(isClickingState)
-        const selectedShapeIds = await snapshot.getPromise(selectedShapeIdsState)
-        const activeCoord = await snapshot.getPromise(activeCoordState)
-
-        console.debug(
-          isClicking,
-          activeCoordWhenMouseDown,
-          draggingShapeOriginalData,
-          selectedShapeIds,
-          activeCoord
+        const { isClicking, activeCoordWhenMouseDown, targetShapeId } = await snapshot.getPromise(
+          mouseDownState
         )
+        const activeCoord = await snapshot.getPromise(activeCoordState)
+        const dragShadowShapes = await snapshot.getPromise(dragShadowShapeState)
 
         if (
           isClicking &&
           activeCoordWhenMouseDown !== null &&
-          draggingShapeOriginalData !== null &&
-          selectedShapeIds.length > 0 &&
-          activeCoord !== null
+          activeCoord !== null &&
+          targetShapeId !== null
         ) {
           const dx = activeCoord.x - activeCoordWhenMouseDown.x
           const dy = activeCoord.y - activeCoordWhenMouseDown.y
@@ -34,14 +26,15 @@ const useDrag = () => {
 
           set(shapesState, shapes => {
             return shapes.map(shape => {
-              if (selectedShapeIds.includes(shape.id)) {
-                const originalShape = draggingShapeOriginalData.get(shape.id)
+              if (targetShapeId === shape.id) {
+                const shadowShape = dragShadowShapes.find(
+                  shadowShape => shadowShape.id === shape.id
+                )
 
-                if (originalShape !== undefined) {
-                  console.debug(shape)
+                if (shadowShape !== undefined) {
                   if (isLine(shape)) {
                     const newShape = cloneShape(shape)
-                    const originalLine = originalShape as Line
+                    const originalLine = shadowShape as Line
                     newShape.constraints.startPoint.x = originalLine.constraints.startPoint.x + dx
                     newShape.constraints.startPoint.y = originalLine.constraints.startPoint.y + dy
                     newShape.constraints.endPoint.x = originalLine.constraints.endPoint.x + dx

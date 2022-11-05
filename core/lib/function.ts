@@ -562,12 +562,15 @@ export const isPointInTriangle = (point: Coordinate, triangleVertexes: Coordinat
  * 図形の描画に使用するカラーコードを返します。
  * @param isSelected その図形が選択状態にあるかどうか
  * @param isFocused その図形にフォーカスが当たっているかどうか
+ * @param drawType その図形の描画タイプ
  * @returns カラーコード
  */
-export const getStrokeColor = (isSelected: boolean, isFocused: boolean) => {
-  if (isSelected) return color.strokeColorOnSelected
-  else if (isFocused) return color.strokeColorOnFocused
-  else return color.strokeColor
+export const getStrokeColor = (isSelected: boolean, isFocused: boolean, drawType: DrawType) => {
+  if (drawType === 'dragShadow') return color.stroke.shadow
+  if (isSelected) return color.stroke.onSelected
+  if (isFocused) return color.stroke.onFocused
+
+  return color.stroke.normal
 }
 
 export const cloneShape = <S extends Shape>(shape: S): S => {

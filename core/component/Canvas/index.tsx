@@ -32,6 +32,7 @@ const currentCoordInfoStyle = css`
   font-size: 10px;
   transform: translate(-40%);
   color: #008000;
+  user-select: none;
 `
 
 interface Props {

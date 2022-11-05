@@ -9,6 +9,7 @@ import { useRecoilValue } from 'recoil'
 import { guidingLinesState, snappingCoordState } from '../../container/state'
 import GuidingLine from '../GuidingLine'
 import { filteredShapeIdsSelector } from '../../container/state/shapeState'
+import DragViewer from '../supplementalItems/DragViewer'
 
 const svgStyle = css`
   position: absolute;
@@ -83,6 +84,8 @@ const SupplementalRenderer: React.FC<Props> = React.memo(function SupplementalRe
             end={line.endPoint}
           />
         ))}
+
+      <DragViewer />
     </svg>
   )
 })

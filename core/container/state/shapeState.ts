@@ -93,3 +93,24 @@ export const isShapeSelectedSelectorFamily = selectorFamily<boolean, number>({
       return selectedShapeIds.includes(shapeId)
     },
 })
+
+/** 図形のドラッグ移動時にドラッグの開始位置に描画する、図形の残像を管理するAtom */
+export const dragShadowShapeState = atom<Shape[]>({
+  key: 'drugShadowShape',
+  default: [],
+})
+
+/** IDを指定して図形を取得するSelectorFamily */
+export const dragShadowShapeSelectorFamily = selectorFamily<Shape, number>({
+  key: 'singleDragShadowShape',
+  get:
+    (shapeId: number) =>
+    ({ get }) => {
+      const shapes = get(dragShadowShapeState)
+      const found = shapes.find(shape => shape.id === shapeId)
+      if (found === undefined) {
+        throw new Error(`Shape with id ${shapeId} not found`)
+      }
+      return found
+    },
+})
