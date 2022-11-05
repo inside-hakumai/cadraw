@@ -1,4 +1,5 @@
 import { color } from './constants'
+import { isLine } from './typeguard'
 
 /**
  * 2つの座標間の距離を返します。
@@ -561,10 +562,53 @@ export const isPointInTriangle = (point: Coordinate, triangleVertexes: Coordinat
  * 図形の描画に使用するカラーコードを返します。
  * @param isSelected その図形が選択状態にあるかどうか
  * @param isFocused その図形にフォーカスが当たっているかどうか
+ * @param drawType その図形の描画タイプ
  * @returns カラーコード
  */
-export const getStrokeColor = (isSelected: boolean, isFocused: boolean) => {
-  if (isSelected) return color.strokeColorOnSelected
-  else if (isFocused) return color.strokeColorOnFocused
-  else return color.strokeColor
+export const getStrokeColor = (isSelected: boolean, isFocused: boolean, drawType: DrawType) => {
+  if (drawType === 'dragShadow') return color.stroke.shadow
+  if (isSelected) return color.stroke.onSelected
+  if (isFocused) return color.stroke.onFocused
+
+  return color.stroke.normal
+}
+
+export const cloneShape = <S extends Shape>(shape: S): S => {
+  if (isLine(shape)) {
+    return {
+      id: shape.id,
+      type: shape.type,
+      shape: shape.shape,
+      drawCommand: shape.drawCommand,
+      constraints: {
+        startPoint: {
+          x: shape.constraints.startPoint.x,
+          y: shape.constraints.startPoint.y,
+        },
+        endPoint: {
+          x: shape.constraints.endPoint.x,
+          y: shape.constraints.endPoint.y,
+        },
+      },
+      computed: {
+        startPoint: {
+          x: shape.computed.startPoint.x,
+          y: shape.computed.startPoint.y,
+        },
+        endPoint: {
+          x: shape.computed.endPoint.x,
+          y: shape.computed.endPoint.y,
+        },
+      },
+    } as typeof shape
+  } else {
+    return shape
+  }
+}
+
+export const addCoord = (source: Coordinate, dx: number, dy: number): Coordinate => {
+  return {
+    x: source.x + dx,
+    y: source.y + dy,
+  }
 }

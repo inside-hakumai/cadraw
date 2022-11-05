@@ -1,22 +1,20 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
-import {
-  indicatingShapeIdState,
-  isShapeSelectedSelectorFamily,
-  shapeSelectorFamily,
-} from '../../container/states'
 import { isCircle } from '../../lib/typeguard'
 import { getStrokeColor } from '../../lib/function'
+import {
+  isShapeSelectedSelectorFamily,
+  shapeSelectorFamily,
+} from '../../container/state/shapeState'
+import { isIndicatedFamily } from '../../container/state/cursorState'
 
 interface Props {
   shapeId: number
 }
 
-const Circle: React.FC<Props> = ({ shapeId }) => {
+const Circle: React.FC<Props> = React.memo(function Circle({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Circle
-  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
-
-  const isFocused = indicatingShapeId === shape.id
+  const isFocused = useRecoilValue(isIndicatedFamily(shapeId))
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
 
   useEffect(() => {
@@ -35,10 +33,10 @@ const Circle: React.FC<Props> = ({ shapeId }) => {
       r={radius}
       strokeWidth={1}
       fill={'none'}
-      stroke={getStrokeColor(isSelected, isFocused)}
+      stroke={getStrokeColor(isSelected, isFocused, shape.type)}
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
-}
+})
 
 export default Circle

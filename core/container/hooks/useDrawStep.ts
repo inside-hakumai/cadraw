@@ -1,5 +1,4 @@
 import { useRecoilCallback } from 'recoil'
-import { drawCommandState, drawStepState, operationModeState } from '../states'
 import { drawStepList } from '../../lib/constants'
 import {
   isValidArcCommand,
@@ -7,6 +6,7 @@ import {
   isValidLineCommand,
   isValidRectangleCommand,
 } from '../../lib/typeguard'
+import { drawCommandState, drawStepState, operationModeState } from '../state/userOperationState'
 
 const useDrawStep = () => {
   const goToNextStep = useRecoilCallback(

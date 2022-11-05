@@ -1,23 +1,21 @@
-import React, { useEffect } from 'react'
-import { useRecoilValue } from 'recoil'
+import LineBase from './base/LineBase'
 import {
-  indicatingShapeIdState,
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
-} from '../../container/states'
+} from '../../container/state/shapeState'
+import { isIndicatedFamily } from '../../container/state/cursorState'
+import { useRecoilValue } from 'recoil'
+import React, { useEffect } from 'react'
 import { isLine } from '../../lib/typeguard'
-import { getStrokeColor } from '../../lib/function'
 
 interface Props {
   shapeId: number
 }
 
-const Line: React.FC<Props> = ({ shapeId }) => {
+const Line: React.FC<Props> = React.memo(function Line({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Line
-  const indicatingShapeId = useRecoilValue(indicatingShapeIdState)
-
+  const isFocused = useRecoilValue(isIndicatedFamily(shapeId))
   const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
-  const isFocused = indicatingShapeId === shape.id
 
   useEffect(() => {
     if (!isLine(shape)) {
@@ -28,16 +26,14 @@ const Line: React.FC<Props> = ({ shapeId }) => {
   const { startPoint, endPoint } = shape.constraints
 
   return (
-    <line
-      x1={startPoint.x}
-      y1={startPoint.y}
-      x2={endPoint.x}
-      y2={endPoint.y}
-      strokeWidth={1}
-      stroke={getStrokeColor(isSelected, isFocused)}
-      strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
+    <LineBase
+      startPoint={startPoint}
+      endPoint={endPoint}
+      isFocused={isFocused}
+      isSelected={isSelected}
+      drawType={shape.type}
     />
   )
-}
+})
 
 export default Line

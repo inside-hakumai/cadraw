@@ -1,18 +1,18 @@
 import React from 'react'
 import { useRecoilValue } from 'recoil'
-import { shapeSelectorFamily } from '../../container/states'
 import ArcConstrainedByThreePoints from '../constrainedShape/ArcConstrainedByThreePoints'
 import {
   isArcConstrainedByCenterTwoPoints,
   isArcConstrainedByThreePoints,
 } from '../../lib/typeguard'
 import ArcConstrainedByCenterTwoPoints from '../constrainedShape/ArcConstrainedByCenterTwoPoints'
+import { shapeSelectorFamily } from '../../container/state/shapeState'
 
 interface Props {
   shapeId: number
 }
 
-const Arc: React.FC<Props> = ({ shapeId }) => {
+const Arc: React.FC<Props> = React.memo(function Arc({ shapeId }) {
   const shape = useRecoilValue(shapeSelectorFamily(shapeId))
 
   if (isArcConstrainedByCenterTwoPoints(shape)) {
@@ -22,6 +22,6 @@ const Arc: React.FC<Props> = ({ shapeId }) => {
   } else {
     throw new Error(`Shape(ID = ${shapeId}) is not a arc`)
   }
-}
+})
 
 export default Arc

@@ -2,6 +2,7 @@ const ja: TranslationSchema = {
   drawType: {
     solid: '実線',
     supplemental: '補助線',
+    dragShadow: 'ドラッグ前',
   },
   shape: {
     line: '直線',
@@ -43,6 +44,21 @@ const ja: TranslationSchema = {
     onLine: '線上',
     onArc: '円弧上',
     onRectangle: '長方形上',
+  },
+  drawOperation: {
+    noop: '操作なし',
+    'add-line': '直線を追加',
+    'add-circle': '円を追加',
+    'add-rectangle': '長方形を追加',
+    'add-arc': '円弧を追加',
+    'delete-line': '直線を削除',
+    'delete-circle': '円を削除',
+    'delete-rectangle': '長方形を削除',
+    'delete-arc': '円弧を削除',
+    'move-line': '直線を移動',
+    'move-circle': '円を移動',
+    'move-rectangle': '長方形を移動',
+    'move-arc': '円弧を移動',
   },
 } as const
 

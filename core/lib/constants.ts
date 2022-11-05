@@ -1,4 +1,4 @@
-export const drawType = ['solid', 'supplemental'] as const
+export const drawType = ['solid', 'supplemental', 'dragShadow'] as const
 export const shapeList = ['line', 'rectangle', 'circle', 'arc'] as const
 
 export const drawCommandList = {
@@ -27,8 +27,28 @@ export const drawStepList = {
   },
 } as const
 
+export const drawOperationList = [
+  'noop',
+  'add-line',
+  'add-circle',
+  'add-rectangle',
+  'add-arc',
+  'delete-line',
+  'delete-circle',
+  'delete-rectangle',
+  'delete-arc',
+  'move-line',
+  'move-circle',
+  'move-rectangle',
+  'move-arc',
+] as const
+
 export const color = {
-  strokeColor: '#000000',
-  strokeColorOnSelected: '#FF0000',
-  strokeColorOnFocused: '#ff9797',
+  stroke: {
+    normal: '#000000',
+    onSelected: '#FF0000',
+    onFocused: '#ff9797',
+    shadow: '#8c8c8c',
+  },
+  supplementalColor: '#8c8c8c',
 }

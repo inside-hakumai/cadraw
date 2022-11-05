@@ -1,154 +1,56 @@
-import { atom, selector, selectorFamily } from 'recoil'
+import { atom, selector } from 'recoil'
 import {
   assert,
   calcCentralAngleFromHorizontalLine,
   calcCircumferenceCoordFromDegree,
   calcDistance,
-  calcDistanceFromCircumference,
   findIntersectionOfCircleAndLine,
-  findNearestPointOnLineSegment,
   findNearestPointOnArc,
-  getSnapDestinationCoordDefaultValue,
-  findPointEquidistantFromThreePoints,
-  findNearestPointOnRectangle,
   findNearestPointOnLine,
-} from '../lib/function'
+  findNearestPointOnLineSegment,
+  findNearestPointOnRectangle,
+  findPointEquidistantFromThreePoints,
+  getSnapDestinationCoordDefaultValue,
+} from '../../lib/function'
 import {
   isArc,
   isArcConstrainedByCenterTwoPoints,
-  isArcSeed1ConstrainedByCenterTwoPoints,
-  isArcSeed2ConstrainedByCenterTwoPoints,
   isArcConstrainedByThreePoints,
+  isArcSeed1ConstrainedByCenterTwoPoints,
   isArcSeed1ConstrainedByThreePoints,
+  isArcSeed2ConstrainedByCenterTwoPoints,
   isArcSeed2ConstrainedByThreePoints,
-  isLine,
-  isRectangle,
-  isShapeType,
-  isRectangleSeedConstrainedByCenterCorner,
-  isRectangleSeedConstrainedByTwoCorners,
-  isCircleSeedConstrainedByCenterDiameter,
-  isLineSeedConstrainedByStartEnd,
   isCircle,
   isCircleSeed1ConstrainedByTwoPointsRadius,
   isCircleSeed2ConstrainedByTwoPointsRadius,
+  isCircleSeedConstrainedByCenterDiameter,
   isCircleSeedConstrainedByTwoPoints,
-} from '../lib/typeguard'
-import { drawCommandList } from '../lib/constants'
+  isLine,
+  isLineSeedConstrainedByStartEnd,
+  isRectangle,
+  isRectangleSeedConstrainedByCenterCorner,
+  isRectangleSeedConstrainedByTwoCorners,
+} from '../../lib/typeguard'
+import { drawCommandState, drawStepState, operationModeState } from './userOperationState'
+import { shapesState } from './shapeState'
+import { indicatingShapeIdState, pointingCoordState } from './cursorState'
 
-export const operationModeState = atom<OperationMode>({
-  key: 'operationMode',
-  default: 'select',
-})
-
-export const drawTypeState = atom<DrawType>({
-  key: 'drawType',
-  default: 'solid',
-})
-
-export const drawCommandState = atom<DrawCommand | null>({
-  key: 'drawCommand',
-  default: null,
-})
-
-export const drawStepState = atom<DrawStep | null>({
-  key: 'drawStep',
-  default: null,
-})
-
-export const currentAvailableCommandSelector = selector<DrawCommand[] | null>({
-  key: 'currentAvailableCommand',
-  get: ({ get }) => {
-    const operationMode = get(operationModeState)
-
-    if (isShapeType(operationMode)) {
-      return [...drawCommandList[operationMode]]
-    } else {
-      return null
-    }
+/** マウスを押下する際の状態を管理するAtom */
+export const mouseDownState = atom<{
+  isClicking: boolean
+  activeCoordWhenMouseDown: Coordinate | null
+  pointingCoordWhenMouseDown: Coordinate | null
+  targetShapeId: number | null
+  draggedShapeIds: Set<number> | null
+}>({
+  key: 'mouseDown',
+  default: {
+    isClicking: false,
+    activeCoordWhenMouseDown: null,
+    pointingCoordWhenMouseDown: null,
+    targetShapeId: null,
+    draggedShapeIds: null,
   },
-})
-
-export const currentOperatingShapeSelector = selector<ShapeType | null>({
-  key: 'currentOperatingShape',
-  get: ({ get }) => {
-    const operationMode = get(operationModeState)
-    return isShapeType(operationMode) ? operationMode : null
-  },
-})
-
-/*
- * 作成した図形を管理するAtom、Selector
- */
-
-// 図形を管理するAtom
-export const shapesState = atom<Shape[]>({
-  key: 'shapes',
-  default: [],
-})
-
-// 図形を取得するSelectorFamily
-export const shapeSelectorFamily = selectorFamily<Shape, number>({
-  key: 'singleShape',
-  get:
-    (shapeId: number) =>
-    ({ get }) => {
-      const shapes = get(shapesState)
-      const found = shapes.find(shape => shape.id === shapeId)
-      if (found === undefined) {
-        throw new Error(`Shape with id ${shapeId} not found`)
-      }
-      return found
-    },
-})
-
-// 特定の形状の図形に限定してIDのリストを返すSelectorFamily
-export const filteredShapeIdsSelector = selectorFamily<
-  number[],
-  { filterDrawType: DrawType; filterShapeType: ShapeType }
->({
-  key: 'shapeTypeFilteredShapeIds',
-  get:
-    ({ filterDrawType, filterShapeType }) =>
-    ({ get }) => {
-      const allShapes = get(shapesState)
-
-      return allShapes
-        .filter(shape => shape.type === filterDrawType && shape.shape === filterShapeType)
-        .map(shape => shape.id)
-    },
-})
-
-// 特定の形状の図形に限定して図形のリストを返すSelectorFamily
-export const filteredShapesSelector = selectorFamily<
-  Shape[],
-  { filterDrawType: DrawType; filterShapeType: ShapeType }
->({
-  key: 'shapeTypeFilteredShapeIds',
-  get:
-    ({ filterDrawType, filterShapeType }) =>
-    ({ get }) => {
-      const allShapes = get(shapesState)
-      return allShapes.filter(
-        shape => shape.type === filterDrawType && shape.shape === filterShapeType
-      )
-    },
-})
-
-// クリックして選択状態になっている図形のIDを管理するAtom
-export const selectedShapeIdsState = atom<number[]>({
-  key: 'selectedShapeIds',
-  default: [],
-})
-
-// 図形が選択されているかどうかを返すSelectorFamily
-export const isShapeSelectedSelectorFamily = selectorFamily<boolean, number>({
-  key: 'isShapeSelected',
-  get:
-    (shapeId: number) =>
-    ({ get }) => {
-      const selectedShapeIds = get(selectedShapeIdsState)
-      return selectedShapeIds.includes(shapeId)
-    },
 })
 
 // 図形の拘束点を返すSelector
@@ -190,7 +92,7 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
         }
 
         if (isArc(shape)) {
-          if (isArcConstrainedByCenterTwoPoints(shape)) {
+          if (isArcConstrainedByCenterTwoPoints(shape) || isArcConstrainedByThreePoints(shape)) {
             const { center, radius, startPointAngle, endPointAngle } = shape.computed
 
             return [
@@ -218,10 +120,6 @@ export const shapeConstraintPointsSelector = selector<ShapeConstraintPoint[]>({
       .flat()
   },
 })
-
-/*
- * 作成中の図形を管理するAtom、Selector
- */
 
 // 作成中の図形の拘束条件を管理するAtom
 export const shapeSeedConstraintsState = atom<ShapeSeed | null>({
@@ -259,7 +157,6 @@ export const shapeSeedState = selector<ShapeSeed | null>({
         }
 
         const diagonalSlope = (corner2Point.y - corner1Point.y) / (corner2Point.x - corner1Point.x)
-        console.debug(diagonalSlope)
 
         let upperLeftPoint: Coordinate
         if (diagonalSlope > 0) {
@@ -523,79 +420,6 @@ export const shapeSeedState = selector<ShapeSeed | null>({
 })
 
 /*
- * マウスカーソルが指している座標や図形を管理するAtom、Selector
- */
-
-// カーソルが指しているDOM上の座標を管理するAtom
-export const cursorClientPositionState = atom<Coordinate | null>({
-  key: 'cursorClientPosition',
-  default: null,
-})
-
-// カーソル位置のSVG上の座標を管理するAtom
-export const pointingCoordState = atom<Coordinate | null>({
-  key: 'pointingCoord',
-  default: null,
-})
-
-// カーソル位置をもとに操作の対象となる図形のIDを返すSelector
-export const indicatingShapeIdState = selector<number | null>({
-  key: 'indicatingShape',
-  get: ({ get }) => {
-    // 選択モードでない場合は操作対象を取らない
-    if (get(operationModeState) !== 'select') {
-      return null
-    }
-
-    const pointingCoord = get(pointingCoordState)
-    if (pointingCoord === null) {
-      return null
-    }
-
-    const shapes = get(shapesState)
-
-    let nearestIndex = -1
-    let minimumDistance = Number.MAX_VALUE
-    for (let i = 0; i < shapes.length; i++) {
-      const shape = shapes[i]
-      if (isCircle(shape)) {
-        const distance = calcDistanceFromCircumference(pointingCoord, shape.computed)
-        if (distance < minimumDistance) {
-          minimumDistance = distance
-          nearestIndex = i
-        }
-      } else if (isRectangle(shape)) {
-        const { distance } = findNearestPointOnRectangle(pointingCoord, shape.computed)
-        if (distance < minimumDistance) {
-          minimumDistance = distance
-          nearestIndex = i
-        }
-      } else if (isLine(shape)) {
-        const nearest = findNearestPointOnLineSegment(pointingCoord, shape.constraints)
-        if (nearest.distance < minimumDistance) {
-          minimumDistance = nearest.distance
-          nearestIndex = i
-        }
-      } else if (isArcConstrainedByCenterTwoPoints(shape)) {
-        const nearest = findNearestPointOnArc(pointingCoord, shape)
-        if (nearest !== null && nearest.distance < minimumDistance) {
-          minimumDistance = nearest.distance
-          nearestIndex = i
-        }
-      } else {
-        throw new Error(`unknown shape type: ${shape.shape}`)
-      }
-    }
-
-    if (nearestIndex !== -1 && minimumDistance < 10) {
-      return shapes[nearestIndex].id
-    } else {
-      return null
-    }
-  },
-})
-
-/*
  * 座標スナップに必要な情報を管理するAtom、Selector
  */
 
@@ -683,10 +507,17 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
     }
 
     const shapes = get(shapesState)
+    const indicatingShapeId = get(indicatingShapeIdState)
+    const { isClicking } = get(mouseDownState)
 
     // 現在指している座標と図形の最近傍点との距離が近い図形を探す
     let closeShapes: Shape[] = []
     for (const shape of shapes) {
+      // ドラッグ中はカーソルが当たっている図形（＝ドラッグ中の図形そのもの）へのスナップは無効にする
+      if (isClicking && indicatingShapeId === shape.id) {
+        continue
+      }
+
       if (shape.shape === 'circle') {
         const circle = shape as Circle
         const { center, radius } = circle.computed
@@ -719,15 +550,10 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         }
       }
 
-      if (shape.shape === 'arc') {
-        if (!isArcConstrainedByCenterTwoPoints(shape) && !isArcConstrainedByThreePoints(shape)) {
-          console.warn('shape is not ArcCenterTwoPoints')
-          return null
-        }
-
+      if (isArc(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape)
 
-        // 最近傍点が線分の終点の場合は除外する（拘束点は別途スナップ判定するため）
+        // 最近傍点が円弧の終点の場合は除外する（拘束点は別途スナップ判定するため）
         if (nearest !== null && nearest.distance < 10 && !nearest.isArcTerminal) {
           closeShapes = [...closeShapes, shape]
         }
@@ -776,12 +602,7 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
         ]
       }
 
-      if (shape.shape === 'arc') {
-        if (!isArcConstrainedByCenterTwoPoints(shape) && !isArcConstrainedByThreePoints(shape)) {
-          console.warn('shape is not ArcCenterTwoPoints')
-          return null
-        }
-
+      if (isArc(shape)) {
         const nearest = findNearestPointOnArc(pointingCoord, shape)
 
         if (nearest !== null) {
@@ -878,140 +699,3 @@ export const snappingCoordInfoState = selector<SnapInfo[]>({
     return snappingCoord?.snapInfoList || []
   },
 })
-
-/*
- * Undo用のスナップショット管理用のAtom
- */
-
-// スナップショットのリストを管理するAtom
-export const snapshotsState = atom<Shape[][]>({
-  key: 'snapshots',
-  default: [[]],
-  dangerouslyAllowMutability: true,
-})
-
-// 現在描画されている状態を示しているスナップショットのバージョン
-export const currentSnapshotVersionState = atom<number>({
-  key: 'currentSnapshotVersion',
-  default: 0,
-})
-
-// Undoの可否をboolean値で返すSelector
-export const canUndoSelector = selector<boolean>({
-  key: 'canUndoSelector',
-  get: ({ get }) => {
-    const currentSnapshotVersion = get(currentSnapshotVersionState)
-
-    // スナップショットが1つ以上追加されている状態でのみUndoを実行できる
-    // （ = 初期状態と1つ目の図形を追加した状態の2つスナップショットが存在している状態）
-    return currentSnapshotVersion >= 1
-  },
-})
-
-/*
- * その他
- */
-
-// 図形作成中に表示されるツールチップの中身テキストを返すSelector
-export const tooltipState = selector<{ content: string; clientPosition: Coordinate } | null>({
-  key: 'tooltipContent',
-  get: ({ get }) => {
-    const shapeSeed = get(shapeSeedState)
-    const coord = get(activeCoordState)
-    const cursorClientPosition = get(cursorClientPositionState)
-
-    if (shapeSeed === null || coord === null || cursorClientPosition === null) {
-      return null
-    }
-
-    if (shapeSeed.shape === 'circle' && isCircleSeedConstrainedByCenterDiameter(shapeSeed)) {
-      return {
-        content: (shapeSeed.radius * 2).toFixed(2) + 'px',
-        clientPosition: cursorClientPosition,
-      }
-    }
-
-    if (shapeSeed.shape === 'circle' && isCircleSeedConstrainedByTwoPoints(shapeSeed)) {
-      return {
-        content: shapeSeed.diameter.toFixed(2) + 'px',
-        clientPosition: shapeSeed.center,
-      }
-    }
-
-    if (shapeSeed.shape === 'circle' && isCircleSeed1ConstrainedByTwoPointsRadius(shapeSeed)) {
-      return {
-        content: shapeSeed.distanceBetweenPoints.toFixed(2) + 'px',
-        clientPosition: cursorClientPosition,
-      }
-    }
-
-    if (shapeSeed.shape === 'circle' && isCircleSeed2ConstrainedByTwoPointsRadius(shapeSeed)) {
-      return {
-        content: shapeSeed.radius.toFixed(2) + 'px',
-        clientPosition: shapeSeed.center,
-      }
-    }
-
-    if (shapeSeed.shape === 'line') {
-      const lineSeed = shapeSeed as LineSeedConstrainedByStartEnd
-
-      return {
-        content:
-          Math.sqrt(
-            Math.pow(lineSeed.startPoint.x - coord.x, 2) +
-              Math.pow(lineSeed.startPoint.y - coord.y, 2)
-          ).toFixed(2) + 'px',
-        clientPosition: cursorClientPosition,
-      }
-    }
-
-    if (shapeSeed.shape === 'arc') {
-      if (isArcSeed1ConstrainedByCenterTwoPoints(shapeSeed)) {
-        return {
-          content: (shapeSeed.radius * 2).toFixed(2) + 'px',
-          clientPosition: cursorClientPosition,
-        }
-      }
-
-      if (isArcSeed2ConstrainedByCenterTwoPoints(shapeSeed)) {
-        const { startPointAngle, endPointAngle } = shapeSeed
-
-        let counterClockWiseAngle
-        if (startPointAngle === endPointAngle) {
-          counterClockWiseAngle = 0
-        } else if (startPointAngle < endPointAngle) {
-          counterClockWiseAngle = endPointAngle - startPointAngle
-        } else {
-          counterClockWiseAngle = 360 - (shapeSeed.startPointAngle - shapeSeed.endPointAngle)
-        }
-
-        return {
-          content: counterClockWiseAngle.toFixed(2) + '°',
-          clientPosition: cursorClientPosition,
-        }
-      }
-    }
-
-    return null
-  },
-})
-
-// ショートカットカットキーのヒントを表示させるかどうかを管理するAtom
-export const isShowingShortcutKeyHintState = atom<boolean>({
-  key: 'isShowingShortcutKeyHint',
-  default: false,
-})
-
-// デバッグ用に点を描画する時に使う
-// export let debugCoordState: RecoilState<Coordinate[]> | undefined = undefined
-// export const debugCoordState: RecoilValueReadOnly<Coordinate[]> | undefined = undefined
-// if (process.env.NODE_ENV === 'development') {
-// debugCoordState = atom<Coordinate[]>({
-//   key: 'debugCoord',
-//   default: [],
-// })
-// debugCoordState = selector<Coordinate[]>({
-//   key: 'debugCoord',
-//   get: ({ get }) => [],
-// })
-// }

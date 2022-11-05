@@ -1,12 +1,8 @@
 import React, { useEffect } from 'react'
 import { useRecoilValue } from 'recoil'
-import { isArcConstrainedByThreePoints } from '../../lib/typeguard'
-import {
-  isShapeSelectedSelectorFamily,
-  shapeSelectorFamily,
-} from '../../container/state/shapeState'
-import { isIndicatedFamily } from '../../container/state/cursorState'
-import ArcConstrainedByThreePointsBase from '../shape/base/ArcConstrainedByThreePointsBase'
+import { isArcConstrainedByThreePoints } from '../../../lib/typeguard'
+import ArcConstrainedByThreePointsBase from '../../shape/base/ArcConstrainedByThreePointsBase'
+import { dragShadowShapeSelectorFamily } from '../../../container/state/shapeState'
 
 interface Props {
   shapeId: number
@@ -17,10 +13,10 @@ interface Props {
  * @param shapeId 図形のID
  * @constructor
  */
-const ArcConstrainedByThreePoints: React.FC<Props> = ({ shapeId }) => {
-  const shape = useRecoilValue(shapeSelectorFamily(shapeId)) as Arc<ThreePointsConstraints>
-  const isFocused = useRecoilValue(isIndicatedFamily(shapeId))
-  const isSelected = useRecoilValue(isShapeSelectedSelectorFamily(shapeId))
+const DragShadowArcConstrainedByThreePoints: React.FC<Props> = ({ shapeId }) => {
+  const shape = useRecoilValue(
+    dragShadowShapeSelectorFamily(shapeId)
+  ) as Arc<ThreePointsConstraints>
 
   useEffect(() => {
     if (!isArcConstrainedByThreePoints(shape)) {
@@ -38,11 +34,11 @@ const ArcConstrainedByThreePoints: React.FC<Props> = ({ shapeId }) => {
       startPoint={startPoint}
       endPoint={endPoint}
       onLinePoint={onLinePoint}
-      isFocused={isFocused}
-      isSelected={isSelected}
+      isFocused={false}
+      isSelected={false}
       drawType={shape.type}
     />
   )
 }
 
-export default ArcConstrainedByThreePoints
+export default DragShadowArcConstrainedByThreePoints
