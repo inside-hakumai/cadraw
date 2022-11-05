@@ -1,6 +1,4 @@
 import { useRecoilCallback } from 'recoil'
-import { mouseDownState } from '../state'
-import { cloneShape } from '../../lib/function'
 import { selectedShapeIdsState, shapeSelectorFamily } from '../state/shapeState'
 import { indicatingShapeIdState } from '../state/cursorState'
 
@@ -25,13 +23,13 @@ const useSelectOperation = () => {
           }
         })
 
-        set(mouseDownState, state => ({
-          ...state,
-          draggingShapeOriginalData: (state.draggingShapeOriginalData ?? new Map()).set(
-            indicatingShapeId,
-            cloneShape(indicatingShape)
-          ),
-        }))
+        // set(mouseDownState, state => ({
+        //   ...state,
+        //   draggingShapeOriginalData: (state.draggingShapeOriginalData ?? new Map()).set(
+        //     indicatingShapeId,
+        //     cloneShape(indicatingShape)
+        //   ),
+        // }))
       },
     []
   )

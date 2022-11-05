@@ -33,7 +33,7 @@ const Circle: React.FC<Props> = React.memo(function Circle({ shapeId }) {
       r={radius}
       strokeWidth={1}
       fill={'none'}
-      stroke={getStrokeColor(isSelected, isFocused)}
+      stroke={getStrokeColor(isSelected, isFocused, shape.type)}
       strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
     />
   )
