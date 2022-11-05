@@ -27,6 +27,7 @@ const rootStyle = css`
   position: absolute;
   bottom: 10px;
   right: 10px;
+  pointer-events: none;
 
   span,
   button {
@@ -40,6 +41,7 @@ const toolGroupStyle = css`
   padding: 5px 10px;
   border: 1px solid #787878;
   border-radius: 5px;
+  pointer-events: auto;
 
   button {
     margin: 0 5px;
