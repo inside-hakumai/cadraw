@@ -42,6 +42,7 @@ import {
 } from './state/cursorState'
 import useDrawing from './hooks/useDrawing'
 import { cloneShape } from '../lib/function'
+import useSnapshotUpdater from './hooks/useSnapshotUpdater'
 
 interface Props {
   onExport?: (data: string) => void
@@ -53,6 +54,7 @@ const App: React.FC<Props> = ({ onExport }) => {
   const { triggerSelectOperation } = useSelectOperation()
   const { dragShape } = useDrag()
   const { proceedLineDraw, proceedRectangleDraw, proceedCircleDraw, proceedArcDraw } = useDrawing()
+  const { addSnapshot } = useSnapshotUpdater()
 
   const didMountRef = useRef(false)
   const stageRef = useRef<SVGSVGElement>(null)
@@ -220,6 +222,7 @@ const App: React.FC<Props> = ({ onExport }) => {
           activeCoordWhenMouseDown: activeCoord,
           pointingCoordWhenMouseDown: pointingCoord,
           targetShapeId: indicatingShapeId,
+          draggedShapeIds: new Set<number>(),
         })
 
         if (indicatingShapeId !== null) {
@@ -237,7 +240,9 @@ const App: React.FC<Props> = ({ onExport }) => {
       async (event: React.MouseEvent) => {
         const pointingCoord = await snapshot.getPromise(pointingCoordState)
         const operationMode = await snapshot.getPromise(operationModeState)
-        const { pointingCoordWhenMouseDown } = await snapshot.getPromise(mouseDownState)
+        const { pointingCoordWhenMouseDown, draggedShapeIds } = await snapshot.getPromise(
+          mouseDownState
+        )
 
         if (pointingCoord !== null && pointingCoordWhenMouseDown !== null) {
           if (
@@ -265,11 +270,33 @@ const App: React.FC<Props> = ({ onExport }) => {
                 break
             }
           } else {
-            // mouseDownした図形をドラッグ移動した上でmouseUpした場合は
-            // 選択ではなくドラッグを意図した操作であるとしてselectedShapeから削除する
-            // if (operationMode === 'select') {
-            //
-            // }
+            // マウスを押下した時と離した時の座標が異なる場合、ドラッグを実行したものとみなしスナップショットを追加する
+            if (draggedShapeIds?.size) {
+              const shapes = await snapshot.getPromise(shapesState)
+
+              if (draggedShapeIds.size === 1) {
+                const draggedShape = await snapshot.getPromise(
+                  shapeSelectorFamily(Array.from(draggedShapeIds)[0])
+                )
+
+                switch (draggedShape.shape) {
+                  case 'line':
+                    await addSnapshot(shapes, 'move-line')
+                    break
+                  // case 'circle':
+                  //   await addSnapshot(shapes, 'move-circle')
+                  //   break
+                  // case 'rectangle':
+                  //   await addSnapshot(shapes, 'move-rectangle')
+                  //   break
+                  // case 'arc':
+                  //   await addSnapshot(shapes, 'move-arc')
+                  //   break
+                }
+              } else {
+                // await addSnapshot(shapes, '')
+              }
+            }
           }
         }
 
@@ -278,10 +305,12 @@ const App: React.FC<Props> = ({ onExport }) => {
           activeCoordWhenMouseDown: null,
           pointingCoordWhenMouseDown: null,
           targetShapeId: null,
+          draggedShapeIds: null,
         })
         set(dragShadowShapeState, [])
       },
     [
+      addSnapshot,
       proceedArcDraw,
       proceedCircleDraw,
       proceedLineDraw,

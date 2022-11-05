@@ -27,6 +27,16 @@ export const currentSnapshotVersionState = atom<number>({
   default: 0,
 })
 
+/** 現在描画されている状態を示しているスナップショットを取得するSelector */
+export const currentSnapshotState = selector({
+  key: 'currentSnapshot',
+  get: ({ get }) => {
+    const snapshots = get(snapshotsState)
+    const currentSnapshotVersion = get(currentSnapshotVersionState)
+    return snapshots[currentSnapshotVersion]
+  },
+})
+
 /** Undoの可否をboolean値で返すSelector */
 export const canUndoSelector = selector<boolean>({
   key: 'canUndoSelector',

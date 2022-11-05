@@ -8,9 +8,8 @@ const useDrag = () => {
   const dragShape = useRecoilCallback(
     ({ snapshot, set }) =>
       async () => {
-        const { isClicking, activeCoordWhenMouseDown, targetShapeId } = await snapshot.getPromise(
-          mouseDownState
-        )
+        const { isClicking, activeCoordWhenMouseDown, targetShapeId, draggedShapeIds } =
+          await snapshot.getPromise(mouseDownState)
         const activeCoord = await snapshot.getPromise(activeCoordState)
         const dragShadowShapes = await snapshot.getPromise(dragShadowShapeState)
 
@@ -55,6 +54,10 @@ const useDrag = () => {
               }
             })
           })
+          set(mouseDownState, mouseDownState => ({
+            ...mouseDownState,
+            draggedShapeIds: (mouseDownState.draggedShapeIds ?? new Set()).add(targetShapeId),
+          }))
         }
       },
     []

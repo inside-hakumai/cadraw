@@ -41,6 +41,7 @@ export const mouseDownState = atom<{
   activeCoordWhenMouseDown: Coordinate | null
   pointingCoordWhenMouseDown: Coordinate | null
   targetShapeId: number | null
+  draggedShapeIds: Set<number> | null
 }>({
   key: 'mouseDown',
   default: {
@@ -48,6 +49,7 @@ export const mouseDownState = atom<{
     activeCoordWhenMouseDown: null,
     pointingCoordWhenMouseDown: null,
     targetShapeId: null,
+    draggedShapeIds: null,
   },
 })
 
