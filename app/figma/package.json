@@ -1,6 +1,6 @@
 {
   "name": "cadraw-figma",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Your Figma Plugin",
   "private": true,
   "main": "code.js",
