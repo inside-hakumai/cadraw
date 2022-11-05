@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react'
-import { useRecoilValue } from 'recoil'
-import { isLine } from '../../lib/typeguard'
-import { getStrokeColor } from '../../lib/function'
+import LineBase from './base/LineBase'
 import {
   isShapeSelectedSelectorFamily,
   shapeSelectorFamily,
 } from '../../container/state/shapeState'
 import { isIndicatedFamily } from '../../container/state/cursorState'
+import { useRecoilValue } from 'recoil'
+import React, { useEffect } from 'react'
+import { isLine } from '../../lib/typeguard'
 
 interface Props {
   shapeId: number
@@ -26,14 +26,12 @@ const Line: React.FC<Props> = React.memo(function Line({ shapeId }) {
   const { startPoint, endPoint } = shape.constraints
 
   return (
-    <line
-      x1={startPoint.x}
-      y1={startPoint.y}
-      x2={endPoint.x}
-      y2={endPoint.y}
-      strokeWidth={1}
-      stroke={getStrokeColor(isSelected, isFocused)}
-      strokeDasharray={shape.type === 'supplemental' ? '3 3' : ''}
+    <LineBase
+      startPoint={startPoint}
+      endPoint={endPoint}
+      isFocused={isFocused}
+      isSelected={isSelected}
+      drawType={shape.type}
     />
   )
 })
