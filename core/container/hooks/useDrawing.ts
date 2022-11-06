@@ -25,6 +25,7 @@ import {
   calcCentralAngleFromHorizontalLine,
   calcDistance,
   findLineEquidistantFromTwoPoints,
+  isBetween,
 } from '../../lib/function'
 
 const useDrawing = () => {
@@ -699,10 +700,37 @@ const useDrawing = () => {
               radius,
             } = shapeSeed
 
-            const angleDeltaFromStart =
-              endPointAngle > startPointAngle
-                ? endPointAngle - startPointAngle
-                : 360 - (startPointAngle - endPointAngle)
+            const onLinePointAngle = calcCentralAngleFromHorizontalLine(onLinePoint, center)
+            if (onLinePointAngle === null) {
+              return
+            }
+
+            let angleDeltaFromStart: number | null = null
+            if (startPointAngle < endPointAngle) {
+              if (isBetween(onLinePointAngle, 0, startPointAngle, true, false)) {
+                angleDeltaFromStart = -1 * (startPointAngle + (360 - endPointAngle))
+              } else if (
+                isBetween(onLinePointAngle, startPointAngle, endPointAngle, false, false)
+              ) {
+                angleDeltaFromStart = endPointAngle - startPointAngle
+              } else if (isBetween(onLinePointAngle, endPointAngle, 360, false, false)) {
+                angleDeltaFromStart = -1 * (startPointAngle + (360 - endPointAngle))
+              }
+            } else if (endPointAngle < startPointAngle) {
+              if (isBetween(onLinePointAngle, 0, endPointAngle, true, false)) {
+                angleDeltaFromStart = endPointAngle + (360 - endPointAngle)
+              } else if (
+                isBetween(onLinePointAngle, endPointAngle, startPointAngle, false, false)
+              ) {
+                angleDeltaFromStart = -1 * (startPointAngle - endPointAngle)
+              } else if (isBetween(onLinePointAngle, startPointAngle, 360, false, false)) {
+                angleDeltaFromStart = endPointAngle + (360 - endPointAngle)
+              }
+            }
+
+            if (angleDeltaFromStart === null) {
+              return
+            }
 
             const newArcSeed: Arc<ThreePointsConstraints> = {
               id: shapes.length,
