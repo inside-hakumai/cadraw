@@ -26,7 +26,6 @@ const RectangleConstrainedByCenterCornerPreview: React.FC<Props> = ({ shape }) =
         width={Math.abs(cornerPoint.x - center.x) * 2}
         height={Math.abs(cornerPoint.y - center.y) * 2}
         stroke={'grey'}
-        strokeDasharray={'3 3'}
         strokeWidth={1}
         fill={'none'}
       />

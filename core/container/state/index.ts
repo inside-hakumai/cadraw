@@ -620,9 +620,18 @@ export const snappingCoordState = selector<SnappingCoordinate | null>({
       ([] as SnappingCoordCandidate[])
 
     const snapToConstraintPointMap = get(snapToShapeConstraintPointSelector)
-    const snappingConstraintPoint =
+    let snappingConstraintPoint =
       snapToConstraintPointMap[`${pointingCoord.x}-${pointingCoord.y}`] ||
       ([] as SnappingCoordCandidate[])
+
+    if (isClicking) {
+      snappingConstraintPoint = snappingConstraintPoint.filter(snap => {
+        // ドラッグ中はカーソルが当たっている図形（＝ドラッグ中の図形そのもの）へのスナップは無効にする
+        return (
+          isClicking && indicatingShapeId !== (snap.snapInfo as ShapeRelatedSnapInfo).targetShapeId
+        )
+      })
+    }
 
     const allSnappingCoords: SnappingCoordCandidate[] = [
       ...snappingGridIntersection,

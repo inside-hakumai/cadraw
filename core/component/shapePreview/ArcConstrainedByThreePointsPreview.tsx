@@ -68,19 +68,21 @@ const ArcConstrainedByThreePointsPreview: React.FC<Props> = ({ shape, centerRef 
 
   return (
     <>
-      <line
-        key={'arcSeedStartPointToEndPoint'}
-        x1={startPoint.x}
-        y1={startPoint.y}
-        x2={endPoint.x}
-        y2={endPoint.y}
-        stroke='grey'
-        strokeDasharray={'3 3'}
-        strokeWidth={1}
-      />
-      <circle key={'arcSeedStartPoint'} cx={startPoint.x} cy={startPoint.y} r={2} fill='blue' />
+      {!pathNodeAttribute && (
+        <line
+          key={'arcPreviewStartPointToEndPoint'}
+          x1={startPoint.x}
+          y1={startPoint.y}
+          x2={endPoint.x}
+          y2={endPoint.y}
+          stroke='grey'
+          strokeDasharray={'3 3'}
+          strokeWidth={1}
+        />
+      )}
+      <circle key={'arcPreviewStartPoint'} cx={startPoint.x} cy={startPoint.y} r={2} fill='blue' />
       <circle
-        key={'arcSeedEndPoint'}
+        key={'arcPreviewEndPoint'}
         cx={endPoint.x}
         cy={endPoint.y}
         r={2}
@@ -88,17 +90,37 @@ const ArcConstrainedByThreePointsPreview: React.FC<Props> = ({ shape, centerRef 
         ref={centerRef}
       />
 
-      {pathNodeAttribute && center && (
+      {pathNodeAttribute && center && onLinePoint && (
         <>
+          <line
+            key={'arcPreviewRadius1'}
+            x1={center.x}
+            y1={center.y}
+            x2={endPoint.x}
+            y2={endPoint.y}
+            stroke='grey'
+            strokeDasharray={'3 3'}
+            strokeWidth={1}
+          />
+          <line
+            key={'arcPreviewRadius2'}
+            x1={center.x}
+            y1={center.y}
+            x2={onLinePoint.x}
+            y2={onLinePoint.y}
+            stroke='grey'
+            strokeDasharray={'3 3'}
+            strokeWidth={1}
+          />
           <path
-            key={'arcSeedArc'}
+            key={'arcPreviewArc'}
             d={pathNodeAttribute.join(' ')}
             fill='none'
             stroke={'grey'}
             strokeWidth='2'
           />
           <circle
-            key={'arcSeedCenter'}
+            key={'arcPreviewCenter'}
             cx={center.x}
             cy={center.y}
             r={2}
