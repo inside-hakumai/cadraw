@@ -26,7 +26,6 @@ const RectangleConstrainedByTwoCornersPreview: React.FC<Props> = ({ shape }) => 
         width={Math.abs(corner2Point.x - corner1Point.x)}
         height={Math.abs(corner2Point.y - corner1Point.y)}
         stroke={'grey'}
-        strokeDasharray={'3 3'}
         strokeWidth={1}
         fill={'none'}
       />
